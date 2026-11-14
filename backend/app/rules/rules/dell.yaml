@@ -1,0 +1,23 @@
+# Règles Dell — RÈGLES DE DÉMONSTRATION.
+# Fait vérifié : la durée et le niveau de service Dell dépendent de ce qui a été acheté avec la machine
+# (garantie de base, ProSupport, ProSupport Plus...). Ils figurent sur la facture / le contrat.
+# -> duration_months: 0 = durée LUE dans la preuve (fait `warranty_term_months`) ; absente => to_verify.
+# Hypothèse (à vérifier avec l'API Dell TechDirect en production) : la garantie démarre à la date
+# d'expédition ; si elle est inconnue, la date de facture sert d'approximation et le verdict est dégradé
+# en likely_covered lorsque l'expiration est proche.
+# En production : API officielle Dell TechDirect (pas de robot sur dell.com — Acceptable Use Policy).
+defaults: &dell
+  version: "1"
+  source_url: https://www.dell.com/en-us/lp/dt/warranty-support-services
+  consulted_on: 2026-11-14
+  start_event: ship_date
+  proof_required: [serial_number, purchase_date, warranty_term_months]
+  exclusions: [accidental_damage, liquid_damage, third_party_repair, misuse, loss, theft]
+  contact_delay_days: null
+  contact_delay_start: unspecified
+  channel: browser_portal
+  requires_certificate: false
+rules:
+  - {<<: *dell, id: dell-latitude, applies_to: {brand: Dell, model_glob: "Latitude*"}, right_type: manufacturer_warranty, duration_months: 0}
+  - {<<: *dell, id: dell-monitor-p, applies_to: {brand: Dell, model_glob: "P2*"}, right_type: manufacturer_warranty, duration_months: 0}
+  - {<<: *dell, id: dell-prosupport, applies_to: {brand: Dell, model_glob: "*"}, right_type: extension, duration_months: 0, proof_required: [serial_number, service_contract, warranty_term_months]}

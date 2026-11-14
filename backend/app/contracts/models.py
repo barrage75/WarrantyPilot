@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -110,6 +110,7 @@ class Fact(ContractModel):
 class RuleAppliesTo(ContractModel):
     brand: str
     model_glob: str
+    condition: Literal["new", "refurbished"] = "new"
 
 
 class Rule(ContractModel):
@@ -120,6 +121,7 @@ class Rule(ContractModel):
     applies_to: RuleAppliesTo
     right_type: RightType
     duration_months: int = Field(ge=0)
+    duration_days: int | None = Field(default=None, ge=1)
     start_event: RuleStartEvent
     proof_required: list[str]
     exclusions: list[str]
