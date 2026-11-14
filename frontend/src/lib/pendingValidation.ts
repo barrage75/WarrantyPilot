@@ -10,6 +10,12 @@ export function subscribeValidation(listener: () => void) {
 }
 export const isValidationPending = (caseId: string) => pending.has(caseId);
 
+export function resetPendingValidations() {
+ for (const entry of pending.values()) if (entry.timer) clearTimeout(entry.timer);
+ pending.clear();
+ emit();
+}
+
 export function cancelValidation(caseId: string) {
  const entry = pending.get(caseId);
  if (!entry?.timer) return false;

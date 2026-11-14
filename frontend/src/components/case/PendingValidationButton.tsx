@@ -8,7 +8,7 @@ import { apiErrorKey } from "@/api/errors";
 import { cancelValidation, isValidationPending, queueValidation, subscribeValidation } from "@/lib/pendingValidation";
 import { Button } from "@/components/ui/button";
 
-export function PendingValidationButton({ caseId, disabled, onError }: { caseId: string; disabled?: boolean; onError?: (error: unknown) => void }) {
+export function PendingValidationButton({ caseId, disabled, onError, beam = true }: { caseId: string; disabled?: boolean; onError?: (error: unknown) => void; beam?: boolean }) {
  const { t } = useTranslation("caseDetail");
  const cache = useQueryClient();
  const reducedMotion = useReducedMotion();
@@ -27,8 +27,8 @@ export function PendingValidationButton({ caseId, disabled, onError }: { caseId:
    action: { label: t("common:cancel"), onClick: () => { if (cancelValidation(caseId)) toast.dismiss(toastId); } },
   });
  }
- return <span className="relative inline-flex max-w-full overflow-hidden rounded-full bg-accent p-[2px]">
-  {!reducedMotion && !pending && <motion.span aria-hidden="true" className="pointer-events-none absolute -inset-full bg-[conic-gradient(from_0deg,transparent_65%,#c7d2fe_85%,#6366f1_100%)]" animate={{ rotate: 360 }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }}/>}
+ return <span className={`relative inline-flex max-w-full overflow-hidden rounded-full p-[2px] ${beam ? "bg-accent" : ""}`}>
+  {beam && !reducedMotion && !pending && <motion.span aria-hidden="true" className="pointer-events-none absolute -inset-full bg-[conic-gradient(from_0deg,transparent_65%,#c7d2fe_85%,#6366f1_100%)]" animate={{ rotate: 360 }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }}/>}
   <Button className="relative" disabled={disabled || pending} onClick={schedule}>{t(pending ? "validationQueued" : "validate")}</Button>
  </span>;
 }

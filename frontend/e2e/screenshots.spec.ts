@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, test } from "@playwright/test";
-import { fakeCase, resolveFromUi } from "./helpers";
+import { fakeCase, openUserMenu, resolveFromUi } from "./helpers";
 test("capture every screen in French and English with isolated fictional cases", async ({ page }) => {
  const request = page.request;
  const data = await resolveFromUi(page, request);
@@ -16,7 +16,9 @@ test("capture every screen in French and English with isolated fictional cases",
   ["garde-fou", "/purchase-guard"], ["parametres", "/settings"], ["demo", "/demo"], ["journal", "/journal"],
  ] as const;
  for (const language of ["fr", "en"]) {
+  await openUserMenu(page);
   await page.getByRole("combobox", { name: /Langue|Language/ }).selectOption(language);
+  await page.keyboard.press("Escape");
   for (const [name, path] of surfaces) {
    await page.goto(path);
    await expect(page.locator("main h1")).toBeVisible();

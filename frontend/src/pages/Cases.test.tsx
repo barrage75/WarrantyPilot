@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
@@ -9,6 +9,7 @@ import i18n from "@/i18n";
 import { apiErrorKey } from "@/api/errors";
 import { ApiError } from "@/api/client";
 import { TestSession, sessionUser } from "@/test/http";
+import { resetPendingValidations } from "@/lib/pendingValidation";
 const person = "10000000-0000-4000-8000-000000000001";
 const caseId = "20000000-0000-4000-8000-000000000002";
 const item: components["schemas"]["Case"] = { id: caseId, incident_id: caseId, equipment_id: person, status: "awaiting_validation", badge: "simulated", channel: "email_reseller", verdict: { value: "covered", explanation_fr: "Couverture fictive", explanation_en: "Fictional coverage", checks: [{ name: "Facture", passed: true, detail: "Facture valide" }, { name: "Date", passed: null, detail: "Date absente" }], evidence: [{ document_id: person, page: 2, excerpt: "Achat fictif" }] }, policy: { outcome: "needs_validation", reasons: ["under_threshold"], conditions: { under_threshold: false, verdict_covered: true, equipment_unambiguous: true, no_possible_exclusion: true, no_suspicious_signal: true, low_commitment_action: true } } };
@@ -18,6 +19,7 @@ let postStatus: number;
 let events: unknown[], actions: unknown[];
 let checklistDone: Set<string>;
 beforeEach(async () => {
+ resetPendingValidations();
  localStorage.clear(); await i18n.changeLanguage("fr");
  data = [structuredClone(item)]; posts = []; postStatus = 200; events = []; actions = []; checklistDone = new Set(["backup_verified"]);
  vi.stubGlobal("EventSource", class { close() {} addEventListener() {} });
@@ -39,23 +41,28 @@ beforeEach(async () => {
   if (url.endsWith("/actions")) return Response.json(actions);
   if (url === "/api/people") return Response.json([{ id: person, name: "Camille Martin", email: "camille@example.test", role: "IT" }]);
   if (url === "/api/equipment") return Response.json([{ id: person, brand: "Dell", model: "Latitude 5440", serial: "SVC-FAKE-01", category: "laptop" }]);
+  if (url === "/api/equipment/overview") return Response.json([]);
   if (url === "/api/cases") return Response.json(data);
   return Response.json(data[0]);
  }));
 });
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); resetPendingValidations(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 function show(kind: "decisions" | "cases" | "detail", identity = true) {
  const cache = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
  return render(<QueryClientProvider client={cache}><TestSession user={identity ? sessionUser : null}><MemoryRouter initialEntries={[kind === "detail" ? "/cases/" + caseId : "/"]}><Routes><Route path="/" element={kind === "decisions" ? <Decisions/> : <CasesPage/>}/><Route path="/cases/:id" element={<CaseDetail/>}/></Routes></MemoryRouter></TestSession></QueryClientProvider>);
 }
-it("shows the queue and validates in one click with the session as actor", async () => {
+it("shows the queue and validates after the undo window with the session as actor", async () => {
  show("decisions"); await screen.findByText("Couverture fictive");
  expect(screen.getByText("Achat fictif")).toBeInTheDocument();
- await userEvent.click(screen.getByRole("button", { name: "Valider" }));
+ vi.useFakeTimers();
+ fireEvent.click(screen.getByRole("button", { name: "Valider" }));
+ expect(posts).toEqual([]);
+ await act(async () => { await vi.advanceTimersByTimeAsync(5000); await vi.runOnlyPendingTimersAsync(); });
+ vi.useRealTimers();
  await waitFor(() => expect(posts).toEqual([{ url: "/api/cases/" + caseId + "/validate", body: {} }]));
  expect(await screen.findByText("Envoyé", { exact: true })).toBeInTheDocument();
  expect(screen.queryByRole("button", { name: "Valider" })).not.toBeInTheDocument();
-});
+}, 10000);
 it("requires a note to resolve a sent case as the active person", async () => {
  data = [{ ...item, status: "tracked" }];
  show("detail");
@@ -84,10 +91,14 @@ it("disables human actions without identity", async () => {
 });
 it("shows translated person-not-found errors", async () => {
  postStatus = 404; show("decisions");
- await userEvent.click(await screen.findByRole("button", { name: "Valider" }));
+ const validate = await screen.findByRole("button", { name: "Valider" });
+ vi.useFakeTimers();
+ fireEvent.click(validate);
+ await act(async () => { await vi.advanceTimersByTimeAsync(5000); await vi.runOnlyPendingTimersAsync(); });
+ vi.useRealTimers();
  expect(await screen.findByRole("alert")).toHaveTextContent("Personne inconnue");
  expect(apiErrorKey(new ApiError(409, {}))).toBe("common:conflict");
-});
+}, 10000);
 it("renders policy conditions, nullable checks and seven checklist steps", async () => {
  show("detail"); await screen.findByText("Couverture fictive");
  expect(screen.getByText("Facture valide")).toBeInTheDocument();

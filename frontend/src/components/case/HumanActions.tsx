@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { PendingValidationButton } from "./PendingValidationButton";
 type Case = Pick<components["schemas"]["Case"], "id" | "status">;
 function ErrorMessage({ error }: { error: unknown }) { const { t } = useTranslation(); return <p role="alert" className="py-3 text-red-800">{t(apiErrorKey(error))}</p>; }
-export function HumanActions({ item }: { item: Case }) {
+export function HumanActions({ item, beam = true }: { item: Case; beam?: boolean }) {
  const { t } = useTranslation(["caseDetail", "common"]);
  const { personId } = useOperator();
  const action = useHumanAction(item.id ?? "");
@@ -27,7 +27,7 @@ export function HumanActions({ item }: { item: Case }) {
  return <div className="space-y-3">
  {!personId && <p className="text-sm text-amber-900">{t("common:identityRequired")}</p>}
  <div className="flex flex-wrap gap-2">
- {item.status === "awaiting_validation" && <><PendingValidationButton caseId={item.id ?? ""} disabled={disabled} onError={setValidationError}/><Button variant="outline" disabled={disabled} onClick={() => setReject(true)}>{t("reject")}</Button></>}
+ {item.status === "awaiting_validation" && <><PendingValidationButton caseId={item.id ?? ""} disabled={disabled} onError={setValidationError} beam={beam}/><Button variant="outline" disabled={disabled} onClick={() => setReject(true)}>{t("reject")}</Button></>}
  {item.status === "failed" && <Button disabled={disabled} onClick={() => submit({ kind: "manual-takeover" })}>{t("takeover")}</Button>}
  </div>
  {item.status === "manual_takeover" && <form className="space-y-2" onSubmit={e => { e.preventDefault(); if (proof.trim()) submit({ kind: "manual-proof", proof_type: proofType, reference: proof.trim(), proof_date: proofDate, note: note.trim() }); }}><p className="font-medium">{t("manualProof")}</p><label className="block text-sm" htmlFor={"proof-type-" + item.id}>{t("proofType")}</label><select id={"proof-type-" + item.id} className="block min-h-10 max-w-full rounded-2xl border border-line p-2" value={proofType} onChange={e => setProofType(e.target.value as ManualProof["proof_type"])}>{(["case_number", "email_message_id", "portal_screenshot", "carrier_tracking"] as const).map(value => <option key={value} value={value}>{t("proofTypes." + value)}</option>)}</select><label className="block text-sm" htmlFor={"proof-" + item.id}>{t("proofReference")}</label><input id={"proof-" + item.id} className="block w-full min-h-10 max-w-full rounded-2xl border border-line p-2" value={proof} maxLength={200} onChange={e => setProof(e.target.value)} required/><label className="block text-sm" htmlFor={"proof-date-" + item.id}>{t("proofDate")}</label><input id={"proof-date-" + item.id} type="date" className="block min-h-10 max-w-full rounded-2xl border border-line p-2" value={proofDate} onChange={e => setProofDate(e.target.value)} required/><label className="block text-sm" htmlFor={"proof-note-" + item.id}>{t("proofNote")}</label><Textarea id={"proof-note-" + item.id} value={note} maxLength={500} onChange={e => setNote(e.target.value)}/><Button disabled={disabled || !proof.trim()}>{t("submitProof")}</Button></form>}

@@ -57,7 +57,7 @@ export async function resolveFromUi(page: Page, request: APIRequestContext = pag
  await expect(card).toBeVisible();
  await expectSignedIn(page);
  await card.getByRole("button", { name: "Valider", exact: true }).click();
- await expect.poll(async () => (await (await request.get("/api/cases/" + item.id)).json() as { status: string }).status).toMatch(/^(sent|tracked|resolved)$/);
+ await expect.poll(async () => (await (await request.get("/api/cases/" + item.id)).json() as { status: string }).status, { timeout: 15000 }).toMatch(/^(sent|tracked|resolved)$/);
  await page.goto("/cases/" + item.id);
  if ((await (await request.get("/api/cases/" + item.id)).json() as { status: string }).status !== "resolved") {
   await page.getByLabel("Note de résolution", { exact: true }).fill("Remplacement reçu (démo fictive).");
