@@ -25,6 +25,7 @@ import { NumberTicker } from "@/components/bento/NumberTicker";
 import { EmptyState } from "@/components/bento/EmptyState";
 import { EquipmentIcon } from "@/components/bento/EquipmentIcon";
 import { CaseStatus } from "@/components/case/CaseStatus";
+import { CaseRealityPill } from "@/components/case/CaseRealityPill";
 import { CaseEquipment } from "@/components/case/CaseEquipment";
 import { AgentJourney } from "@/components/case/AgentJourney";
 import { caseChannel } from "@/components/case/caseState";
@@ -70,7 +71,7 @@ function TechnicalDetails({ value }: { value: unknown }) {
 }
 function ActionHistory({ history }: { history: CaseActionHistory }) {
  const { t, i18n } = useTranslation("caseDetail");
- return <li className="border-l-2 border-teal-600 pl-4"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{t("enums:Channel." + history.action.channel)} · {technicalLabel(history.action.kind, i18n.language)}</h3><RealityBadge value={history.action.badge}/></div><ul className="mt-2 space-y-2 text-sm">{history.results.map((result, index) => { const number = proofCaseNumber(result.proof); return <li key={result.id ?? index}><p className={result.status === "success" ? "text-green-800" : "text-red-800"}>{t("result")} : {t("enums:ActionResultStatus." + result.status, { defaultValue: technicalLabel(result.status, i18n.language) })}</p>{number && <p className="font-semibold text-teal-900">{t("dellCase", { number })}</p>}{result.proof && <TechnicalDetails value={result.proof} />}{result.error && <details className="max-w-full text-red-800"><summary className="cursor-pointer">{t("technicalDetails")}</summary><pre className="mt-2 max-w-full overflow-x-auto whitespace-pre-wrap rounded bg-slate-50 p-3 text-xs">{result.error}</pre></details>}</li>; })}</ul></li>;
+ return <li className="border-l-2 border-teal-600 pl-4"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{t("enums:Channel." + history.action.channel)} · {technicalLabel(history.action.kind, i18n.language)}</h3><CaseRealityPill value={history.action.badge}/></div><ul className="mt-2 space-y-2 text-sm">{history.results.map((result, index) => { const number = proofCaseNumber(result.proof); return <li key={result.id ?? index}><p className={result.status === "success" ? "text-green-800" : "text-red-800"}>{t("result")} : {t("enums:ActionResultStatus." + result.status, { defaultValue: technicalLabel(result.status, i18n.language) })}</p>{number && <p className="font-semibold text-teal-900">{t("dellCase", { number })}</p>}{result.proof && <TechnicalDetails value={result.proof} />}{result.error && <details className="max-w-full text-red-800"><summary className="cursor-pointer">{t("technicalDetails")}</summary><pre className="mt-2 max-w-full overflow-x-auto whitespace-pre-wrap rounded bg-slate-50 p-3 text-xs">{result.error}</pre></details>}</li>; })}</ul></li>;
 }
 function useFormat() {
  const { i18n } = useTranslation();
@@ -127,7 +128,7 @@ export function CasesPage() {
   </section>
   {query.isPending && <p role="status">{t("common:loading")}</p>}{query.isError && <ErrorMessage error={query.error}/>}
   <div className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3">{rows.map(item => { const device = byId.get(item.equipment_id ?? ""); return <Tile key={item.id} tabIndex={0} aria-label={item.id} highlight={item.status === "awaiting_validation"} className="min-w-0 cursor-pointer space-y-5" onClick={event => { if (!(event.target as HTMLElement).closest("a")) navigate("/cases/" + item.id); }} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); navigate("/cases/" + item.id); } }}>
-   <div className="flex items-start justify-between gap-3"><EquipmentIcon category={device?.category ?? "package"} size={44}/><RealityBadge value={item.badge}/></div>
+   <div className="flex items-start justify-between gap-3"><EquipmentIcon category={device?.category ?? "package"} size={44}/><CaseRealityPill value={item.badge}/></div>
    <div><h2 className="text-xl font-semibold tracking-tight [overflow-wrap:anywhere]">{device ? `${device.brand} ${device.model}` : t("equipmentUnknown")}</h2><p className="mt-1 text-sm text-muted [overflow-wrap:anywhere]">{device?.serial ?? "—"}</p></div>
    <div className="flex flex-wrap items-center gap-3"><CaseStatus status={item.status}/>{item.verdict && <Pill className={`px-3 py-1 ${item.verdict.value === "covered" ? "bg-ok/10 text-emerald-800" : ["not_covered", "out_of_manufacturer"].includes(item.verdict.value) ? "bg-bad/10 text-red-800" : "bg-warn/15 text-amber-900"}`}>{t("enums:VerdictValue." + item.verdict.value)}</Pill>}</div>
    <div className="border-t border-line pt-4 text-sm"><p className="text-muted">{t("enums:Channel." + caseChannel(item))}</p><div className="mt-2 flex flex-wrap items-center justify-between gap-2"><Link className="inline-flex min-h-10 items-center gap-1 font-semibold text-indigo-700" to={"/cases/" + item.id} aria-label={short(item.id)}>{t("id")} #{short(item.id)}<ChevronRight size={16} aria-hidden="true"/></Link><time className="text-xs text-muted" dateTime={item.updated_at}>{date(item.updated_at)}</time></div></div>
@@ -158,7 +159,7 @@ function Payload({ payload }: { payload: Record<string, unknown> }) {
  }
  const visible = Object.entries(payload).filter(([key, value]) => !isTechnicalField(key) && !isTechnicalValue(value) && (value === null || typeof value !== "object"));
  const hasTechnical = visible.length !== Object.keys(payload).length;
- return <>{visible.length > 0 && <dl className="mt-2 space-y-1 text-sm text-slate-600 [overflow-wrap:anywhere]">{visible.map(([key, value]) => <div key={key}><dt className="inline font-medium">{technicalLabel(key, i18n.language)}: </dt><dd className="inline">{key === "badge" && (value === "real" || value === "reproduction" || value === "simulated") ? <RealityBadge value={value}/> : readable(value, key)}</dd></div>)}</dl>}{hasTechnical && <TechnicalDetails value={payload}/>}</>;
+ return <>{visible.length > 0 && <dl className="mt-2 space-y-1 text-sm text-slate-600 [overflow-wrap:anywhere]">{visible.map(([key, value]) => <div key={key}><dt className="inline font-medium">{technicalLabel(key, i18n.language)}: </dt><dd className="inline">{key === "badge" && (value === "real" || value === "reproduction" || value === "simulated") ? <CaseRealityPill value={value}/> : readable(value, key)}</dd></div>)}</dl>}{hasTechnical && <TechnicalDetails value={payload}/>}</>;
 }
 function EventRow({ event }: { event: StreamEventLocal }) {
  const { t, i18n } = useTranslation("caseDetail"), date = useFormat();
@@ -175,9 +176,10 @@ export function CaseDetail() {
  return <div className="min-w-0 space-y-6"><Link className="inline-flex min-h-10 items-center text-sm font-medium text-indigo-700 underline" to="/cases">{t("back")}</Link><header className={`min-w-0 space-y-5 rounded-[28px] bg-surface p-6 sm:p-8 ${item.status === "awaiting_validation" ? "ring-2 ring-accent" : ""}`}>
  <CaseEquipment equipmentId={item.equipment_id}/>
  <div><h1 className="text-3xl font-bold tracking-tight sm:text-4xl"><span className="mb-2 block text-sm font-medium text-muted">{t("title")} #{short(item.id)}</span><span className="[overflow-wrap:anywhere]">{equipmentName(item.equipment_id)}</span></h1></div>
- <div className="flex flex-wrap items-center gap-3"><CaseStatus status={item.status}/><RealityBadge value={item.badge}/><Pill className="bg-canvas">{t("enums:Channel." + caseChannel(item))}</Pill></div>
- <p className="text-sm text-muted">{t("created")}: {date(item.created_at)} · {t("updated")}: {date(item.updated_at)}</p><HumanActions item={item}/></header>
+ <div className="flex flex-wrap items-center gap-3"><CaseStatus status={item.status}/><CaseRealityPill value={item.badge}/><Pill className="bg-canvas">{t("enums:Channel." + caseChannel(item))}</Pill></div>
+ <p className="text-sm text-muted">{t("created")}: {date(item.created_at)} · {t("updated")}: {date(item.updated_at)}</p></header>
  <AgentJourney item={item} events={stream.data ?? []}/>
+ {["awaiting_validation", "failed", "manual_takeover"].includes(item.status) && <Card><h2 className="mb-4 text-xl font-semibold">{t("yourDecision")}</h2><HumanActions item={item} section="decision"/></Card>}
  <div className="grid items-start gap-6 xl:grid-cols-2">
   <Card>
    <h2 className="mb-4 text-xl font-semibold">{t("verdict")}</h2>
@@ -195,5 +197,6 @@ export function CaseDetail() {
  </div>
  <Checklist id={id}/>
  <Card><h2 className="text-xl font-semibold">{t("actions")}</h2><p className="my-3 text-sm text-slate-600">{t("actionsNote")}</p>{history.isError && <ErrorMessage error={history.error}/>}{history.data && !history.data.length && <p>{t("none")}</p>}<ol className="space-y-5">{history.data?.map((entry, index) => <ActionHistory key={entry.action.id ?? index} history={entry}/>)}</ol></Card>
+ {["sent", "tracked"].includes(item.status) && <Card><h2 className="mb-4 text-xl font-semibold">{t("resolution")}</h2><HumanActions item={item} section="resolution"/></Card>}
  <Card><div className="mb-5 flex flex-wrap justify-between gap-3"><h2 className="text-xl font-semibold">{t("timeline")}</h2><span role="status" className={stream.connection === "open" ? "text-green-800" : "text-amber-900"}>{t(stream.mode === "poll" ? "polling" : stream.connection === "open" ? "liveSse" : "reconnecting")}</span></div>{stream.isError && <ErrorMessage error={stream.error}/>}<ol className="space-y-6">{stream.data?.map(e => <EventRow key={e.seq} event={e}/>)}</ol>{!stream.isPending && !stream.data?.length && <p>{t("none")}</p>}</Card></div>;
 }

@@ -21,6 +21,13 @@
   "submitProof": "Save proof",
   "resolveCase": "Mark as resolved",
   "resolutionNote": "Resolution note",
+  "resolution": "Resolution",
+  "yourDecision": "Your decision",
+  "reality": {
+    "real": "Real",
+    "reproduction": "Local reproduction",
+    "simulated": "Simulated"
+  },
   "actionSuccess": "Action saved.",
   "evidence": "Evidence",
   "document": "Document",

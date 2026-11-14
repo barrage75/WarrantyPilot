@@ -21,6 +21,13 @@
   "submitProof": "Enregistrer la preuve",
   "resolveCase": "Marquer comme résolu",
   "resolutionNote": "Note de résolution",
+  "resolution": "Résolution",
+  "yourDecision": "Votre décision",
+  "reality": {
+    "real": "Réel",
+    "reproduction": "Reproduction locale",
+    "simulated": "Simulé"
+  },
   "actionSuccess": "Action enregistrée.",
   "evidence": "Preuves",
   "document": "Document",

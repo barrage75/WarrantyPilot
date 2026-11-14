@@ -75,6 +75,33 @@ it("requires a note to resolve a sent case as the active person", async () => {
   body: { note: "Remplacement reçu" },
  }]));
 });
+it("places the journey before decision actions and evidence", async () => {
+ show("detail");
+ const validate = await screen.findByRole("button", { name: "Valider" });
+ const hero = screen.getByRole("heading", { level: 1 }).closest("header")!;
+ expect(within(hero).queryByRole("button")).not.toBeInTheDocument();
+ const journey = screen.getByRole("heading", { name: "Parcours de l’agent" });
+ const evidence = screen.getByRole("heading", { name: "Preuves" });
+ expect(journey.compareDocumentPosition(validate) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+ expect(validate.compareDocumentPosition(evidence) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+ expect(screen.queryByLabelText("Note de résolution")).not.toBeInTheDocument();
+});
+it.each(["sent", "tracked"] as const)("places the resolution form after evidence for %s cases", async status => {
+ data = [{ ...item, status }];
+ show("detail");
+ const note = await screen.findByLabelText("Note de résolution");
+ const hero = screen.getByRole("heading", { level: 1 }).closest("header")!;
+ expect(within(hero).queryByRole("textbox")).not.toBeInTheDocument();
+ expect(screen.getByRole("heading", { name: "Preuves" }).compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+ expect(screen.getAllByRole("button", { name: "Marquer comme résolu" })).toHaveLength(1);
+});
+it.each(["failed", "manual_takeover", "resolved", "cancelled"] as const)("does not offer resolution for %s cases", async status => {
+ data = [{ ...item, status }];
+ show("detail");
+ await screen.findByRole("heading", { level: 1 });
+ expect(screen.queryByLabelText("Note de résolution")).not.toBeInTheDocument();
+ expect(screen.queryByRole("button", { name: "Marquer comme résolu" })).not.toBeInTheDocument();
+});
 it("requires a nonblank rejection reason", async () => {
  show("decisions"); await userEvent.click(await screen.findByRole("button", { name: "Rejeter" }));
  const dialog = screen.getByRole("dialog");

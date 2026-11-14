@@ -7,6 +7,7 @@ import { renderWithApi, stubHttp } from "@/test/http";
 import { EquipmentIcon } from "./EquipmentIcon";
 import { NotificationBell } from "./NotificationBell";
 import { NumberTicker } from "./NumberTicker";
+import { PillNav } from "./PillNav";
 import { StatusDot } from "./StatusDot";
 import { WarrantyRing } from "./WarrantyRing";
 
@@ -55,4 +56,15 @@ it("renders status and number components accessibly", () => {
  const ticker = container.querySelector('[aria-live="off"]');
  expect(ticker).toHaveAttribute("aria-label", new Intl.NumberFormat("fr", { style: "currency", currency: "EUR" }).format(1200));
  expect(ticker?.textContent?.replace(/\s+/g, " ")).toBe(new Intl.NumberFormat("fr", { style: "currency", currency: "EUR" }).format(1200).replace(/\s+/g, " "));
+});
+
+it("keeps every PillNav link keyboard-accessible when hiding the native scrollbar", async () => {
+ const items = [{ to: "/", label: "Accueil", end: true }, { to: "/cases", label: "Dossiers" }, { to: "/chat", label: "Signalement" }];
+ renderWithApi(<PillNav label="Navigation" items={items}/>);
+ expect(screen.getByRole("navigation")).toHaveClass("overflow-x-auto", "[scrollbar-width:none]", "[&::-webkit-scrollbar]:hidden");
+ for (const item of items) {
+  await userEvent.tab();
+  expect(screen.getByRole("link", { name: item.label })).toHaveFocus();
+  expect(screen.getByRole("link", { name: item.label })).toHaveAttribute("href", item.to);
+ }
 });
