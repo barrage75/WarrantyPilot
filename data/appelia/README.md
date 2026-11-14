@@ -82,6 +82,13 @@ n'est inventée. Il expose aussi les faits et droits déduits des preuves de
 location, Warranty+ et ProSupport. Le seed persiste ces faits ; un scan restaure
 les faits manquants d'une base déjà initialisée, sans les dupliquer.
 
+Le scan transmet au loader l'extracteur injecté pour les factures Factur-X,
+comme auparavant. Les PDF ordinaires restent traités par l'extracteur de texte local :
+le scan ne les envoyait pas au hook Mistral et ne déclenche pas de nouvel appel externe.
+La progression est publiée après le traitement de chaque document dans le loader,
+et non par une boucle vide après son retour. Elle mesure les documents traités ;
+le statut ne devient `completed` qu'après la persistance et le calcul des totaux.
+
 Les PDF sont produits avec des métadonnées à date fixe pour que la génération
 soit reproductible. Les outils de génération (`reportlab` et `factur-x`) sont
 uniquement des dépendances du groupe de développement.

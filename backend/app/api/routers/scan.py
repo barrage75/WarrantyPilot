@@ -107,11 +107,25 @@ async def _run_scan(application: Any, scan_id: str) -> None:
             sys.path.insert(0, str(repository_root))
         from data.appelia.load import load_dataset
 
-        dataset = await run_pdf_task(load_dataset)
+        loop = asyncio.get_running_loop()
+
+        def document_loaded(done: int, total: int) -> None:
+            # The loader runs on the PDF worker; publish completed documents on the event loop.
+            loop.call_soon_threadsafe(
+                state.update,
+                {
+                    "documents_total": total,
+                    "documents_done": done,
+                    "progress": round(done * 100 / max(1, total)),
+                },
+            )
+
+        dataset = await run_pdf_task(
+            load_dataset,
+            facturx_extractor=application.state.services.get("extractor"),
+            on_document=document_loaded,
+        )
         state["documents_total"] = len(dataset.documents)
-        for index, _document in enumerate(dataset.documents, start=1):
-            state["documents_done"] = index
-            state["progress"] = round(index * 100 / max(1, len(dataset.documents)))
 
         engine = application.state.services.get("rules_engine")
         if engine is None:

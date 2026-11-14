@@ -1,5 +1,8 @@
 import asyncio
+import json
 from collections import Counter
+from pathlib import Path
+from threading import Event
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -11,7 +14,86 @@ from app.contracts.enums import FactField
 from app.contracts.models import Fact, Provenance
 from app.core import tables
 from app.core.warranty import inventory_verdict, rules_engine, stored_inventory
+from app.ingestion.facturx import FacturXExtractor
 from tests.auth_helpers import KARIM_ID, login
+
+
+def test_scan_progress_tracks_extraction_and_honors_injected_extractor(
+    db_engine, app_settings, session_factory
+):
+    started = [Event(), Event()]
+    release = [Event(), Event()]
+    seen = []
+
+    class Extractor:
+        def extract(self, document, content):
+            index = len(seen)
+            seen.append(document)
+            if index < 2:
+                started[index].set()
+                assert release[index].wait(10), "test did not release extraction"
+            return [
+                *FacturXExtractor().extract(document, content),
+                Fact(
+                    document_id=document.id,
+                    field="scan.observed",
+                    value=document.filename,
+                    source="structured",
+                    confidence=1,
+                    provenance=Provenance(document_id=document.id, excerpt="injected extractor"),
+                ),
+            ]
+
+    application = create_app(app_settings=app_settings, app_engine=db_engine)
+    with TestClient(application) as client:
+        login(client, person_id=KARIM_ID)
+        assert client.post("/api/demo/reset", json={"confirm": "RESET"}).status_code == 200
+        application.state.services["extractor"] = Extractor()
+        application.state.scans["progress"] = {
+            "documents_done": 0,
+            "documents_total": 0,
+            "progress": 0,
+        }
+
+        async def run():
+            task = asyncio.create_task(_run_scan(application, "progress"))
+            state = application.state.scans["progress"]
+            try:
+                assert await asyncio.to_thread(started[0].wait, 5), "injected extractor unused"
+                assert state["documents_total"] == 65
+                assert state["documents_done"] == state["progress"] == 0
+                release[0].set()
+                assert await asyncio.to_thread(started[1].wait, 5)
+                records = json.loads(
+                    (
+                        Path(__file__).resolve().parents[3] / "data/appelia/documents.json"
+                    ).read_text()
+                )
+                expected = next(
+                    i for i, row in enumerate(records) if row["filename"] == seen[1].filename
+                )
+                assert state["documents_done"] == expected
+                assert 0 < state["progress"] < 100
+            finally:
+                for event in release:
+                    event.set()
+                await task
+            assert state["status"] == "completed", state
+            assert state["documents_done"] == 65
+            assert state["progress"] == 100
+
+        asyncio.run(run())
+        assert len(seen) == 13
+        assert all(document.source.value == "facturx" for document in seen)
+        with session_factory() as session:
+            facts = (
+                session.execute(select(tables.facts).where(tables.facts.c.field == "scan.observed"))
+                .mappings()
+                .all()
+            )
+        assert facts
+        assert {row["document_id"] for row in facts} == {str(doc.id) for doc in seen}
+        assert all(row["equipment_id"] is not None for row in facts)
 
 
 def test_indexed_inventory_preserves_all_seed_verdicts(db_engine, app_settings, session_factory):
