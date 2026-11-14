@@ -1,11 +1,15 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { FileCode, FileText, UploadCloud } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { ApiError, client, localRequest, unwrap } from "@/api/client";
 import { apiErrorKey } from "@/api/errors";
 import type { components } from "@/api/schema";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Tile as Card } from "@/components/bento/Tile";
+import { EmptyState } from "@/components/bento/EmptyState";
+import { UploadProgress } from "@/components/documents/UploadProgress";
 import { isTechnicalValue, technicalLabel } from "@/i18n/technical";
 
 type UploadResult = { document_id: string; duplicate: boolean; reason?: string; state?: string; facts?: number };
@@ -17,6 +21,11 @@ export default function Documents() {
  const { t, i18n } = useTranslation("documents");
  const cache = useQueryClient();
  const input = useRef<HTMLInputElement>(null);
+ const [params] = useSearchParams();
+ const documentId = params.get("document");
+ const linked = useQuery({ queryKey: ["document", documentId], enabled: !!documentId, retry: false, queryFn: async () => unwrap(await client.GET("/api/documents/{document_id}", { params: { path: { document_id: documentId! } } })) });
+ const selected = useRef<HTMLElement>(null);
+ const [filename, setFilename] = useState<string>();
  const [offset, setOffset] = useState(0), [busy, setBusy] = useState<"upload" | "poll">();
  const [error, setError] = useState<unknown>(), [validation, setValidation] = useState<string>();
  const [result, setResult] = useState<UploadResult>(), [detail, setDetail] = useState<components["schemas"]["DocumentDetail"]>();
@@ -25,10 +34,11 @@ export default function Documents() {
   queryKey: ["documents", offset],
   queryFn: async () => unwrap(await client.GET("/api/documents", { params: { query: { limit, offset } } })),
  });
+ useEffect(() => { if (linked.data) selected.current?.scrollIntoView?.({ block: "nearest" }); }, [linked.data, query.data]);
  async function refresh() { await cache.invalidateQueries({ queryKey: ["documents"] }); }
  async function upload(file?: File) {
   if (!file || busy) return;
-  setValidation(undefined); setError(undefined); setResult(undefined); setDetail(undefined);
+  setValidation(undefined); setError(undefined); setResult(undefined); setDetail(undefined); setFilename(file.name);
   if (!/\.(pdf|xml)$/i.test(file.name)) { setValidation("invalidType"); return; }
   if (file.size > 10 * 1024 * 1024) { setValidation("tooLarge"); return; }
   setBusy("upload");
@@ -61,17 +71,31 @@ export default function Documents() {
   return t(apiErrorKey(reason));
  }
  const date = (at: string | null) => at ? new Intl.DateTimeFormat(i18n.language, { dateStyle: "short", timeStyle: "short" }).format(new Date(at)) : "—";
- return <div className="space-y-5">
-  <h1 className="text-3xl font-semibold">{t("title")}</h1>
+ function documentTile(item: components["schemas"]["DocumentItem"]) {
+  const active = item.id === documentId;
+  const Icon = /\.xml$/i.test(item.name) ? FileCode : FileText;
+  return <Card key={item.id} ref={active ? selected : undefined} highlight={active} className="min-w-0 space-y-4" aria-label={item.name}>
+   <Icon size={36} strokeWidth={1.75} aria-hidden="true"/>
+   <h3 className="break-all font-semibold">{item.name}</h3>
+   <dl className="grid grid-cols-2 gap-3 text-sm">{[
+    ["source", t("enums:DocumentSource." + item.source)], ["state", t("states." + item.state)],
+    ["suspicious", t(item.suspicious ? "yes" : "no")], ["facts", item.facts_count], ["date", date(item.created_at)],
+   ].map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-muted">{t("columns." + label)}</dt><dd className="break-words">{value}</dd></div>)}</dl>
+   {active && linked.data && <details open><summary className="min-h-10 cursor-pointer font-medium focus-visible:outline-accent">{t("factsTitle")}</summary><dl className="space-y-3">{linked.data.facts.map((fact, index) => <div key={index} className="[overflow-wrap:anywhere]"><dt className="text-sm text-muted">{technicalLabel(fact.field, i18n.language)}</dt><dd>{typeof fact.value === "string" ? fact.value : JSON.stringify(fact.value)}</dd></div>)}</dl></details>}
+  </Card>;
+ }
+ return <div className="space-y-5 text-ink">
+  <h1 className="text-4xl font-bold tracking-tight">{t("title")}</h1>
   <Card className="space-y-4">
    <h2 className="text-xl font-semibold">{t("uploadTitle")}</h2>
-   <button type="button" disabled={!!busy} onClick={() => input.current?.click()} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); if (!busy) void upload(event.dataTransfer.files[0]); }} className="w-full rounded-lg border-2 border-dashed border-teal-600 bg-teal-50 p-8 text-center text-teal-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:opacity-50">
-    {t("drop")}
+   <button type="button" aria-describedby="document-formats" disabled={!!busy} onClick={() => input.current?.click()} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); if (!busy) void upload(event.dataTransfer.files[0]); }} className="flex min-h-48 w-full flex-col items-center justify-center gap-4 rounded-[28px] border-2 border-dashed border-idle bg-canvas p-6 text-center font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50">
+    <UploadCloud size={40} strokeWidth={1.75} aria-hidden="true"/>{t("drop")}
    </button>
    <p className="text-sm text-slate-600" id="document-formats">{t("formats")}</p>
    <label className="block font-medium" htmlFor="document-file">{t("choose")}</label>
-   <input ref={input} id="document-file" type="file" accept=".pdf,.xml" aria-describedby="document-formats" disabled={!!busy} className="block w-full rounded border border-slate-300 p-2 file:mr-4 file:rounded file:border-0 file:bg-teal-800 file:px-4 file:py-2 file:text-white" onChange={event => { void upload(event.target.files?.[0]); event.target.value = ""; }}/>
-   {busy && <p role="status" aria-live="polite" aria-busy="true">{t(busy === "upload" ? "uploading" : "polling")}</p>}
+   <input ref={input} id="document-file" type="file" accept=".pdf,.xml" aria-describedby="document-formats" disabled={!!busy} className="block min-h-10 w-full min-w-0 rounded-2xl border border-line p-2 text-sm file:mr-2 file:rounded-full file:border-0 file:bg-ink file:px-4 file:py-2 file:text-white focus-visible:outline-accent" onChange={event => { void upload(event.target.files?.[0]); event.target.value = ""; }}/>
+   {filename && <UploadProgress name={filename} waiting={busy === "upload"} state={result?.state} duplicate={result?.duplicate} facts={result?.facts}/>}
+   {busy === "poll" && <p role="status" aria-live="polite" aria-busy="true">{t("polling")}</p>}
    {validation && <p role="alert" className="text-red-800">{t(validation)}</p>}
    {error !== undefined && <p role="alert" className="text-red-800">{errorText(error)}</p>}
   </Card>
@@ -84,12 +108,13 @@ export default function Documents() {
   <Card className="space-y-4"><h2 className="text-xl font-semibold">{t("inboxTitle")}</h2><Button disabled={!!busy} onClick={() => void poll()}>{t("poll")}</Button>
    {summary && <div role="status" aria-live="polite"><h3 className="font-semibold">{t("summary")}</h3><ul className="mt-2 flex flex-wrap gap-x-6 gap-y-2">{pollStates.map(state => <li key={state}>{t("pollStates." + state, { count: summary[state] })}</li>)}</ul></div>}
   </Card>
-  <Card className="space-y-4"><h2 className="text-xl font-semibold">{t("listTitle")}</h2>
+  <section className="space-y-4" aria-label={t("listTitle")}><h2 className="text-xl font-semibold">{t("listTitle")}</h2>
    {query.isPending && <p role="status">{t("common:loading")}</p>}
    {query.isError && <p role="alert">{errorText(query.error)}</p>}
-   {query.data && <><p>{t("total", { count: query.data.total })}</p><div className="overflow-x-auto"><table className="w-full text-left text-sm"><caption className="sr-only">{t("listTitle")}</caption><thead><tr>{["name", "source", "state", "suspicious", "facts", "date"].map(column => <th key={column} scope="col" className="border-b p-3">{t("columns." + column)}</th>)}</tr></thead><tbody>{query.data.items.map(item => <tr key={item.id}><td className="border-b p-3 font-medium">{item.name}</td><td className="border-b p-3">{t("enums:DocumentSource." + item.source)}</td><td className="border-b p-3">{t("states." + item.state)}</td><td className="border-b p-3">{t(item.suspicious ? "yes" : "no")}</td><td className="border-b p-3">{item.facts_count}</td><td className="whitespace-nowrap border-b p-3">{date(item.created_at)}</td></tr>)}</tbody></table></div>
-   {query.data.items.length === 0 && <p>{t("empty")}</p>}
+   {linked.isError && <p role="status" className="text-sm text-muted">{t("documentUnavailable")}</p>}
+   {query.data && <><p>{t("total", { count: query.data.total })}</p><div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">{linked.data && !query.data.items.some(item => item.id === linked.data.id) && documentTile(linked.data)}{query.data.items.map(documentTile)}</div>
+   {query.data.items.length === 0 && <EmptyState title={t("empty")}/>}
    <nav aria-label={t("pagination")} className="flex items-center gap-3"><Button variant="outline" disabled={offset === 0 || query.isFetching} onClick={() => setOffset(Math.max(0, offset - limit))}>{t("previous")}</Button><p>{t("page", { number: Math.floor(offset / limit) + 1 })}</p><Button variant="outline" disabled={offset + limit >= query.data.total || query.isFetching} onClick={() => setOffset(offset + limit)}>{t("next")}</Button></nav></>}
-  </Card>
+  </section>
  </div>;
 }

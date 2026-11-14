@@ -1,4 +1,15 @@
 {
+  "extractedInfo_one": "{{count}} piece of information extracted",
+  "extractedInfo_other": "{{count}} pieces of information extracted",
+  "stepsTitle": "Upload steps",
+  "completed": "Completed",
+  "steps": {
+    "sent": "Sending",
+    "verified": "Verification",
+    "read": "Reading"
+  },
+  "awaitingReading": "Reading is awaiting server processing.",
+  "documentUnavailable": "This document could not be found or is unavailable.",
   "title": "Documents",
   "uploadTitle": "Upload an invoice or document",
   "drop": "Drop a PDF or XML here, or press to choose a file",

@@ -8,11 +8,13 @@ import { KARIM, loginUi } from "./helpers";
 test("upload an Appelia Factur-X invoice and check the inbox against the real API", async ({ page }) => {
  await loginUi(page);
  await page.goto("/documents");
+ await page.getByTestId("user-menu-trigger").click();
  await page.getByRole("combobox", { name: /Langue|Language/ }).selectOption("fr");
+ await page.keyboard.press("Escape");
  await expect(page.getByRole("heading", { name: "Documents enregistrés" })).toBeVisible();
  await page.getByLabel("Choisir un fichier", { exact: true }).setInputFiles(resolve("../data/appelia/invoices/invoice-001.pdf"));
  await expect(page.getByText(/Document extrait : \d+ faits?\./)).toBeVisible();
- await expect(page.getByRole("row", { name: /invoice-001.pdf/ })).toContainText("Factur-X");
+ await expect(page.getByRole("article", { name: /invoice-001.pdf/ })).toContainText("Factur-X");
  await page.getByText("Voir les faits extraits", { exact: true }).click();
  await expect(page.locator("main dl dt").first()).toBeVisible();
  const directory = "/home/ubuntu/screenshots/ui-fix";
@@ -28,7 +30,9 @@ test("upload an Appelia Factur-X invoice and check the inbox against the real AP
 test("uploads a new unique Factur-X invoice with facts and no duplicate row", async ({ page }) => {
  await loginUi(page);
  await page.goto("/documents");
+ await page.getByTestId("user-menu-trigger").click();
  await page.getByRole("combobox", { name: /Langue|Language/ }).selectOption("fr");
+ await page.keyboard.press("Escape");
  const invoiceNumber = `APP-E2E-${randomUUID()}`;
  const generator = [
   "import os, sys",
@@ -60,21 +64,22 @@ test("uploads a new unique Factur-X invoice with facts and no duplicate row", as
  await page.getByLabel("Choisir un fichier", { exact: true }).setInputFiles(file);
  const extracted = await page.getByText(/Document extrait : \d+ faits?\./).textContent();
  expect(Number(extracted?.match(/\d+/)?.[0])).toBeGreaterThan(0);
- await expect(page.getByRole("row", { name: new RegExp(invoiceNumber) })).toHaveCount(1);
+ await expect(page.getByRole("article", { name: new RegExp(invoiceNumber) })).toHaveCount(1);
  await page.getByText("Voir les faits extraits", { exact: true }).click();
  await expect(page.getByText("Nom du fournisseur")).toBeVisible();
  await expect(page.getByText("Ligne 2 · Modèle")).toBeVisible();
  await page.getByText("Détails techniques", { exact: true }).click();
- await page.setViewportSize({ width: 1280, height: 900 });
- await expectNoHorizontalOverflow(page);
+ for (const width of [360, 768, 1280, 1440, 1920]) {
+  await page.setViewportSize({ width, height: 900 });
+  await expectNoHorizontalOverflow(page);
+ }
  await page.setViewportSize({ width: 1440, height: 900 });
- await expectNoHorizontalOverflow(page);
  const directory = "/home/ubuntu/screenshots/ui-fix";
  mkdirSync(directory, { recursive: true });
  await page.screenshot({ path: resolve(directory, "documents-facturx.png"), animations: "disabled" });
  await page.getByLabel("Choisir un fichier", { exact: true }).setInputFiles(file);
  await expect(page.getByText(/doublon détecté : contenu identique/)).toBeVisible();
- await expect(page.getByRole("row", { name: new RegExp(invoiceNumber) })).toHaveCount(1);
+ await expect(page.getByRole("article", { name: new RegExp(invoiceNumber) })).toHaveCount(1);
 });
 
 test("polls a non-empty L7 Maildir and shows the created case", async ({ page }) => {

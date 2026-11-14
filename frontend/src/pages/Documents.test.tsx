@@ -9,13 +9,13 @@ import { people, renderWithApi } from "@/test/http";
 const item = { id: "doc-1", name: "facture.pdf", source: "facturx", state: "extracted", suspicious: false, facts_count: 2, created_at: null };
 let calls: { path: string; method: string; body?: FormData | null }[];
 let uploadResult: Record<string, unknown>, serverStatus: number, gate: Promise<void> | undefined;
-let total: number;
+let total: number, empty: boolean;
 beforeEach(async () => {
  const nativeForm = await new Response("--boundary--\r\n", { headers: { "Content-Type": "multipart/form-data; boundary=boundary" } }).formData();
  vi.stubGlobal("FormData", nativeForm.constructor);
  vi.stubGlobal("File", NodeFile);
  await i18n.changeLanguage("fr");
- calls = []; total = 1; serverStatus = 200; gate = undefined;
+ calls = []; total = 1; empty = false; serverStatus = 200; gate = undefined;
  uploadResult = { document_id: item.id, duplicate: false, state: "extracted", facts: 2 };
  vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
   const request = input instanceof Request ? input : new Request(new URL(String(input), window.location.origin), init);
@@ -23,7 +23,7 @@ beforeEach(async () => {
   const body = request.method === "POST" && url.pathname.endsWith("/upload") ? await request.formData() : null;
   calls.push({ path: url.pathname + url.search, method: request.method, body });
   if (url.pathname === "/api/people") return Response.json(people);
-  if (url.pathname === "/api/documents") return Response.json({ items: [item], total, limit: 20, offset: Number(url.searchParams.get("offset")) });
+  if (url.pathname === "/api/documents") return Response.json({ items: empty ? [] : [item], total, limit: 20, offset: Number(url.searchParams.get("offset")) });
   if (url.pathname === "/api/documents/doc-1") return Response.json({ ...item, facts: [{ field: "invoice_number", value: "INV-42", confidence: 1 }, { field: "supplier_name", value: "Appelia", confidence: 1 }, { field: "lines[1].model", value: "Dell Latitude 7440", confidence: 0.9 }] });
   if (url.pathname === "/api/documents/upload") { await gate; return Response.json(serverStatus === 200 ? uploadResult : { detail: "Document invalide" }, { status: serverStatus }); }
   if (url.pathname === "/api/intake/poll") return Response.json({ messages: [{ state: "failure" }, { state: "invoice" }, { state: "invoice" }, { state: "duplicate" }, { state: "quarantined" }, { state: "ignored" }] });
@@ -37,7 +37,7 @@ async function upload(name = "invoice.pdf") {
 }
 it("lists documents with source, state, facts, undated placeholder and pagination", async () => {
  total = 21; await render();
- const row = screen.getByRole("row", { name: /facture.pdf/ });
+ const row = screen.getByRole("article", { name: /facture.pdf/ });
  expect(row).toHaveTextContent("Factur-X"); expect(row).toHaveTextContent("Extrait");
  expect(within(row).getByText("2")).toBeInTheDocument(); expect(row).toHaveTextContent("—");
  expect(screen.getByRole("button", { name: "Précédent" })).toBeDisabled();
@@ -60,6 +60,8 @@ it("uploads multipart, announces progress, shows extracted facts and refreshes t
  let finish!: () => void; gate = new Promise<void>(resolve => { finish = resolve; });
  await render(); await upload();
  expect(await screen.findByText("Envoi et analyse du document en cours…")).toHaveAttribute("aria-busy", "true");
+ expect(screen.getByRole("progressbar")).not.toHaveAttribute("aria-valuenow");
+ expect(screen.queryByLabelText("Terminé")).not.toBeInTheDocument();
  finish();
  expect(await screen.findByText("Document extrait : 2 faits.")).toBeInTheDocument();
  await userEvent.click(await screen.findByText("Voir les faits extraits"));
@@ -67,6 +69,8 @@ it("uploads multipart, announces progress, shows extracted facts and refreshes t
  const sent = calls.find(call => call.path.endsWith("/upload"));
  expect(sent?.method).toBe("POST"); expect((sent?.body?.get("file") as File).name).toBe("invoice.pdf");
  expect(calls.filter(call => call.path.startsWith("/api/documents?")).length).toBe(2);
+ expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+ expect(screen.getAllByLabelText("Terminé")).toHaveLength(3);
 });
 it("localizes technical Factur-X fields in French and English", async () => {
  await render(); await upload();
@@ -90,6 +94,28 @@ it("shows duplicate reason", async () => {
  uploadResult = { document_id: item.id, duplicate: true, reason: "sha256" };
  await render(); await upload();
  expect(await screen.findByText(/doublon détecté : contenu identique/)).toBeInTheDocument();
+});
+it("shows an empty document list", async () => {
+ empty = true; total = 0; renderWithApi(<Documents/>);
+ expect(await screen.findByText("Aucun document enregistré.")).toBeInTheDocument();
+});
+it.each([false, true])("opens and highlights a linked document (outside first page: %s)", async outside => {
+ empty = outside;
+ const scroll = vi.fn();
+ Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { configurable: true, value: scroll });
+ renderWithApi(<Documents/>, "/documents?document=doc-1");
+ const tile = await screen.findByRole("article", { name: "facture.pdf" });
+ expect(tile).toHaveClass("ring-accent");
+ await waitFor(() => expect(within(tile).getByText("INV-42")).toBeVisible());
+ expect(within(tile).getByText("Voir les faits extraits").closest("details")).toHaveAttribute("open");
+ expect(screen.getAllByRole("article", { name: "facture.pdf" })).toHaveLength(1);
+ expect(scroll).toHaveBeenCalled();
+});
+it("keeps the list usable when a linked document does not exist", async () => {
+ renderWithApi(<Documents/>, "/documents?document=unknown");
+ expect(await screen.findByText("Ce document est introuvable ou indisponible.")).toBeInTheDocument();
+ expect(screen.getByRole("article", { name: "facture.pdf" })).toBeVisible();
+ expect(screen.getByRole("button", { name: "Relever la boîte de réception" })).toBeEnabled();
 });
 it.each([400, 413, 415])("shows server detail for HTTP %s", async status => {
  serverStatus = status; await render(); await upload();
