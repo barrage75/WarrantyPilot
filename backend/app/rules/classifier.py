@@ -3,7 +3,7 @@ import unicodedata
 from dataclasses import dataclass
 from uuid import uuid5
 
-from app.contracts.enums import FactSource
+from app.contracts.enums import FactField, FactSource
 from app.contracts.models import Fact, Incident, Provenance
 
 
@@ -55,19 +55,17 @@ class KeywordIncidentClassifier:
         return IncidentClassification("defect", 0.5, ())
 
     def to_fact(self, incident: Incident) -> Fact:
-        """L'identifiant d'incident tient lieu de document exigé par le contrat Fact."""
         result = self.classify(incident.description)
         return Fact(
             id=uuid5(incident.id, "incident_category"),
             equipment_id=incident.equipment_id,
-            document_id=incident.id,
-            field="incident_category",
+            incident_id=incident.id,
+            field=FactField.INCIDENT_CATEGORY.value,
             value=result.category,
             confidence=result.confidence,
-            source=FactSource.STRUCTURED,
+            source=FactSource.CLASSIFIER,
             provenance=Provenance(
                 id=uuid5(incident.id, "incident_category:provenance"),
-                document_id=incident.id,
                 excerpt=", ".join(result.matched_keywords) or incident.description[:200],
             ),
         )

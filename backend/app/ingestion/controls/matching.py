@@ -30,7 +30,7 @@ def match_to_inventory(facts: list[Fact], inventory: list[Equipment]) -> MatchRe
     lines: dict[tuple[UUID, int], list[Fact]] = {}
     for fact in facts:
         match = re.fullmatch(r"lines\[(\d+)\]\.(\w+)", fact.field)
-        if match:
+        if match and fact.document_id is not None:
             lines.setdefault((fact.document_id, int(match[1])), []).append(fact)
     serial_matches: dict[tuple[UUID, int], list[Equipment]] = {}
     for key, line in lines.items():

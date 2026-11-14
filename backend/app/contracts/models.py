@@ -83,7 +83,7 @@ class Document(ContractModel):
 
 class Provenance(ContractModel):
     id: UUID = Field(default_factory=uuid4)
-    document_id: UUID
+    document_id: UUID | None = None
     page: int | None = Field(default=None, ge=1)
     excerpt: str
     char_span: tuple[int, int] | None = None
@@ -99,7 +99,8 @@ class Provenance(ContractModel):
 class Fact(ContractModel):
     id: UUID = Field(default_factory=uuid4)
     equipment_id: UUID | None = None
-    document_id: UUID
+    document_id: UUID | None = None
+    incident_id: UUID | None = None
     field: str
     value: Any
     provenance: Provenance

@@ -2,7 +2,7 @@ from collections.abc import Callable
 from datetime import date, datetime, timedelta
 from fnmatch import fnmatchcase
 
-from app.contracts.enums import Channel, RightType, VerdictValue
+from app.contracts.enums import Channel, FactField, RightType, VerdictValue
 from app.contracts.models import (
     Equipment,
     Fact,
@@ -174,7 +174,10 @@ class DeterministicRulesEngine:
             False,
             "Règle de location sans preuve, poursuite" if lease else "Aucune location prouvée",
         )
-        if truthy(get("suspicious")):
+        security_signal = get(FactField.SECURITY_SUSPICIOUS.value)
+        if (security_signal is not None and bool(security_signal.value)) or truthy(
+            get("suspicious")
+        ):
             check("suspicious_signal", False, "Signal suspect dans les documents")
             return verify("signal suspect", "suspicious document signal")
         check("suspicious_signal", True, "Aucun signal suspect")

@@ -54,6 +54,27 @@ class FactSource(StrEnum):
     STRUCTURED = "structured"
     HUMAN = "human"
     INVENTORY = "inventory"
+    CLASSIFIER = "classifier"
+
+
+class FactField(StrEnum):
+    PURCHASE_DATE = "purchase_date"
+    INVOICE_DATE = "invoice_date"
+    DELIVERY_DATE = "delivery_date"
+    SHIP_DATE = "ship_date"
+    WARRANTY_TERM_MONTHS = "warranty_term_months"
+    EXTENSION_MONTHS = "extension_months"
+    WARRANTY_PLUS_CERTIFICATE = "warranty_plus_certificate"
+    SERVICE_CONTRACT = "service_contract"
+    LEASE_CONTRACT = "lease_contract"
+    SERIAL_NUMBER = "serial_number"
+    BRAND = "brand"
+    MODEL_NUMBER = "model_number"
+    CONDITION = "condition"
+    BUYER_NAME = "buyer_name"
+    EQUIPMENT_AMBIGUOUS = "equipment_ambiguous"
+    SECURITY_SUSPICIOUS = "security.suspicious"
+    INCIDENT_CATEGORY = "incident_category"
 
 
 class PolicyOutcome(StrEnum):
@@ -205,6 +226,7 @@ _LABELS: dict[type[StrEnum], dict[str, tuple[str, str]]] = {
         "structured": ("Document structuré", "Structured document"),
         "human": ("Personne", "Human"),
         "inventory": ("Inventaire", "Inventory"),
+        "classifier": ("Classificateur", "Classifier"),
     },
     PolicyOutcome: {
         "auto_send": ("Envoi automatique", "Automatic send"),

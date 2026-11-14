@@ -2,10 +2,11 @@ import asyncio
 import json
 from collections.abc import AsyncIterator
 from datetime import datetime
+from decimal import Decimal
 from typing import Any
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import insert, select, update
 from sqlalchemy.orm import Session
@@ -25,7 +26,9 @@ from app.contracts.models import (
     Case,
     ChecklistStep,
     DataChecklist,
+    Equipment,
     Event,
+    Person,
     PolicyDecision,
     Verdict,
     utc_now,
@@ -38,6 +41,7 @@ from app.core.tables import (
     actions,
     cases,
     data_checklists,
+    equipment,
     events,
     people,
     policy_decisions,
@@ -72,6 +76,36 @@ class ManualProofRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     person_id: UUID
     proof: str = Field(min_length=1)
+
+
+class CaseActionHistory(BaseModel):
+    action: Action
+    results: list[ActionResult]
+
+
+def _equipment_from_row(row: Any) -> Equipment:
+    return Equipment(
+        id=UUID(row["id"]),
+        brand=row["brand"],
+        model=row["model"],
+        serial=row["serial"],
+        category=row["category"],
+        assigned_to=UUID(row["assigned_to"]) if row["assigned_to"] else None,
+        purchase_price=Decimal(row["purchase_price"])
+        if row["purchase_price"] is not None
+        else None,
+        currency=row["currency"],
+        in_loan_stock=row["in_loan_stock"],
+        purchase_date=row["purchase_date"],
+        delivery_date=row["delivery_date"],
+        ship_date=row["ship_date"],
+    )
+
+
+def _require_person(session: Session, person_id: UUID) -> None:
+    exists = session.execute(select(people.c.id).where(people.c.id == str(person_id))).first()
+    if exists is None:
+        raise HTTPException(status_code=404, detail="Human approver not found")
 
 
 def _case_from_row(session: Session, row: Any) -> Case:
@@ -134,6 +168,41 @@ def _load_case(session: Session, case_id: UUID) -> Case:
     return _case_from_row(session, row)
 
 
+@router.get("/people", response_model=list[Person])
+def list_people(session: Session = Depends(get_session)) -> list[Person]:
+    rows = session.execute(select(people).order_by(people.c.name)).mappings().all()
+    return [
+        Person(
+            id=UUID(row["id"]),
+            name=row["name"],
+            email=row["email"],
+            role=row["role"],
+        )
+        for row in rows
+    ]
+
+
+@router.get("/equipment", response_model=list[Equipment])
+def list_equipment(session: Session = Depends(get_session)) -> list[Equipment]:
+    rows = session.execute(select(equipment).order_by(equipment.c.serial)).mappings().all()
+    return [_equipment_from_row(row) for row in rows]
+
+
+@router.get("/equipment/{equipment_id}", response_model=Equipment)
+def get_equipment(
+    equipment_id: UUID,
+    session: Session = Depends(get_session),
+) -> Equipment:
+    row = (
+        session.execute(select(equipment).where(equipment.c.id == str(equipment_id)))
+        .mappings()
+        .first()
+    )
+    if row is None:
+        raise HTTPException(status_code=404, detail="Equipment not found")
+    return _equipment_from_row(row)
+
+
 @router.get("/cases", response_model=list[Case])
 def list_cases(session: Session = Depends(get_session)) -> list[Case]:
     rows = session.execute(select(cases).order_by(cases.c.created_at.desc())).mappings().all()
@@ -146,11 +215,17 @@ def get_case(case_id: UUID, session: Session = Depends(get_session)) -> Case:
 
 
 @router.get("/cases/{case_id}/events", response_model=list[Event])
-def get_case_events(case_id: UUID, session: Session = Depends(get_session)) -> list[Event]:
+def get_case_events(
+    case_id: UUID,
+    after: int = Query(default=0, ge=0),
+    session: Session = Depends(get_session),
+) -> list[Event]:
     _load_case(session, case_id)
     rows = (
         session.execute(
-            select(events).where(events.c.case_id == str(case_id)).order_by(events.c.seq)
+            select(events)
+            .where(events.c.case_id == str(case_id), events.c.seq > after)
+            .order_by(events.c.seq)
         )
         .mappings()
         .all()
@@ -179,6 +254,7 @@ async def stream_case_events(
     session: Session = Depends(get_session),
 ) -> EventSourceResponse:
     _load_case(session, case_id)
+    session.rollback()
 
     async def event_stream() -> AsyncIterator[dict[str, str]]:
         cursor = after
@@ -216,6 +292,63 @@ async def stream_case_events(
     return EventSourceResponse(event_stream())
 
 
+@router.get("/cases/{case_id}/actions", response_model=list[CaseActionHistory])
+def get_case_actions(
+    case_id: UUID,
+    session: Session = Depends(get_session),
+) -> list[CaseActionHistory]:
+    _load_case(session, case_id)
+    action_rows = (
+        session.execute(
+            select(actions)
+            .where(actions.c.case_id == str(case_id))
+            .order_by(actions.c.idempotency_key)
+        )
+        .mappings()
+        .all()
+    )
+    if not action_rows:
+        return []
+    action_ids = [row["id"] for row in action_rows]
+    result_rows = (
+        session.execute(
+            select(action_results)
+            .where(action_results.c.action_id.in_(action_ids))
+            .order_by(action_results.c.id)
+        )
+        .mappings()
+        .all()
+    )
+    results_by_action: dict[str, list[ActionResult]] = {}
+    for row in result_rows:
+        results_by_action.setdefault(row["action_id"], []).append(
+            ActionResult(
+                id=UUID(row["id"]),
+                action_id=UUID(row["action_id"]),
+                status=row["status"],
+                proof=row["proof"],
+                error=row["error"],
+                badge=row["badge"],
+            )
+        )
+    return [
+        CaseActionHistory(
+            action=Action(
+                id=UUID(row["id"]),
+                case_id=UUID(row["case_id"]),
+                channel=row["channel"],
+                kind=row["kind"],
+                idempotency_key=row["idempotency_key"],
+                payload=row["payload"],
+                badge=row["badge"],
+                requires_data_checklist=row["requires_data_checklist"],
+            ),
+            results=results_by_action.get(row["id"], []),
+        )
+        for row in action_rows
+    ]
+
+
 @router.post("/cases/{case_id}/validate", response_model=Case)
 async def validate_case(
     case_id: UUID,
@@ -224,6 +357,7 @@ async def validate_case(
     orchestrator: Orchestrator = Depends(get_orchestrator),
 ) -> Case:
     case = _load_case(session, case_id)
+    _require_person(session, request_body.person_id)
     if case.status != CaseStatus.AWAITING_VALIDATION:
         raise HTTPException(status_code=409, detail="Case is not awaiting validation")
     append_event(
@@ -244,6 +378,7 @@ def reject_case(
     session: Session = Depends(get_session),
 ) -> Case:
     case = _load_case(session, case_id)
+    _require_person(session, request_body.person_id)
     if case.status != CaseStatus.AWAITING_VALIDATION:
         raise HTTPException(status_code=409, detail="Case is not awaiting validation")
     try:
@@ -400,7 +535,7 @@ def get_checklist(case_id: UUID, session: Session = Depends(get_session)) -> Dat
         .first()
     )
     if row is None:
-        return DataChecklist(case_id=case_id)
+        raise HTTPException(status_code=404, detail="Checklist not found")
     return DataChecklist(id=UUID(row["id"]), case_id=case_id, steps=row["steps"])
 
 

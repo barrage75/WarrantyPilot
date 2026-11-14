@@ -1,3 +1,4 @@
+from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
@@ -19,6 +20,7 @@ class AppSettings(BaseSettings):
     anchor_file: Path = Path("runtime/anchors/anchors.jsonl")
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173"])
     demo_mode: bool = True
+    demo_today: date = date(2026, 11, 20)
 
 
 @lru_cache

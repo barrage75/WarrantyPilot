@@ -10,12 +10,13 @@ from app.contracts.enums import Channel
 from app.core.db import SessionLocal, create_schema, engine, make_session_factory
 from app.core.settings import AppSettings, get_settings
 from app.core.status import recover_interrupted_sends
+from app.ingestion.registry import ExtractorRegistry
+from app.rules import DEFAULT_RULES_DIR, DeterministicRulesEngine, load_rules
+from app.rules.classifier import KeywordIncidentClassifier
 from app.testing.fakes import (
     FakeBrowserAdapter,
     FakeEmailAdapter,
-    FakeExtractor,
     FakeFollowUp,
-    FakeRulesEngine,
 )
 
 
@@ -39,15 +40,23 @@ def create_app(
         application.state.engine = active_engine
         application.state.session_factory = active_session_factory
         application.state.app_settings = active_settings
-        application.state.services = services or {
-            "extractor": FakeExtractor(),
-            "rules_engine": FakeRulesEngine(),
-            "action_adapters": {
-                Channel.EMAIL_RESELLER: FakeEmailAdapter(),
-                Channel.BROWSER_PORTAL: FakeBrowserAdapter(),
-            },
-            "follow_up": FakeFollowUp(),
-        }
+        application.state.services = (
+            services
+            if services is not None
+            else {
+                "extractor": ExtractorRegistry(),
+                "rules_engine": DeterministicRulesEngine(
+                    today=active_settings.demo_today,
+                    classifier=KeywordIncidentClassifier(),
+                ),
+                "rules": load_rules(DEFAULT_RULES_DIR),
+                "action_adapters": {
+                    Channel.EMAIL_RESELLER: FakeEmailAdapter(),
+                    Channel.BROWSER_PORTAL: FakeBrowserAdapter(),
+                },
+                "follow_up": FakeFollowUp(),
+            }
+        )
         yield
         if app_engine is None:
             active_engine.dispose()

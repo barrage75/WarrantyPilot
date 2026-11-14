@@ -25,7 +25,7 @@ jobs:
       - run: uv run ruff format --check app tests
       - run: >-
           MYPYPATH=.:../data uv run mypy --strict --explicit-package-bases
-          app/contracts app/core ../data/appelia
+          app/contracts app/core app/ingestion app/rules ../data/appelia
       - run: uv run pytest tests ../data/appelia/tests
 
   frontend:
@@ -44,3 +44,23 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
+
+  repro-dell:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: repro/dell
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy
+      - run: uv run playwright install --with-deps chromium
+      - run: uv run pytest -v

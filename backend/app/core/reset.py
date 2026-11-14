@@ -1,5 +1,8 @@
-from datetime import date
+from __future__ import annotations
+
+import sys
 from pathlib import Path
+from typing import TYPE_CHECKING, cast
 
 from alembic import command
 from alembic.config import Config
@@ -7,10 +10,21 @@ from sqlalchemy import Engine, text
 from sqlalchemy.orm import Session
 
 from app.contracts.enums import EventType
-from app.contracts.models import Equipment, Person
 from app.core.journal import append_event
 from app.core.settings import AppSettings
-from app.core.tables import Base, equipment, people
+from app.core.tables import Base, documents, equipment, facts, people, rights
+
+if TYPE_CHECKING:
+    from appelia.load import AppeliaDataset
+
+
+def _load_appelia_dataset() -> AppeliaDataset:
+    repository_root = str(Path(__file__).resolve().parents[3])
+    if repository_root not in sys.path:
+        sys.path.insert(0, repository_root)
+    from data.appelia.load import load_dataset
+
+    return cast("AppeliaDataset", load_dataset())
 
 
 def reset_demo(engine: Engine, settings: AppSettings) -> None:
@@ -35,42 +49,18 @@ def reset_demo(engine: Engine, settings: AppSettings) -> None:
     with engine.connect() as connection:
         alembic_config.attributes["connection"] = connection
         command.upgrade(alembic_config, "head")
-    person_one = Person(name="Camille Martin", email="camille@example.test", role="employee")
-    person_two = Person(name="Alex Dupont", email="alex@example.test", role="manager")
-    jabra = Equipment(
-        brand="Jabra",
-        model="Evolve2 65",
-        serial="DEMO-JABRA-001",
-        category="headset",
-        assigned_to=person_one.id,
-        purchase_price="199.00",
-        purchase_date=date(2024, 1, 15),
-    )
-    dell = Equipment(
-        brand="Dell",
-        model="Latitude",
-        serial="DEMO-DELL-001",
-        category="computer",
-        assigned_to=person_two.id,
-        purchase_price="1200.00",
-        purchase_date=date(2024, 2, 20),
-    )
+    dataset = _load_appelia_dataset()
     with Session(engine) as session, session.begin():
         session.execute(
             people.insert(),
             [
                 {
-                    "id": str(person_one.id),
-                    "name": person_one.name,
-                    "email": person_one.email,
-                    "role": person_one.role,
-                },
-                {
-                    "id": str(person_two.id),
-                    "name": person_two.name,
-                    "email": person_two.email,
-                    "role": person_two.role,
-                },
+                    "id": str(person.id),
+                    "name": person.name,
+                    "email": person.email,
+                    "role": person.role,
+                }
+                for person in dataset.people
             ],
         )
         session.execute(
@@ -82,7 +72,7 @@ def reset_demo(engine: Engine, settings: AppSettings) -> None:
                     "model": item.model,
                     "serial": item.serial,
                     "category": item.category,
-                    "assigned_to": str(item.assigned_to),
+                    "assigned_to": str(item.assigned_to) if item.assigned_to else None,
                     "purchase_price": item.purchase_price,
                     "currency": item.currency,
                     "in_loan_stock": item.in_loan_stock,
@@ -90,7 +80,68 @@ def reset_demo(engine: Engine, settings: AppSettings) -> None:
                     "delivery_date": item.delivery_date,
                     "ship_date": item.ship_date,
                 }
-                for item in (jabra, dell)
+                for item in dataset.equipment
             ],
         )
-        append_event(session, EventType.DEMO_RESET, payload={"records_loaded": 4})
+        session.execute(
+            documents.insert(),
+            [
+                {
+                    "id": str(item.id),
+                    "kind": item.kind.value,
+                    "filename": item.filename,
+                    "sha256": item.sha256,
+                    "mime": item.mime,
+                    "source": item.source.value,
+                    "untrusted": item.untrusted,
+                }
+                for item in dataset.documents
+            ],
+        )
+        if dataset.facts:
+            session.execute(
+                facts.insert(),
+                [
+                    {
+                        "id": str(item.id),
+                        "equipment_id": str(item.equipment_id) if item.equipment_id else None,
+                        "document_id": str(item.document_id) if item.document_id else None,
+                        "incident_id": str(item.incident_id) if item.incident_id else None,
+                        "field": item.field,
+                        "value": item.value,
+                        "provenance": item.provenance.model_dump(mode="json"),
+                        "confidence": item.confidence,
+                        "source": item.source.value,
+                    }
+                    for item in dataset.facts
+                ],
+            )
+        if dataset.rights:
+            session.execute(
+                rights.insert(),
+                [
+                    {
+                        "id": str(item.id),
+                        "equipment_id": str(item.equipment_id),
+                        "right_type": item.right_type.value,
+                        "rule_id": item.rule_id,
+                        "start_date": item.start_date,
+                        "end_date": item.end_date,
+                        "evidence": [proof.model_dump(mode="json") for proof in item.evidence],
+                    }
+                    for item in dataset.rights
+                ],
+            )
+        append_event(
+            session,
+            EventType.DEMO_RESET,
+            payload={
+                "records_loaded": (
+                    len(dataset.people)
+                    + len(dataset.equipment)
+                    + len(dataset.documents)
+                    + len(dataset.facts)
+                    + len(dataset.rights)
+                )
+            },
+        )

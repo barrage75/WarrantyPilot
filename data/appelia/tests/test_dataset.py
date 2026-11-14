@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree
@@ -180,6 +181,7 @@ def test_traps_reference_existing_equipment_and_documents() -> None:
         traps_by_id[trap_id]["expected_channel"] == "email_reseller"
         for trap_id in (2, 3, 5, 9, 11)
     )
+
     assert all(
         case["expected_channel"] == "email_reseller"
         for case in trap_data["demo_cases"]
@@ -212,6 +214,30 @@ def test_traps_reference_existing_equipment_and_documents() -> None:
     )
 
 
+def test_dell_prosupport_rights_match_contract() -> None:
+    dataset = load_dataset()
+    prosupport = next(
+        item
+        for item in dataset.documents
+        if item.filename.endswith("contrat-dell-prosupport.pdf")
+    )
+    contract_text = (
+        PdfReader(str(DATA_DIRECTORY / prosupport.filename)).pages[0].extract_text()
+    )
+    contracted_serials = set(
+        re.findall(
+            r"\b[A-Z0-9]{7}\b", contract_text.split("Numéros de série couverts :")[-1]
+        )
+    )
+    equipment_by_id = {item.id: item for item in dataset.equipment}
+    rights_serials = {
+        equipment_by_id[right.equipment_id].serial
+        for right in dataset.rights
+        if right.rule_id == "dell-prosupport"
+    }
+    assert rights_serials == contracted_serials
+
+
 def test_hidden_instruction_is_extractable_but_white() -> None:
     trap = next(item for item in _read_json("traps.json")["traps"] if item["id"] == 6)
     invoice_path = DATA_DIRECTORY / trap["documents"][0]
@@ -232,6 +258,12 @@ def test_loader_validates_contract_models() -> None:
     assert len(dataset.people) == 200
     assert len(dataset.equipment) == 230
     assert len(dataset.documents) == 65
+    assert dataset.facts
+    assert dataset.rights
+    demo_dell = next(
+        item for item in dataset.equipment_records if item["scenario"] == "demo-dell"
+    )
+    assert demo_dell["serial"] == "7XK4L93"
     equipment_records = dataset.equipment_records
     assert sum(item["category"] == "headset" for item in equipment_records) == 150
     assert sum(item["category"] == "laptop" for item in equipment_records) == 50

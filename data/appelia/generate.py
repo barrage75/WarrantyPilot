@@ -293,6 +293,8 @@ def build_equipment(people: list[dict[str, Any]]) -> list[dict[str, Any]]:
             serial = _base36(serial_index + 100000).rjust(7, "0")[-7:]
         else:
             serial = f"HP{_base36(serial_index + 200000).rjust(6, '0')[-6:]}"
+        if scenario == "demo-dell":
+            serial = "7XK4L93"
 
         base_date, base_delivery = _default_dates(rng, purchase_date)
         actual_delivery = base_delivery if delivery_date is ... else delivery_date
@@ -1667,11 +1669,15 @@ def _make_support_documents(
     lease_end = add_months(lease_start, 36) - timedelta(days=1)
     prosupport_start = DEMO_TODAY.replace(year=2025, month=1, day=1)
     prosupport_end = DEMO_TODAY.replace(year=2027, month=12, day=31)
-    dell_laptops = [
+    all_dell_laptops = [
         item
         for item in equipment
         if item["category"] == "laptop" and item["brand"] == "Dell"
-    ][3:23]
+    ]
+    dell_laptops = [
+        by_scenario["demo-dell"],
+        *[item for item in all_dell_laptops if item["scenario"] != "demo-dell"][:19],
+    ]
     support_files = {
         "lease": "documents/contrat-location-imprimantes.pdf",
         "warranty_plus_1": "documents/jabra-warranty-plus-001.pdf",
@@ -1717,8 +1723,10 @@ def _make_support_documents(
             "extension_months : 36 mois (Dell ProSupport).",
             "Numéros de série couverts : "
             + ", ".join(item["serial"] for item in dell_laptops),
-            f"Date d'effet : {prosupport_start.isoformat()}; "
-            f"fin de couverture : {prosupport_end.isoformat()}.",
+            (
+                f"Date d'effet : {prosupport_start.isoformat()}; "
+                f"fin de couverture : {prosupport_end.isoformat()}."
+            ),
         ],
     )
     trap7 = by_scenario["trap-7"]
@@ -1731,8 +1739,11 @@ def _make_support_documents(
             "Destinataire : Appelia SAS.",
             f"Produit : Dell {trap7['model']}, série {trap7['serial']}.",
             f"Date de livraison : {trap7_delivery_date.strftime('%d/%m/%Y')}.",
-            f"Facture n° {trap7['invoice_number']} du "
-            f"{trap7_delivery_date.strftime('%d/%m/%Y')} (date indiquée sur le bon de livraison).",
+            (
+                f"Facture n° {trap7['invoice_number']} du "
+                f"{trap7_delivery_date.strftime('%d/%m/%Y')} "
+                "(date indiquée sur le bon de livraison)."
+            ),
         ],
     )
     return support_files

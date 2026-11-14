@@ -7,7 +7,17 @@ from sqlalchemy import insert, inspect, select, update
 from app.api.main import create_app
 from app.contracts.enums import CaseStatus, EventType
 from app.contracts.models import utc_now
-from app.core.tables import action_results, case_steps, cases, equipment, events, people
+from app.core.tables import (
+    action_results,
+    case_steps,
+    cases,
+    documents,
+    equipment,
+    events,
+    facts,
+    people,
+    rights,
+)
 from tests.integration.helpers import create_case
 
 
@@ -26,8 +36,11 @@ def test_reset_preflight_and_health_endpoints(db_engine, app_settings) -> None:
     table_names = set(inspect(db_engine).get_table_names())
     assert "alembic_version" in table_names
     with db_engine.connect() as connection:
-        assert len(connection.execute(select(people.c.id)).all()) == 2
-        assert len(connection.execute(select(equipment.c.id)).all()) == 2
+        assert len(connection.execute(select(people.c.id)).all()) == 200
+        assert len(connection.execute(select(equipment.c.id)).all()) == 230
+        assert len(connection.execute(select(documents.c.id)).all()) == 65
+        assert connection.execute(select(facts.c.id)).all()
+        assert connection.execute(select(rights.c.id)).all()
 
 
 def test_manual_takeover_requires_human_proof(db_engine, session_factory, app_settings) -> None:
