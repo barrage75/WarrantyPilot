@@ -1,4 +1,7 @@
 {
+  "duplicateBadge": "Doublon — déjà importé",
+  "viewExisting": "Voir le document existant",
+  "suspiciousBadge": "Contenu suspect — {{reason}}",
   "extractedInfo_one": "{{count}} information extraite",
   "extractedInfo_other": "{{count}} informations extraites",
   "stepsTitle": "Étapes du dépôt",

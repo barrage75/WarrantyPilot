@@ -9,10 +9,12 @@ import type { components } from "@/api/schema";
 import { Button } from "@/components/ui/button";
 import { Tile as Card } from "@/components/bento/Tile";
 import { EmptyState } from "@/components/bento/EmptyState";
+import { Pill } from "@/components/bento/Pill";
+import { StatusDot } from "@/components/bento/StatusDot";
 import { UploadProgress } from "@/components/documents/UploadProgress";
 import { isTechnicalValue, technicalLabel } from "@/i18n/technical";
 
-type UploadResult = { document_id: string; duplicate: boolean; reason?: string; state?: string; facts?: number };
+type UploadResult = { document_id: string; duplicate: boolean; reason?: string; state?: string; facts?: number; suspicious?: boolean };
 type PollState = "failure" | "invoice" | "duplicate" | "quarantined" | "ignored";
 const pollStates: PollState[] = ["failure", "invoice", "duplicate", "quarantined", "ignored"];
 const limit = 20;
@@ -28,6 +30,7 @@ export default function Documents() {
  const [filename, setFilename] = useState<string>();
  const [offset, setOffset] = useState(0), [busy, setBusy] = useState<"upload" | "poll">();
  const [error, setError] = useState<unknown>(), [validation, setValidation] = useState<string>();
+ const [errorSource, setErrorSource] = useState<"upload" | "poll">("upload");
  const [result, setResult] = useState<UploadResult>(), [detail, setDetail] = useState<components["schemas"]["DocumentDetail"]>();
  const [summary, setSummary] = useState<Record<PollState, number>>();
  const query = useQuery({
@@ -38,7 +41,7 @@ export default function Documents() {
  async function refresh() { await cache.invalidateQueries({ queryKey: ["documents"] }); }
  async function upload(file?: File) {
   if (!file || busy) return;
-  setValidation(undefined); setError(undefined); setResult(undefined); setDetail(undefined); setFilename(file.name);
+  setValidation(undefined); setError(undefined); setErrorSource("upload"); setResult(undefined); setDetail(undefined); setFilename(file.name);
   if (!/\.(pdf|xml)$/i.test(file.name)) { setValidation("invalidType"); return; }
   if (file.size > 10 * 1024 * 1024) { setValidation("tooLarge"); return; }
   setBusy("upload");
@@ -54,7 +57,7 @@ export default function Documents() {
  }
  async function poll() {
   if (busy) return;
-  setBusy("poll"); setError(undefined); setValidation(undefined);
+  setBusy("poll"); setError(undefined); setErrorSource("poll"); setValidation(undefined);
   try {
    const response = await localRequest<{ messages: { state: string }[] }>("/intake/poll", "POST");
    const counts = Object.fromEntries(pollStates.map(state => [state, response.messages.filter(message => message.state === state).length])) as Record<PollState, number>;
@@ -75,10 +78,11 @@ export default function Documents() {
   const active = item.id === documentId;
   const Icon = /\.xml$/i.test(item.name) ? FileCode : FileText;
   return <Card key={item.id} ref={active ? selected : undefined} highlight={active} className="min-w-0 space-y-4" aria-label={item.name}>
-   <Icon size={36} strokeWidth={1.75} aria-hidden="true"/>
+   <span className="inline-flex rounded-2xl bg-accent/10 p-3"><Icon size={36} strokeWidth={1.75} aria-hidden="true"/></span>
    <h3 className="break-all font-semibold">{item.name}</h3>
+   <div className="flex flex-wrap gap-2"><Pill className={`gap-2 ${item.state === "extracted" ? "bg-ok/15" : item.state === "quarantined" ? "bg-bad/15" : "bg-warn/20"}`}><StatusDot tone={item.state === "extracted" ? "ok" : item.state === "quarantined" ? "bad" : "waiting"}/>{t("states." + item.state)}</Pill>{item.suspicious && <Pill className="gap-2 bg-bad/15"><StatusDot tone="bad"/>{t("columns.suspicious")}</Pill>}</div>
    <dl className="grid grid-cols-2 gap-3 text-sm">{[
-    ["source", t("enums:DocumentSource." + item.source)], ["state", t("states." + item.state)],
+    ["source", t("enums:DocumentSource." + item.source)],
     ["suspicious", t(item.suspicious ? "yes" : "no")], ["facts", item.facts_count], ["date", date(item.created_at)],
    ].map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-muted">{t("columns." + label)}</dt><dd className="break-words">{value}</dd></div>)}</dl>
    {active && linked.data && <details open><summary className="min-h-10 cursor-pointer font-medium focus-visible:outline-accent">{t("factsTitle")}</summary><dl className="space-y-3">{linked.data.facts.map((fact, index) => <div key={index} className="[overflow-wrap:anywhere]"><dt className="text-sm text-muted">{technicalLabel(fact.field, i18n.language)}</dt><dd>{typeof fact.value === "string" ? fact.value : JSON.stringify(fact.value)}</dd></div>)}</dl></details>}
@@ -94,18 +98,14 @@ export default function Documents() {
    <p className="text-sm text-slate-600" id="document-formats">{t("formats")}</p>
    <label className="block font-medium" htmlFor="document-file">{t("choose")}</label>
    <input ref={input} id="document-file" type="file" accept=".pdf,.xml" aria-describedby="document-formats" disabled={!!busy} className="block min-h-10 w-full min-w-0 rounded-2xl border border-line p-2 text-sm file:mr-2 file:rounded-full file:border-0 file:bg-ink file:px-4 file:py-2 file:text-white focus-visible:outline-accent" onChange={event => { void upload(event.target.files?.[0]); event.target.value = ""; }}/>
-   {filename && <UploadProgress name={filename} waiting={busy === "upload"} state={result?.state} duplicate={result?.duplicate} facts={result?.facts}/>}
-   {busy === "poll" && <p role="status" aria-live="polite" aria-busy="true">{t("polling")}</p>}
-   {validation && <p role="alert" className="text-red-800">{t(validation)}</p>}
-   {error !== undefined && <p role="alert" className="text-red-800">{errorText(error)}</p>}
-  </Card>
-  {result && <Card className="space-y-3"><h2 className="text-xl font-semibold">{t("resultTitle")}</h2><div role="status" aria-live="polite">
-   {result.duplicate ? <p>{t("duplicate", { reason: t("reasons." + result.reason, { defaultValue: result.reason ?? t("unknownReason") }) })}</p> : <p>{t("results." + result.state, { count: result.facts ?? 0 })}</p>}
-   {detail?.suspicious && result.duplicate && <p>{t("results.quarantined")}</p>}
-  </div>
+   {filename && <UploadProgress name={filename} waiting={busy === "upload"} state={result?.state} duplicate={result?.duplicate} documentId={result?.document_id} suspicious={result?.suspicious || detail?.suspicious} reason={result?.reason} facts={result?.facts} error={validation ? t(validation) : error !== undefined && errorSource === "upload" ? errorText(error) : undefined}>
+   {result?.state === "pending_extraction" && <p role="status">{t("results.pending_extraction")}</p>}
   {!!detail?.facts.length && <details><summary className="cursor-pointer font-semibold">{t("factsTitle")}</summary><dl className="mt-3 space-y-2">{detail.facts.map((fact, index) => { const value = typeof fact.value === "string" ? fact.value : JSON.stringify(fact.value); const technical = isTechnicalValue(value) || typeof fact.value === "object" && fact.value !== null; return <div key={index} className="rounded bg-slate-50 p-3"><dt className="font-medium [overflow-wrap:anywhere]">{technicalLabel(fact.field, i18n.language)}</dt>{technical ? <dd><details className="mt-1"><summary className="cursor-pointer text-sm text-slate-600">{t("technicalDetails")}</summary><pre className="mt-2 max-w-full overflow-x-auto whitespace-pre rounded bg-white p-3 text-xs">{value}</pre></details></dd> : <dd className="[overflow-wrap:anywhere]">{value}</dd>}<dd className="text-sm text-slate-600">{t("confidence", { value: new Intl.NumberFormat(i18n.language, { style: "percent" }).format(fact.confidence) })}</dd></div>; })}</dl></details>}
-  </Card>}
+   </UploadProgress>}
+  </Card>
   <Card className="space-y-4"><h2 className="text-xl font-semibold">{t("inboxTitle")}</h2><Button disabled={!!busy} onClick={() => void poll()}>{t("poll")}</Button>
+   {busy === "poll" && <p role="status" aria-live="polite" aria-busy="true">{t("polling")}</p>}
+   {error !== undefined && errorSource === "poll" && <p role="alert" className="text-red-800">{errorText(error)}</p>}
    {summary && <div role="status" aria-live="polite"><h3 className="font-semibold">{t("summary")}</h3><ul className="mt-2 flex flex-wrap gap-x-6 gap-y-2">{pollStates.map(state => <li key={state}>{t("pollStates." + state, { count: summary[state] })}</li>)}</ul></div>}
   </Card>
   <section className="space-y-4" aria-label={t("listTitle")}><h2 className="text-xl font-semibold">{t("listTitle")}</h2>

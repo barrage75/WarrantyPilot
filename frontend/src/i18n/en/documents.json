@@ -1,4 +1,7 @@
 {
+  "duplicateBadge": "Duplicate — already imported",
+  "viewExisting": "View existing document",
+  "suspiciousBadge": "Suspicious content — {{reason}}",
   "extractedInfo_one": "{{count}} piece of information extracted",
   "extractedInfo_other": "{{count}} pieces of information extracted",
   "stepsTitle": "Upload steps",

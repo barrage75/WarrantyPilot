@@ -13,7 +13,8 @@ test("upload an Appelia Factur-X invoice and check the inbox against the real AP
  await page.keyboard.press("Escape");
  await expect(page.getByRole("heading", { name: "Documents enregistrés" })).toBeVisible();
  await page.getByLabel("Choisir un fichier", { exact: true }).setInputFiles(resolve("../data/appelia/invoices/invoice-001.pdf"));
- await expect(page.getByText(/Document extrait : \d+ faits?\./)).toBeVisible();
+ await expect(page.getByText(/\d+ informations? extraites?/)).toBeVisible();
+ await captureUpload(page, "uploaded");
  await expect(page.getByRole("article", { name: /invoice-001.pdf/ })).toContainText("Factur-X");
  await page.getByText("Voir les faits extraits", { exact: true }).click();
  await expect(page.locator("main dl dt").first()).toBeVisible();
@@ -25,6 +26,12 @@ test("upload an Appelia Factur-X invoice and check the inbox against the real AP
  await expect(page.getByRole("heading", { name: "Bilan de la relève" })).toBeVisible();
  await expect(page.getByText("Factures : 0", { exact: true })).toBeVisible();
  await page.screenshot({ path: resolve(directory, "documents-poll-fr.png"), animations: "disabled" });
+ await page.getByLabel("Choisir un fichier", { exact: true }).setInputFiles(resolve("../data/appelia/invoices/invoice-001.pdf"));
+ await expect(page.getByText("Doublon — déjà importé", { exact: true })).toBeVisible();
+ await captureUpload(page, "duplicate");
+ await page.getByRole("link", { name: "Voir le document existant" }).click();
+ await expect(page.getByRole("article", { name: "invoice-001.pdf" })).toHaveClass(/ring-accent/);
+ await expect(page.getByRole("article", { name: "invoice-001.pdf" }).locator("details")).toHaveAttribute("open");
 });
 
 test("uploads a new unique Factur-X invoice with facts and no duplicate row", async ({ page }) => {
@@ -62,7 +69,7 @@ test("uploads a new unique Factur-X invoice with facts and no duplicate row", as
  });
  const file = { name: filename, mimeType: "application/pdf", buffer: pdf };
  await page.getByLabel("Choisir un fichier", { exact: true }).setInputFiles(file);
- const extracted = await page.getByText(/Document extrait : \d+ faits?\./).textContent();
+ const extracted = await page.getByText(/\d+ informations? extraites?/).textContent();
  expect(Number(extracted?.match(/\d+/)?.[0])).toBeGreaterThan(0);
  await expect(page.getByRole("article", { name: new RegExp(invoiceNumber) })).toHaveCount(1);
  await page.getByText("Voir les faits extraits", { exact: true }).click();
@@ -124,4 +131,16 @@ test("polls a non-empty L7 Maildir and shows the created case", async ({ page })
 async function expectNoHorizontalOverflow(page: Page) {
  const width = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, viewport: window.innerWidth }));
  expect(width.scroll, `document width ${width.scroll}px exceeds viewport ${width.viewport}px`).toBeLessThanOrEqual(width.viewport);
+}
+
+async function captureUpload(page: Page, state: string) {
+ const directory = "/home/ubuntu/screenshots/documents-review";
+ mkdirSync(directory, { recursive: true });
+ for (const [width, height] of [[1440, 900], [390, 844]]) {
+  await page.setViewportSize({ width, height });
+  await page.getByTestId("upload-card").scrollIntoViewIfNeeded();
+  await expectNoHorizontalOverflow(page);
+  await page.screenshot({ path: resolve(directory, `${state}-${width}x${height}.png`), animations: "disabled" });
+ }
+ await page.setViewportSize({ width: 1440, height: 900 });
 }
