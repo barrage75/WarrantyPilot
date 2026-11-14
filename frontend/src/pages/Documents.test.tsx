@@ -101,10 +101,12 @@ it("localizes technical Factur-X fields in French and English", async () => {
  await render(); await upload();
  await userEvent.click(await screen.findByText("Voir les faits extraits"));
  expect(await screen.findByText("Nom du fournisseur")).toBeInTheDocument();
- expect(screen.getByText("Ligne 2 · Modèle")).toBeInTheDocument();
+ expect(screen.getByRole("heading", { name: "Ligne 2" })).toBeInTheDocument();
+ expect(screen.getByText("Modèle")).toBeInTheDocument();
  await i18n.changeLanguage("en");
  expect(screen.getByText("Supplier name")).toBeInTheDocument();
- expect(screen.getByText("Line 2 · Model")).toBeInTheDocument();
+ expect(screen.getByRole("heading", { name: "Line 2" })).toBeInTheDocument();
+ expect(screen.getByText("Model")).toBeInTheDocument();
 });
 it("shows the exact quarantine warning and pending extraction", async () => {
  uploadResult = { document_id: item.id, duplicate: false, state: "quarantined", facts: 1 };
