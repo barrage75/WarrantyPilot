@@ -1,0 +1,79 @@
+features:
+  invoice_scan:
+    priority: P0
+    default_enabled: true
+  document_quality_checks:
+    priority: P0
+    default_enabled: true
+  appellia_dataset:
+    priority: P0
+    default_enabled: true
+  rule_engine:
+    priority: P0
+    default_enabled: true
+  incident_chat:
+    priority: P0
+    default_enabled: true
+  human_validation:
+    priority: P0
+    default_enabled: true
+  email_claim:
+    priority: P0
+    default_enabled: true
+  local_dell_reproduction:
+    priority: P0
+    default_enabled: true
+  status_recovery:
+    priority: P0
+    default_enabled: true
+  agent_pause:
+    priority: P0
+    default_enabled: true
+  verified_journal:
+    priority: P0
+    default_enabled: true
+  data_checklist:
+    priority: P0
+    default_enabled: true
+  demo_reset:
+    priority: P0
+    default_enabled: true
+  scan_report:
+    priority: P1
+    default_enabled: false
+  gmail_read:
+    priority: P1
+    default_enabled: false
+  purchase_guard:
+    priority: P1
+    default_enabled: false
+  followup:
+    priority: P1
+    default_enabled: false
+  translations:
+    priority: P1
+    default_enabled: false
+  email_reporting:
+    priority: P2
+    default_enabled: false
+  voice_reporting:
+    priority: P2
+    default_enabled: false
+  loan_stock:
+    priority: P2
+    default_enabled: false
+  serial_failure_alert:
+    priority: P2
+    default_enabled: false
+  jabra_warranty_plus:
+    priority: P2
+    default_enabled: false
+  hp_reproduction:
+    priority: P3
+    default_enabled: false
+  dell_test_api:
+    priority: P3
+    default_enabled: false
+  label_photo:
+    priority: P3
+    default_enabled: false
