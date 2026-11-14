@@ -6,6 +6,7 @@ import { apiErrorKey } from "@/api/errors";
 import type { components } from "@/api/schema";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { isTechnicalValue, technicalLabel } from "@/i18n/technical";
 
 type UploadResult = { document_id: string; duplicate: boolean; reason?: string; state?: string; facts?: number };
 type PollState = "failure" | "invoice" | "duplicate" | "quarantined" | "ignored";
@@ -78,7 +79,7 @@ export default function Documents() {
    {result.duplicate ? <p>{t("duplicate", { reason: t("reasons." + result.reason, { defaultValue: result.reason ?? t("unknownReason") }) })}</p> : <p>{t("results." + result.state, { count: result.facts ?? 0 })}</p>}
    {detail?.suspicious && result.duplicate && <p>{t("results.quarantined")}</p>}
   </div>
-  {!!detail?.facts.length && <details><summary className="cursor-pointer font-semibold">{t("factsTitle")}</summary><dl className="mt-3 space-y-2">{detail.facts.map((fact, index) => <div key={index} className="rounded bg-slate-50 p-3"><dt className="font-medium">{fact.field}</dt><dd className="break-words">{typeof fact.value === "string" ? fact.value : JSON.stringify(fact.value)}</dd><dd className="text-sm text-slate-600">{t("confidence", { value: new Intl.NumberFormat(i18n.language, { style: "percent" }).format(fact.confidence) })}</dd></div>)}</dl></details>}
+  {!!detail?.facts.length && <details><summary className="cursor-pointer font-semibold">{t("factsTitle")}</summary><dl className="mt-3 space-y-2">{detail.facts.map((fact, index) => { const value = typeof fact.value === "string" ? fact.value : JSON.stringify(fact.value); const technical = isTechnicalValue(value) || typeof fact.value === "object" && fact.value !== null; return <div key={index} className="rounded bg-slate-50 p-3"><dt className="font-medium [overflow-wrap:anywhere]">{technicalLabel(fact.field, i18n.language)}</dt>{technical ? <dd><details className="mt-1"><summary className="cursor-pointer text-sm text-slate-600">{t("technicalDetails")}</summary><pre className="mt-2 max-w-full overflow-x-auto whitespace-pre rounded bg-white p-3 text-xs">{value}</pre></details></dd> : <dd className="[overflow-wrap:anywhere]">{value}</dd>}<dd className="text-sm text-slate-600">{t("confidence", { value: new Intl.NumberFormat(i18n.language, { style: "percent" }).format(fact.confidence) })}</dd></div>; })}</dl></details>}
   </Card>}
   <Card className="space-y-4"><h2 className="text-xl font-semibold">{t("inboxTitle")}</h2><Button disabled={!!busy} onClick={() => void poll()}>{t("poll")}</Button>
    {summary && <div role="status" aria-live="polite"><h3 className="font-semibold">{t("summary")}</h3><ul className="mt-2 flex flex-wrap gap-x-6 gap-y-2">{pollStates.map(state => <li key={state}>{t("pollStates." + state, { count: summary[state] })}</li>)}</ul></div>}

@@ -24,7 +24,7 @@ beforeEach(async () => {
   calls.push({ path: url.pathname + url.search, method: request.method, body });
   if (url.pathname === "/api/people") return Response.json(people);
   if (url.pathname === "/api/documents") return Response.json({ items: [item], total, limit: 20, offset: Number(url.searchParams.get("offset")) });
-  if (url.pathname === "/api/documents/doc-1") return Response.json({ ...item, facts: [{ field: "invoice_number", value: "INV-42", confidence: 1 }] });
+  if (url.pathname === "/api/documents/doc-1") return Response.json({ ...item, facts: [{ field: "invoice_number", value: "INV-42", confidence: 1 }, { field: "supplier_name", value: "Appelia", confidence: 1 }, { field: "lines[1].model", value: "Dell Latitude 7440", confidence: 0.9 }] });
   if (url.pathname === "/api/documents/upload") { await gate; return Response.json(serverStatus === 200 ? uploadResult : { detail: "Document invalide" }, { status: serverStatus }); }
   if (url.pathname === "/api/intake/poll") return Response.json({ messages: [{ state: "failure" }, { state: "invoice" }, { state: "invoice" }, { state: "duplicate" }, { state: "quarantined" }, { state: "ignored" }] });
   return Response.json({ detail: "Not found" }, { status: 404 });
@@ -67,6 +67,15 @@ it("uploads multipart, announces progress, shows extracted facts and refreshes t
  const sent = calls.find(call => call.path.endsWith("/upload"));
  expect(sent?.method).toBe("POST"); expect((sent?.body?.get("file") as File).name).toBe("invoice.pdf");
  expect(calls.filter(call => call.path.startsWith("/api/documents?")).length).toBe(2);
+});
+it("localizes technical Factur-X fields in French and English", async () => {
+ await render(); await upload();
+ await userEvent.click(await screen.findByText("Voir les faits extraits"));
+ expect(await screen.findByText("Nom du fournisseur")).toBeInTheDocument();
+ expect(screen.getByText("Ligne 2 · Modèle")).toBeInTheDocument();
+ await i18n.changeLanguage("en");
+ expect(screen.getByText("Supplier name")).toBeInTheDocument();
+ expect(screen.getByText("Line 2 · Model")).toBeInTheDocument();
 });
 it("shows the exact quarantine warning and pending extraction", async () => {
  uploadResult = { document_id: item.id, duplicate: false, state: "quarantined", facts: 1 };
