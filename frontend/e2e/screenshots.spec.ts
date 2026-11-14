@@ -27,7 +27,7 @@ test("capture every screen in French and English with isolated fictional cases",
     const field = page.getByLabel(language === "fr" ? "Décrivez votre panne" : "Describe the fault", { exact: true });
     await field.fill(language === "fr" ? "Mon casque Jabra ne fonctionne plus." : "My Jabra headset has stopped working.");
     await page.getByRole("button", { name: language === "fr" ? "Envoyer" : "Send", exact: true }).click();
-    await expect(page.getByRole("button", { name: language === "fr" ? "Voir le dossier" : "View case" })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Ouvrir le dossier créé|Open created case/ }).or(page.getByRole("heading", { name: /Question de clarification|Clarifying question/ }))).toBeVisible();
    }
    if (name === "dashboard") {
     await page.getByRole("button", { name: language === "fr" ? "Lancer le scan" : "Run scan", exact: true }).click();

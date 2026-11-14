@@ -132,6 +132,7 @@
     "journal_anchored": "Journal anchored",
     "demo_reset": "Demo reset",
     "followup_received": "Follow-up received",
-    "reminder_drafted": "Reminder drafted"
+    "reminder_drafted": "Reminder drafted",
+    "action_step": "Browser step"
   }
 }

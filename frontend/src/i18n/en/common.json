@@ -1,7 +1,6 @@
 {
   "fr": "Français",
   "en": "English",
-  "uuid": "UUID",
   "product": "WarrantyPilot",
   "workspace": "Appelia · demo workspace",
   "navigation": "Navigation",
@@ -16,21 +15,19 @@
   "loading": "Loading…",
   "language": "Language",
   "error": "API unavailable or action failed.",
-  "placeholder": "This screen will be available in a future step.",
-  "simulated": "Simulated data — endpoint coming soon",
   "notFound": "Page not found",
-  "refresh": "Refresh"
-,
+  "refresh": "Refresh",
   "operator": "Acting as",
-  "operatorHelp": "UUID of a person from the demo database — endpoint coming soon.",
-  "operatorActive": "Active operator: {{id}}",
+  "operatorHelp": "Person from the Appelia demo database (GET /api/people).",
+  "operatorActive": "Active operator: {{name}}",
   "identityRequired": "Set your identity in the header to enable human actions.",
-  "invalidUuid": "Enter a valid UUID.",
-  "save": "Save",
-  "clear": "Clear",
   "cancel": "Cancel",
   "conflict": "The status no longer allows this action. Refresh the case.",
-  "unknownPerson": "Unknown person in the demo database. Check your UUID.",
+  "unknownPerson": "Unknown person in the demo database. Choose a person from the list.",
   "notFoundResource": "Case or resource not found.",
-  "invalidRequest": "Invalid data. Check the fields."
+  "invalidRequest": "Invalid data. Check the fields.",
+  "choosePerson": "Choose a person…",
+  "peopleError": "Unable to load people.",
+  "save": "Save",
+  "simulated": "Simulation — no real action is executed."
 }

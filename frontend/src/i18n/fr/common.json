@@ -1,7 +1,6 @@
 {
   "fr": "Français",
   "en": "English",
-  "uuid": "UUID",
   "product": "WarrantyPilot",
   "workspace": "Appelia · espace de démonstration",
   "navigation": "Navigation",
@@ -16,21 +15,19 @@
   "loading": "Chargement…",
   "language": "Langue",
   "error": "API indisponible ou action échouée.",
-  "placeholder": "Cet écran sera disponible dans une prochaine étape.",
-  "simulated": "Données simulées — endpoint à venir",
   "notFound": "Page introuvable",
-  "refresh": "Actualiser"
-,
+  "refresh": "Actualiser",
   "operator": "Vous agissez en tant que",
-  "operatorHelp": "UUID d’une personne de la base de démo — endpoint à venir.",
-  "operatorActive": "Opérateur actif : {{id}}",
+  "operatorHelp": "Personne de la base de démo Appelia (GET /api/people).",
+  "operatorActive": "Opérateur actif : {{name}}",
   "identityRequired": "Définissez votre identité dans l’en-tête pour activer les actions humaines.",
-  "invalidUuid": "Saisissez un UUID valide.",
-  "save": "Enregistrer",
-  "clear": "Effacer",
   "cancel": "Annuler",
   "conflict": "Le statut ne permet plus cette action. Actualisez le dossier.",
-  "unknownPerson": "Personne inconnue dans la base de démo. Vérifiez votre UUID.",
+  "unknownPerson": "Personne inconnue dans la base de démo. Choisissez une personne dans la liste.",
   "notFoundResource": "Dossier ou ressource introuvable.",
-  "invalidRequest": "Données invalides. Vérifiez les champs."
+  "invalidRequest": "Données invalides. Vérifiez les champs.",
+  "choosePerson": "Choisir une personne…",
+  "peopleError": "Impossible de charger les personnes.",
+  "save": "Enregistrer",
+  "simulated": "Simulation — aucune action réelle n’est exécutée."
 }

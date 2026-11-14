@@ -1,16 +1,14 @@
 {
   "neverBlock": "Aucun achat n’est bloqué automatiquement. Vous gardez la décision.",
   "level1": "1 · Recommandation",
-  "recommendation": "Votre équipement est probablement encore sous garantie : nous recommandons de ne pas racheter.",
-  "review": "Examiner la recommandation",
   "level2": "2 · Votre décision",
   "suspend": "Lancer la garantie et suspendre l'achat",
   "keep": "Acheter quand même",
   "reason": "Motif obligatoire pour conserver l’achat",
   "level3": "3 · Économie réalisée et prouvée",
-  "proofRequirement": "Une économie n’est comptabilisée que si l’achat est confirmé annulé ET le dossier résolu. Ces confirmations sont simulées.",
-  "confirmCancellation": "Confirmer l’annulation de l’achat (simulation)",
-  "resolve": "Confirmer le remplacement reçu et le dossier résolu (simulation)",
+  "proofRequirement": "Une économie n’est comptée que si le serveur confirme l’achat annulé ET le dossier de garantie résolu.",
+  "confirmCancellation": "Confirmer l’annulation de l’achat",
+  "resolve": "Vérifier la résolution du dossier",
   "possible": "Économie possible : {{amount}}",
   "realized": "{{amount}} économisés : achat annulé le {{cancelled}}, remplacement reçu le {{resolved}}.",
   "realizedZero": "Économie réelle : {{amount}}",
@@ -18,5 +16,7 @@
   "resolution": "Remplacement reçu le : {{date}}",
   "pending": "non confirmé",
   "empty": "Aucune recommandation d’achat.",
-  "title": "Garde-fou achat"
+  "title": "Garde-fou achat",
+  "decisionReason": "Décision enregistrée : {{reason}}",
+  "viewCase": "Dossier de garantie #{{id}}"
 }

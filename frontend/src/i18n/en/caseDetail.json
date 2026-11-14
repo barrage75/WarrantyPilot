@@ -1,11 +1,14 @@
 {
-  "checkNames": { "fake_rule_match": "Simulated rule match" },
-  "checkDetails": { "fake_rule_match": "The demo rule matches this fictional case." },
+  "checkNames": {
+    "fake_rule_match": "Simulated rule match"
+  },
+  "checkDetails": {
+    "fake_rule_match": "The demo rule matches this fictional case."
+  },
   "version": "v{{version}}",
   "polling": "Refresh every 2 s",
   "liveSse": "Live (SSE)",
-  "title": "Case details"
-,
+  "title": "Case details",
   "validate": "Validate",
   "reject": "Reject",
   "reason": "Reason",
@@ -35,7 +38,7 @@
   "exclusions": "Possible exclusions",
   "policy": "Sending policy",
   "actions": "Actions and execution proof",
-  "actionsNote": "Reconstructed from action_started/succeeded/failed events; no dedicated endpoint.",
+  "actionsNote": "History returned by GET /api/cases/{id}/actions.",
   "timeline": "Timeline",
   "live": "● Live",
   "reconnecting": "Reconnecting…",
@@ -84,5 +87,11 @@
     "source": "Source",
     "approved": "Approved",
     "reason": "Reason"
-  }
+  },
+  "browserStep": "Browser step",
+  "screenshot": "Screenshot",
+  "dellCase": "Dell case number: {{number}}",
+  "result": "Result",
+  "proofLabel": "Proof",
+  "equipmentLabel": "Equipment"
 }

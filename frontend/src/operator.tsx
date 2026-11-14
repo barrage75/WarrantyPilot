@@ -1,7 +1,6 @@
 import { useId, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { usePeople } from "@/api/resources";
 import { OperatorContext, validUuid, useOperator } from "./operator-state";
 function readIdentity() { try { const value = localStorage.getItem("wp-person-id") ?? ""; return validUuid(value) ? value : ""; } catch { return ""; } }
 export function OperatorProvider({ children }: { children: ReactNode }) {
@@ -10,19 +9,20 @@ export function OperatorProvider({ children }: { children: ReactNode }) {
  return <OperatorContext.Provider value={{ personId, save }}>{children}</OperatorContext.Provider>;
 }
 export function OperatorSelector() {
- const { personId } = useOperator();
- return <OperatorForm key={personId}/>;
-}
-function OperatorForm() {
  const { t } = useTranslation("common");
  const { personId, save } = useOperator();
- const [draft, setDraft] = useState(personId);
+ const people = usePeople();
  const fieldId = useId();
- const invalid = !!draft && !validUuid(draft.trim());
- return <form className="max-w-md space-y-1 text-sm" onSubmit={e => { e.preventDefault(); save(draft); }}>
+ const active = people.data?.find(person => person.id === personId);
+ const unknown = !!personId && !!people.data && !active;
+ return <div className="max-w-md space-y-1 text-sm">
  <label htmlFor={fieldId} className="font-medium">{t("operator")}</label>
- <div className="flex gap-2"><Input id={fieldId} value={draft} aria-invalid={invalid} aria-describedby={fieldId + "-help"} onChange={e => setDraft(e.target.value)} placeholder={t("uuid")}/><Button variant="outline" disabled={invalid}>{t("save")}</Button><Button type="button" variant="outline" onClick={() => { save(""); setDraft(""); }}>{t("clear")}</Button></div>
+ <select id={fieldId} className="block w-full rounded-md border border-slate-300 bg-white p-2" aria-describedby={fieldId + "-help"} disabled={!people.data} value={active ? personId : ""} onChange={event => save(event.target.value)}>
+  <option value="">{t(people.isPending ? "loading" : "choosePerson")}</option>
+  {people.data?.map(person => <option key={person.id} value={person.id}>{person.name}{person.role ? " · " + person.role : ""}</option>)}
+ </select>
  <p id={fieldId + "-help"} className="text-xs text-slate-600">{t("operatorHelp")}</p>
- {invalid && <p role="alert" className="text-red-800">{t("invalidUuid")}</p>}
- <p className="text-xs">{personId ? t("operatorActive", { id: personId }) : t("identityRequired")}</p></form>;
+ {people.isError && <p role="alert" className="text-red-800">{t("peopleError")}</p>}
+ {unknown && <p role="alert" className="text-red-800">{t("unknownPerson")}</p>}
+ <p className="text-xs">{active ? t("operatorActive", { name: active.name }) : t("identityRequired")}</p></div>;
 }

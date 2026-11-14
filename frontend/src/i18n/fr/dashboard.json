@@ -1,16 +1,21 @@
 {
   "coveredEquipmentEur": "Valeur du matériel couvert",
   "possibleSavingsEur": "Économies possibles",
-  "realizedSavingsEur": "Économies réelles",
+  "realizedSavingsEur": "Économies réalisées",
   "scan": "Lancer le scan",
-  "fictional": "Scan local simulé de données Appelia fictives.",
-  "progress": "Progression : {{percent}} %",
-  "complete": "Scan terminé : {{count}} factures fictives.",
+  "fictional": "Scan des documents Appelia fictifs par le serveur local (lecture, Factur-X et moteur de règles).",
+  "progress": "Progression : {{done}} / {{total}} documents",
+  "complete": "Scan terminé : {{done}} / {{total}} documents lus, {{count}} factures fictives.",
   "expiring": "Expire bientôt",
   "equipment": "Équipement",
   "right": "Droit",
   "end": "Date de fin",
   "days": "Jours restants",
   "empty": "Lancez le scan pour afficher les droits de démonstration.",
-  "title": "Tableau de bord"
+  "title": "Tableau de bord",
+  "failed": "Échec du scan : {{error}}",
+  "coveredEquipmentEurHelp": "Prix d’achat du matériel dont le verdict est couvert ou probablement couvert.",
+  "possibleSavingsEurHelp": "Achats en attente qui pourraient être évités par une demande de garantie.",
+  "realizedSavingsEurHelp": "Uniquement les achats annulés avec dossier résolu, selon le serveur.",
+  "noExpiring": "Aucun droit n’expire dans les 30 prochains jours."
 }

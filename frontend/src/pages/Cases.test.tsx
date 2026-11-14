@@ -15,9 +15,10 @@ const item: components["schemas"]["Case"] = { id: caseId, incident_id: caseId, e
 let data: components["schemas"]["Case"][];
 let posts: { url: string; body: Record<string, string> }[];
 let postStatus: number;
+let events: unknown[], actions: unknown[];
 beforeEach(async () => {
  localStorage.clear(); await i18n.changeLanguage("fr");
- data = [structuredClone(item)]; posts = []; postStatus = 200;
+ data = [structuredClone(item)]; posts = []; postStatus = 200; events = []; actions = [];
  vi.stubGlobal("EventSource", class { close() {} addEventListener() {} });
  vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
   const request = input instanceof Request ? input : new Request(new URL(String(input), window.location.origin), init);
@@ -29,7 +30,10 @@ beforeEach(async () => {
    return Response.json(data[0]);
   }
   if (url.endsWith("/checklist")) return Response.json({ case_id: caseId, steps: { backup_verified: { done: true, by_person_id: person, at: "2026-01-01T12:00:00Z" } } });
-  if (url.endsWith("/events")) return Response.json([]);
+  if (url.endsWith("/events")) return Response.json(events);
+  if (url.endsWith("/actions")) return Response.json(actions);
+  if (url === "/api/people") return Response.json([{ id: person, name: "Camille Martin", email: "camille@example.test", role: "IT" }]);
+  if (url === "/api/equipment") return Response.json([{ id: person, brand: "Dell", model: "Latitude 5440", serial: "SVC-FAKE-01", category: "laptop" }]);
   if (url === "/api/cases") return Response.json(data);
   return Response.json(data[0]);
  }));
@@ -86,12 +90,31 @@ it("filters cases by status and ID", async () => {
  expect(screen.getByText("Aucun dossier ne correspond aux filtres.")).toBeInTheDocument();
 });
 it("handles an empty decision queue", async () => { data = []; show("decisions"); expect(await screen.findByText("Rien à décider")).toBeInTheDocument(); });
-it("validates and persists operator identity", async () => {
- render(<OperatorProvider><OperatorSelector/></OperatorProvider>);
- await userEvent.type(screen.getByLabelText("Vous agissez en tant que"), "invalid");
- expect(screen.getByRole("button", { name: "Enregistrer" })).toBeDisabled();
- await userEvent.clear(screen.getByLabelText("Vous agissez en tant que"));
- await userEvent.type(screen.getByLabelText("Vous agissez en tant que"), person);
- await userEvent.click(screen.getByRole("button", { name: "Enregistrer" }));
- expect(localStorage.getItem("wp-person-id")).toBe(person);
+it("selects the operator from GET /people and persists the real id", async () => {
+ const cache = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+ render(<QueryClientProvider client={cache}><OperatorProvider><OperatorSelector/></OperatorProvider></QueryClientProvider>);
+ const select = screen.getByLabelText("Vous agissez en tant que");
+ await screen.findByRole("option", { name: "Camille Martin · IT" });
+ expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+ await userEvent.selectOptions(select, person);
+ expect(localStorage.getItem("wp-person-id")).toBe(person); expect(screen.getByText("Opérateur actif : Camille Martin")).toBeInTheDocument();
+});
+it("flags a stored person that no longer exists", async () => {
+ localStorage.setItem("wp-person-id", "10000000-0000-4000-8000-00000000dead");
+ const cache = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+ render(<QueryClientProvider client={cache}><OperatorProvider><OperatorSelector/></OperatorProvider></QueryClientProvider>);
+ expect(await screen.findByRole("alert")).toHaveTextContent("Personne inconnue dans la base de démo");
+});
+it("renders browser steps with screenshot path, Dell case number and the actions history", async () => {
+ events = [
+  { seq: 1, case_id: caseId, type: "action_step", actor: "agent", at: "2026-01-01T12:00:00Z", payload: { text: "Formulaire rempli avec les données de l'action", screenshot_path: "/runtime/screens/filled.png" } },
+  { seq: 2, case_id: caseId, type: "action_step", actor: "agent", at: "2026-01-01T12:00:05Z", payload: { text: "Dossier Dell créé : DELL-REP-123456", screenshot_path: "/runtime/screens/confirmation.png" } }
+ ];
+ actions = [{ action: { id: "a1", case_id: caseId, channel: "browser_portal", kind: "dell_repair_request", badge: "reproduction" }, results: [{ id: "r1", action_id: "a1", status: "success", proof: JSON.stringify({ case_number: "DELL-REP-123456", screenshot_path: "/runtime/screens/confirmation.png" }) }] }];
+ show("detail");
+ expect(await screen.findByText("Formulaire rempli avec les données de l'action")).toBeInTheDocument();
+ expect(screen.getByText("/runtime/screens/filled.png")).toBeInTheDocument();
+ expect(screen.getAllByText("Numéro de dossier Dell : DELL-REP-123456")).toHaveLength(2);
+ expect(screen.getAllByRole("heading", { name: "Étape navigateur" })).toHaveLength(2);
+ expect(screen.getByText(/Dell Latitude 5440/, { selector: "span" })).toBeInTheDocument();
 });
