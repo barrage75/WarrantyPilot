@@ -103,8 +103,9 @@ async def test_new_attempt_for_same_case_replays_existing_portal_case(tmp_path) 
     adapter = make_adapter(tmp_path, scripted=scripted)
     case_id = uuid4()
 
-    await adapter.execute(make_action(case_id=case_id, key=f"case:{case_id}:execute:1"))
-    second = await adapter.execute(make_action(case_id=case_id, key=f"case:{case_id}:execute:2"))
+    stable_key = f"case:{case_id}:browser_portal:7XK4L93"
+    await adapter.execute(make_action(case_id=case_id, key=stable_key))
+    second = await adapter.execute(make_action(case_id=case_id, key=stable_key))
 
     assert len(scripted.jobs) == 1
     assert second.status == ActionResultStatus.SUCCESS
@@ -140,7 +141,7 @@ async def test_failed_attempt_is_retried_with_the_same_request_token(tmp_path) -
     first = await make_adapter(tmp_path, scripted=failing).execute(make_action(case_id=case_id))
     working = FakeDriver("scripted")
     second = await make_adapter(tmp_path, scripted=working).execute(
-        make_action(case_id=case_id, key=f"case:{case_id}:execute:2")
+        make_action(case_id=case_id, key=f"case:{case_id}:browser_portal:7XK4L93")
     )
 
     assert first.status == ActionResultStatus.FAILURE and first.error == "portal_timeout"

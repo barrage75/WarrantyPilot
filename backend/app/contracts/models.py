@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
+from pathlib import Path
 from typing import Any, Literal
 from uuid import UUID, uuid4
 
@@ -60,6 +61,7 @@ class Equipment(ContractModel):
     currency: str = "EUR"
     in_loan_stock: bool = False
     purchase_date: date | None = None
+    invoice_number: str | None = None
     delivery_date: date | None = None
     ship_date: date | None = None
 
@@ -218,6 +220,73 @@ class Action(ContractModel):
     requires_data_checklist: bool = False
 
 
+class BrowserPortalClaim(ContractModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        validate_assignment=True,
+        frozen=True,
+        str_strip_whitespace=True,
+    )
+
+    service_tag: str = Field(pattern=r"^[A-Z0-9]{7}$")
+    problem_category: Literal[
+        "Ne démarre pas",
+        "Écran",
+        "Clavier/pavé tactile",
+        "Batterie/alimentation",
+        "Disque/stockage",
+        "Carte mère/autre matériel",
+        "Logiciel",
+    ]
+    problem_description: str = Field(min_length=20, max_length=2000)
+    contact_first_name: str = Field(min_length=1, max_length=80)
+    contact_last_name: str = Field(min_length=1, max_length=80)
+    contact_email: str = Field(pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    contact_phone: str = Field(min_length=10, max_length=20)
+    company_name: str = ""
+    address_line1: str = Field(min_length=1, max_length=120)
+    address_line2: str = ""
+    postal_code: str = Field(pattern=r"^\d{5}$")
+    city: str = Field(min_length=1, max_length=80)
+    country: str = "France"
+    availability_date: date
+    availability_slot: Literal["Matin 8h–12h", "Après-midi 13h–18h"]
+    attachment_path: Path | None = None
+    repro_fail_mode: Literal["500", "timeout", "slow"] | None = None
+
+    @field_validator("service_tag", mode="before")
+    @classmethod
+    def upper_service_tag(cls, value: object) -> object:
+        return value.strip().upper() if isinstance(value, str) else value
+
+    @field_validator("attachment_path")
+    @classmethod
+    def pdf_only_attachment(cls, value: Path | None) -> Path | None:
+        if value is not None and value.suffix.lower() != ".pdf":
+            raise ValueError("attachment must be a PDF file")
+        return value
+
+    def form_values(self) -> dict[str, str]:
+        return {
+            "problemDescription": self.problem_description,
+            "contactFirstName": self.contact_first_name,
+            "contactLastName": self.contact_last_name,
+            "contactEmail": self.contact_email,
+            "contactPhone": self.contact_phone,
+            "companyName": self.company_name,
+            "addressLine1": self.address_line1,
+            "addressLine2": self.address_line2,
+            "postalCode": self.postal_code,
+            "city": self.city,
+            "availabilityDate": self.availability_date.isoformat(),
+        }
+
+
+class BrowserPortalPayload(ContractModel):
+    url: str = Field(min_length=1)
+    portal_claim: BrowserPortalClaim
+
+
 class ActionResult(ContractModel):
     id: UUID = Field(default_factory=uuid4)
     action_id: UUID
@@ -287,10 +356,13 @@ class PurchaseRequest(ContractModel):
     id: UUID = Field(default_factory=uuid4)
     requester_id: UUID
     equipment_id: UUID
+    case_id: UUID | None = None
     item_description: str
     amount: Decimal = Field(ge=0)
     state: PurchaseGuardState = PurchaseGuardState.RECOMMENDATION
     decision_reason: str | None = None
+    cancelled_at: datetime | None = None
+    resolved_at: datetime | None = None
 
 
 class Case(ContractModel):

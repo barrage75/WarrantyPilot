@@ -146,11 +146,12 @@ async def test_real_smtp(tmp_path: Path, language: str, disclose: bool) -> None:
         a = adapters[act.channel]
         first = await a.execute(act)
         assert first.status == "success", first.error
-        assert (await a.execute(act)).status == "success"
+        retry = act.model_copy(update={"id": uuid4()})
+        assert (await a.execute(retry)).status == "success"
         restarted = EmailActionAdapter(
             act.channel, transport, a.settings_provider, a.sender, JsonlSentLedger(ledger_path)
         )
-        proof = json.loads((await restarted.execute(act)).proof or "{}")
+        proof = json.loads((await restarted.execute(retry)).proof or "{}")
         assert proof["duplicate_suppressed"]
         box = mailbox.Maildir(str(path))
         assert len(box) == 1
@@ -293,6 +294,46 @@ def test_database_ledger() -> None:
     assert ledger.get("unknown") is None
     with pytest.raises(PermissionError):
         ledger.record("key", {})
+
+
+def test_jsonl_ledger_reads_action_results_and_uses_jsonl_for_writes(tmp_path: Path) -> None:
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    act = action()
+    proof = {"message_id": "<sent@example>"}
+    with engine.begin() as conn:
+        conn.execute(
+            insert(actions).values(
+                id=str(act.id),
+                case_id=str(act.case_id),
+                channel=act.channel.value,
+                kind=act.kind,
+                idempotency_key=act.idempotency_key,
+                payload={},
+                badge=act.badge.value,
+                requires_data_checklist=False,
+            )
+        )
+        conn.execute(
+            insert(action_results).values(
+                id=str(uuid4()),
+                action_id=str(act.id),
+                status="success",
+                proof=json.dumps(proof),
+                badge=act.badge.value,
+            )
+        )
+    path = tmp_path / "ledger.jsonl"
+    ledger = JsonlSentLedger(path, read_ledger=ActionResultsLedger(sessionmaker(engine)))
+
+    assert (ledger.get(act.idempotency_key) or {})["proof"] == proof
+    assert not path.exists()
+    ledger.record(
+        act.idempotency_key,
+        {"case_id": str(act.case_id), "state": "sent"},
+    )
+    assert (ledger.get(act.idempotency_key) or {})["state"] == "sent"
+    assert path.exists()
 
 
 def test_channel_rejected(tmp_path: Path) -> None:

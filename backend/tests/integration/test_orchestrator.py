@@ -44,7 +44,7 @@ async def test_case_runs_from_prepared_through_resolved(session_factory, app_set
     case, person_id = create_case(
         session_factory,
         email="allowed@example.test",
-        allowlist=["allowed@example.test"],
+        allowlist=["warranty@revendeur-test.example"],
     )
     adapter = FakeEmailAdapter()
     orchestrator = make_orchestrator(session_factory, app_settings, adapter)
@@ -89,13 +89,13 @@ async def test_case_runs_from_prepared_through_resolved(session_factory, app_set
     assert journal_status["ok"] is True
 
 
-async def test_failure_can_retry_once_with_a_new_idempotency_key(
+async def test_failure_can_retry_once_with_a_stable_idempotency_key(
     session_factory, app_settings
 ) -> None:
     case, person_id = create_case(
         session_factory,
         email="allowed@example.test",
-        allowlist=["allowed@example.test"],
+        allowlist=["warranty@revendeur-test.example"],
     )
     failing = FailingActionAdapter()
     orchestrator = make_orchestrator(session_factory, app_settings, failing)
@@ -108,7 +108,7 @@ async def test_failure_can_retry_once_with_a_new_idempotency_key(
     assert (await orchestrator.run(case.id)).status == CaseStatus.RESOLVED
     assert len(failing.calls) == 1
     assert len(retry.calls) == 1
-    assert failing.calls[0] != retry.calls[0]
+    assert failing.calls[0] == retry.calls[0]
     with session_factory() as session:
         results = (
             session.execute(
@@ -119,14 +119,14 @@ async def test_failure_can_retry_once_with_a_new_idempotency_key(
             .scalars()
             .all()
         )
-    assert results == ["failure", "success"]
+    assert sorted(results) == ["failure", "success"]
 
 
 async def test_exhausted_retries_escalate_to_manual_takeover(session_factory, app_settings) -> None:
     case, person_id = create_case(
         session_factory,
         email="allowed@example.test",
-        allowlist=["allowed@example.test"],
+        allowlist=["warranty@revendeur-test.example"],
     )
     adapter = FailingActionAdapter()
     orchestrator = make_orchestrator(session_factory, app_settings, adapter)
@@ -142,7 +142,7 @@ async def test_interrupted_send_is_failed_and_not_replayed(session_factory, app_
     case, person_id = create_case(
         session_factory,
         email="allowed@example.test",
-        allowlist=["allowed@example.test"],
+        allowlist=["warranty@revendeur-test.example"],
     )
     crashing = CrashingActionAdapter()
     orchestrator = make_orchestrator(session_factory, app_settings, crashing)
@@ -182,7 +182,7 @@ async def test_email_outside_allowlist_is_refused_before_adapter(
     case, person_id = create_case(
         session_factory,
         email="blocked@example.test",
-        allowlist=["allowed@example.test"],
+        allowlist=["other@revendeur-test.example"],
     )
     adapter = FakeEmailAdapter()
     orchestrator = make_orchestrator(session_factory, app_settings, adapter)
@@ -261,7 +261,7 @@ async def test_case_channel_is_used_when_verdict_channel_is_missing(
     case, person_id = create_case(
         session_factory,
         email="allowed@example.test",
-        allowlist=["allowed@example.test"],
+        allowlist=["warranty@revendeur-test.example"],
     )
     verdict = Verdict(
         value=VerdictValue.COVERED,

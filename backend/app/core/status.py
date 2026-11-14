@@ -23,7 +23,7 @@ TRANSITIONS: dict[CaseStatus, frozenset[CaseStatus]] = {
     CaseStatus.AWAITING_VALIDATION: frozenset(
         {CaseStatus.SENDING, CaseStatus.FAILED, CaseStatus.CANCELLED}
     ),
-    CaseStatus.SENDING: frozenset({CaseStatus.SENT, CaseStatus.FAILED}),
+    CaseStatus.SENDING: frozenset({CaseStatus.SENT, CaseStatus.FAILED, CaseStatus.MANUAL_TAKEOVER}),
     CaseStatus.SENT: frozenset({CaseStatus.TRACKED, CaseStatus.RESOLVED}),
     CaseStatus.FAILED: frozenset(
         {CaseStatus.SENDING, CaseStatus.MANUAL_TAKEOVER, CaseStatus.CANCELLED}

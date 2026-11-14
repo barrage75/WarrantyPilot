@@ -19,6 +19,6 @@ demande de réparation sur la **reproduction locale Dell** (`repro/dell`). Badge
 - Preuve JSON : `case_number`, `url`, `screenshot_path` (PNG), `captured_at`, `engine`.
 - Progression : `on_step(text, screenshot_path)` (sync ou async).
 
-Playwright n'est pas une dépendance du backend : sans lui, l'action échoue en
-`browser_unavailable` et les tests d'intégration sont sautés. Localement :
+Playwright est une dépendance du backend. Installez le navigateur avec
+`uv run playwright install chromium`. Localement :
 `uv run --project backend --with playwright==1.65.1 pytest backend/tests/unit/actions/browser`.

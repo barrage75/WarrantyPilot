@@ -4,8 +4,10 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import insert, inspect, select, update
 
+from app.actions.browser.adapter import BrowserPortalAdapter
+from app.actions.email.adapter import EmailActionAdapter
 from app.api.main import create_app
-from app.contracts.enums import CaseStatus, EventType
+from app.contracts.enums import CaseStatus, Channel, EventType
 from app.contracts.models import utc_now
 from app.core.tables import (
     action_results,
@@ -13,10 +15,13 @@ from app.core.tables import (
     cases,
     documents,
     equipment,
+    equipment_documents,
+    equipment_suppliers,
     events,
     facts,
     people,
     rights,
+    suppliers,
 )
 from tests.integration.helpers import create_case
 
@@ -24,9 +29,18 @@ from tests.integration.helpers import create_case
 def test_reset_preflight_and_health_endpoints(db_engine, app_settings) -> None:
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
+        adapters = application.state.services["action_adapters"]
+        assert isinstance(adapters[Channel.EMAIL_RESELLER], EmailActionAdapter)
+        assert adapters[Channel.EMAIL_RESELLER].transport.name == "smtp-local"
+        assert isinstance(adapters[Channel.BROWSER_PORTAL], BrowserPortalAdapter)
         assert client.get("/api/health").json() == {"status": "ok"}
+        stale_message = app_settings.maildir_path / "stale-message"
+        stale_message.write_text("synthetic", encoding="utf-8")
+        app_settings.email_sent_ledger_path.write_text("synthetic\n", encoding="utf-8")
         reset = client.post("/api/demo/reset")
         assert reset.status_code == 200
+        assert not stale_message.exists()
+        assert not app_settings.email_sent_ledger_path.exists()
         assert client.get("/api/cases").json() == []
         preflight = client.get("/api/demo/preflight")
         assert preflight.status_code == 200
@@ -39,6 +53,9 @@ def test_reset_preflight_and_health_endpoints(db_engine, app_settings) -> None:
         assert len(connection.execute(select(people.c.id)).all()) == 200
         assert len(connection.execute(select(equipment.c.id)).all()) == 230
         assert len(connection.execute(select(documents.c.id)).all()) == 65
+        assert len(connection.execute(select(suppliers.c.id)).all()) == 3
+        assert connection.execute(select(equipment_suppliers.c.equipment_id)).all()
+        assert connection.execute(select(equipment_documents.c.document_id)).all()
         assert connection.execute(select(facts.c.id)).all()
         assert connection.execute(select(rights.c.id)).all()
 

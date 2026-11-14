@@ -24,6 +24,8 @@ from app.contracts.enums import (
 from app.contracts.models import (
     Action,
     ActionResult,
+    BrowserPortalClaim,
+    BrowserPortalPayload,
     Case,
     ChecklistStep,
     DataChecklist,
@@ -48,6 +50,8 @@ __all__ = [
     "Action",
     "ActionResult",
     "ActionResultStatus",
+    "BrowserPortalClaim",
+    "BrowserPortalPayload",
     "Case",
     "CaseStatus",
     "Channel",

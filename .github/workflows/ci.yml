@@ -21,6 +21,7 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --locked
+      - run: uv run playwright install --with-deps chromium
       - run: uv run ruff check app tests ../data/appelia
       - run: uv run ruff format --check app tests
       - run: >-

@@ -17,8 +17,9 @@ class SentLedger(Protocol):
 
 
 class JsonlSentLedger:
-    def __init__(self, path: str | Path) -> None:
+    def __init__(self, path: str | Path, read_ledger: SentLedger | None = None) -> None:
         self.path = Path(path)
+        self.read_ledger = read_ledger
 
     def _entries(self) -> dict[str, dict[str, Any]]:
         entries: dict[str, dict[str, Any]] = {}
@@ -29,7 +30,11 @@ class JsonlSentLedger:
         return entries
 
     def get(self, key: str) -> dict[str, Any] | None:
-        return self._entries().get(key)
+        entry = self._entries().get(key)
+        stored = self.read_ledger.get(key) if self.read_ledger else None
+        if stored is not None and stored.get("state") == "sent":
+            return stored
+        return entry if entry is not None else stored
 
     def record(self, key: str, entry: dict[str, Any]) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -39,7 +44,14 @@ class JsonlSentLedger:
             os.fsync(stream.fileno())
 
     def for_case(self, case_id: str) -> list[dict[str, Any]]:
-        return [e for e in self._entries().values() if e.get("case_id") == case_id]
+        entries = self._entries()
+        if self.read_ledger is not None:
+            for entry in self.read_ledger.for_case(case_id):
+                if entry.get("state") == "sent":
+                    entries[entry["key"]] = entry
+                else:
+                    entries.setdefault(entry["key"], entry)
+        return [entry for entry in entries.values() if entry.get("case_id") == case_id]
 
 
 class ActionResultsLedger:

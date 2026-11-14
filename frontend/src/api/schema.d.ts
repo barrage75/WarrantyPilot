@@ -259,6 +259,142 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/chat/conversations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Conversation */
+        post: operations["start_conversation_api_chat_conversations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/chat/conversations/{conversation_id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send Message */
+        post: operations["send_message_api_chat_conversations__conversation_id__messages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Scan */
+        post: operations["start_scan_api_scan_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/scan/{scan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Scan */
+        get: operations["get_scan_api_scan__scan_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/purchase-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Recommendations */
+        get: operations["list_recommendations_api_purchase_requests_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/purchase-requests/{purchase_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide */
+        post: operations["decide_api_purchase_requests__purchase_id__decision_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/purchase-requests/{purchase_id}/confirm-cancellation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Cancellation */
+        post: operations["confirm_cancellation_api_purchase_requests__purchase_id__confirm_cancellation_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/purchase-requests/{purchase_id}/resolve-case": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve Case */
+        post: operations["resolve_case_api_purchase_requests__purchase_id__resolve_case_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/journal/verify": {
         parameters: {
             query?: never;
@@ -518,6 +654,57 @@ export interface components {
          * @enum {string}
          */
         Channel: "api" | "email_reseller" | "email_manufacturer_support" | "browser_portal" | "email_lessor" | "manual";
+        /** ChatConversation */
+        ChatConversation: {
+            /** Id */
+            id: string;
+            /** Conversation Id */
+            conversation_id: string;
+            /** Messages */
+            messages: components["schemas"]["ChatMessage"][];
+            /** Disclosure Text */
+            disclosure_text: string;
+        };
+        /** ChatMessage */
+        ChatMessage: {
+            /** Id */
+            id: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "human" | "assistant";
+            /** Text */
+            text?: string | null;
+            /** Textkey */
+            textKey?: string | null;
+        };
+        /** ChatMessageRequest */
+        ChatMessageRequest: {
+            /** Text */
+            text: string;
+            /**
+             * Reporter Id
+             * Format: uuid
+             */
+            reporter_id: string;
+        };
+        /** ChatReply */
+        ChatReply: {
+            message: components["schemas"]["ChatMessage"];
+            /** Messages */
+            messages: components["schemas"]["ChatMessage"][];
+            /** Case Id */
+            case_id?: string | null;
+            /** Equipment */
+            equipment?: string | null;
+            /** Identified Equipment */
+            identified_equipment?: string | null;
+            /** Questions */
+            questions?: string[];
+            /** Clarifying Questions */
+            clarifying_questions?: string[];
+        };
         /** ChecklistStep */
         ChecklistStep: {
             /**
@@ -596,6 +783,8 @@ export interface components {
             in_loan_stock: boolean;
             /** Purchase Date */
             purchase_date?: string | null;
+            /** Invoice Number */
+            invoice_number?: string | null;
             /** Delivery Date */
             delivery_date?: string | null;
             /** Ship Date */
@@ -639,7 +828,15 @@ export interface components {
          * EventType
          * @enum {string}
          */
-        EventType: "case_created" | "fact_extracted" | "fact_corrected" | "verdict_computed" | "policy_decided" | "validation_requested" | "validated" | "rejected" | "action_started" | "action_succeeded" | "action_failed" | "status_changed" | "checklist_step_done" | "purchase_guard_recommended" | "purchase_guard_decision" | "purchase_guard_suspended" | "purchase_guard_kept" | "purchase_guard_saving_realized" | "purchase_guard_cancelled" | "agent_paused" | "agent_resumed" | "journal_anchored" | "demo_reset" | "followup_received" | "reminder_drafted";
+        EventType: "case_created" | "fact_extracted" | "fact_corrected" | "verdict_computed" | "policy_decided" | "validation_requested" | "validated" | "rejected" | "action_started" | "action_step" | "action_succeeded" | "action_failed" | "status_changed" | "checklist_step_done" | "purchase_guard_recommended" | "purchase_guard_decision" | "purchase_guard_suspended" | "purchase_guard_kept" | "purchase_guard_saving_realized" | "purchase_guard_cancelled" | "agent_paused" | "agent_resumed" | "journal_anchored" | "demo_reset" | "followup_received" | "reminder_drafted" | "chat_disclosure";
+        /** ExpiringRight */
+        ExpiringRight: {
+            /** Equipment */
+            equipment: string;
+            right: components["schemas"]["RightType"];
+            /** Endsat */
+            endsAt: string;
+        };
         /** FakeCaseRequest */
         FakeCaseRequest: {
             /**
@@ -656,6 +853,14 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HumanActionRequest */
+        HumanActionRequest: {
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            person_id: string;
         };
         /** ManualProofRequest */
         ManualProofRequest: {
@@ -728,6 +933,46 @@ export interface components {
                 number
             ] | null;
         };
+        /** PurchaseDecision */
+        PurchaseDecision: {
+            /**
+             * Choice
+             * @enum {string}
+             */
+            choice: "suspend" | "keep";
+            /** Reason */
+            reason?: string | null;
+        };
+        /**
+         * PurchaseGuardState
+         * @enum {string}
+         */
+        PurchaseGuardState: "recommendation" | "awaiting_decision" | "purchase_suspended" | "purchase_kept" | "saving_realized" | "cancelled";
+        /** PurchaseRecommendation */
+        PurchaseRecommendation: {
+            /** Id */
+            id: string;
+            /** Company */
+            company: string;
+            /** Equipment */
+            equipment: string;
+            /** Amounteur */
+            amountEur: number;
+            state: components["schemas"]["PurchaseGuardState"];
+            /** Reason */
+            reason?: string | null;
+            /** Cancelledat */
+            cancelledAt?: string | null;
+            /** Resolvedat */
+            resolvedAt?: string | null;
+            verdict: components["schemas"]["VerdictValue"];
+            /** Explanationfr */
+            explanationFr: string;
+            /** Explanationen */
+            explanationEn: string;
+            /** Caseid */
+            caseId?: string | null;
+        };
         /**
          * RealityBadge
          * @enum {string}
@@ -743,6 +988,11 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /**
+         * RightType
+         * @enum {string}
+         */
+        RightType: "manufacturer_warranty" | "extension" | "lease_contract" | "maintenance_contract" | "seller_recourse";
         /** RuleCheck */
         RuleCheck: {
             /**
@@ -756,6 +1006,40 @@ export interface components {
             passed: boolean | null;
             /** Detail */
             detail: string;
+        };
+        /** ScanStartResponse */
+        ScanStartResponse: {
+            /** Scan Id */
+            scan_id: string;
+        };
+        /** ScanSummary */
+        ScanSummary: {
+            /** Scanid */
+            scanId: string;
+            /** Status */
+            status: string;
+            /** Company */
+            company: string;
+            /** Invoices */
+            invoices: number;
+            /** Coveredequipmenteur */
+            coveredEquipmentEur: number;
+            /** Possiblesavingseur */
+            possibleSavingsEur: number;
+            /** Realizedsavingseur */
+            realizedSavingsEur: number;
+            /** Expiring */
+            expiring: components["schemas"]["ExpiringRight"][];
+            /** Progress */
+            progress: number;
+            /** Documentstotal */
+            documentsTotal: number;
+            /** Documentsdone */
+            documentsDone: number;
+            /** @default reproduction */
+            badge: components["schemas"]["RealityBadge"];
+            /** Error */
+            error?: string | null;
         };
         /** Settings */
         "Settings-Input": {
@@ -1307,6 +1591,233 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DataChecklist"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_conversation_api_chat_conversations_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatConversation"];
+                };
+            };
+        };
+    };
+    send_message_api_chat_conversations__conversation_id__messages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatMessageRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatReply"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_scan_api_scan_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScanStartResponse"];
+                };
+            };
+        };
+    };
+    get_scan_api_scan__scan_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScanSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_recommendations_api_purchase_requests_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseRecommendation"][];
+                };
+            };
+        };
+    };
+    decide_api_purchase_requests__purchase_id__decision_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                purchase_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseDecision"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseRecommendation"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_cancellation_api_purchase_requests__purchase_id__confirm_cancellation_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                purchase_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HumanActionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseRecommendation"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resolve_case_api_purchase_requests__purchase_id__resolve_case_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                purchase_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseRecommendation"];
                 };
             };
             /** @description Validation Error */

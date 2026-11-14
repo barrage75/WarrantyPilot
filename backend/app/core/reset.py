@@ -1,18 +1,37 @@
 from __future__ import annotations
 
+import mailbox
+import shutil
 import sys
+from calendar import monthrange
+from datetime import date, timedelta
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
+from uuid import NAMESPACE_URL, uuid5
 
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import Engine, text
 from sqlalchemy.orm import Session
 
-from app.contracts.enums import EventType
+from app.contracts.enums import EventType, PurchaseGuardState, RightType
+from app.contracts.models import Provenance
+from app.contracts.models import Settings as PolicySettings
 from app.core.journal import append_event
 from app.core.settings import AppSettings
-from app.core.tables import Base, documents, equipment, facts, people, rights
+from app.core.settings_store import write_settings
+from app.core.tables import (
+    Base,
+    documents,
+    equipment,
+    equipment_documents,
+    equipment_suppliers,
+    facts,
+    people,
+    purchase_requests,
+    rights,
+    suppliers,
+)
 
 if TYPE_CHECKING:
     from appelia.load import AppeliaDataset
@@ -27,9 +46,25 @@ def _load_appelia_dataset() -> AppeliaDataset:
     return cast("AppeliaDataset", load_dataset())
 
 
+def _add_months(value: date, months: int) -> date:
+    month_index = value.year * 12 + value.month - 1 + months
+    year, month_zero = divmod(month_index, 12)
+    month = month_zero + 1
+    day = min(value.day, monthrange(year, month)[1])
+    return date(year, month, day)
+
+
 def reset_demo(engine: Engine, settings: AppSettings) -> None:
     if engine.dialect.name != "sqlite":
         raise ValueError("demo reset is restricted to the local SQLite database")
+    maildir_path = settings.maildir_path.expanduser()
+    if maildir_path.is_symlink():
+        maildir_path.unlink()
+    elif maildir_path.exists():
+        shutil.rmtree(maildir_path)
+    maildir = mailbox.Maildir(str(maildir_path), create=True)
+    maildir.add_folder("sent")
+    settings.email_sent_ledger_path.expanduser().unlink(missing_ok=True)
     database_path = engine.url.database
     if database_path and database_path != ":memory:":
         db_path = Path(database_path).expanduser()
@@ -64,6 +99,22 @@ def reset_demo(engine: Engine, settings: AppSettings) -> None:
             ],
         )
         session.execute(
+            suppliers.insert(),
+            [
+                {
+                    "id": supplier["id"],
+                    "name": supplier["name"],
+                    "address": supplier["address"],
+                    "postal_code": supplier["postal_code"],
+                    "city": supplier["city"],
+                    "country": supplier["country"],
+                    "siret": supplier["siret"],
+                    "email": supplier["email"],
+                }
+                for supplier in dataset.suppliers
+            ],
+        )
+        session.execute(
             equipment.insert(),
             [
                 {
@@ -77,12 +128,35 @@ def reset_demo(engine: Engine, settings: AppSettings) -> None:
                     "currency": item.currency,
                     "in_loan_stock": item.in_loan_stock,
                     "purchase_date": item.purchase_date,
+                    "invoice_number": item.invoice_number,
                     "delivery_date": item.delivery_date,
                     "ship_date": item.ship_date,
                 }
                 for item in dataset.equipment
             ],
         )
+        supplier_ids = {supplier["id"] for supplier in dataset.suppliers}
+        session.execute(
+            equipment_suppliers.insert(),
+            [
+                {
+                    "equipment_id": item["id"],
+                    "supplier_id": item["supplier_id"],
+                }
+                for item in dataset.equipment_records
+                if item["supplier_id"] in supplier_ids
+            ],
+        )
+        document_ids = {item.filename: item.id for item in dataset.documents}
+        equipment_ids = {item["serial"]: item["id"] for item in dataset.equipment_records}
+        document_links = {
+            (equipment_ids[serial], str(document_ids[annotation["filename"]]))
+            for annotation in dataset.annotations
+            if annotation["filename"] in document_ids
+            for line in annotation["lines"]
+            for serial in line["serials"]
+            if serial in equipment_ids
+        }
         session.execute(
             documents.insert(),
             [
@@ -96,6 +170,13 @@ def reset_demo(engine: Engine, settings: AppSettings) -> None:
                     "untrusted": item.untrusted,
                 }
                 for item in dataset.documents
+            ],
+        )
+        session.execute(
+            equipment_documents.insert(),
+            [
+                {"equipment_id": equipment_id, "document_id": document_id}
+                for equipment_id, document_id in sorted(document_links)
             ],
         )
         if dataset.facts:
@@ -132,6 +213,72 @@ def reset_demo(engine: Engine, settings: AppSettings) -> None:
                     for item in dataset.rights
                 ],
             )
+        paul = next(person for person in dataset.people if person.name == "Paul Martin")
+        paul_headset = next(
+            item
+            for item in dataset.equipment
+            if item.assigned_to == paul.id and item.brand == "Jabra" and item.model == "Evolve2 65"
+        )
+        warranty_start = paul_headset.purchase_date or settings.demo_today
+        annotation = next(
+            (
+                item
+                for item in dataset.annotations
+                if item["invoice_number"] == paul_headset.invoice_number
+            ),
+            None,
+        )
+        evidence: list[dict[str, Any]] = []
+        if annotation is not None:
+            document = next(
+                item for item in dataset.documents if item.filename == annotation["filename"]
+            )
+            evidence = [
+                Provenance(
+                    document_id=document.id,
+                    page=annotation["pages"]["invoice_date"],
+                    excerpt=f"Facture {annotation['invoice_number']} pour le casque attribué.",
+                ).model_dump(mode="json")
+            ]
+        session.execute(
+            rights.insert().values(
+                id=str(uuid5(NAMESPACE_URL, f"warrantypilot:appelia:right:{paul_headset.id}")),
+                equipment_id=str(paul_headset.id),
+                right_type=RightType.MANUFACTURER_WARRANTY.value,
+                rule_id="jabra-evolve",
+                start_date=warranty_start,
+                end_date=_add_months(warranty_start, 24) - timedelta(days=1),
+                evidence=evidence,
+            )
+        )
+        session.execute(
+            purchase_requests.insert().values(
+                id=str(uuid5(NAMESPACE_URL, "warrantypilot:appelia:paul-martin-purchase")),
+                requester_id=str(paul.id),
+                equipment_id=str(paul_headset.id),
+                case_id=None,
+                item_description="Jabra Evolve2 65 neuf",
+                amount="120.00",
+                state=PurchaseGuardState.RECOMMENDATION.value,
+                decision_reason=None,
+                cancelled_at=None,
+                resolved_at=None,
+            )
+        )
+        allowlist = list(
+            dict.fromkeys(
+                [
+                    *(supplier["email"] for supplier in dataset.suppliers),
+                    "warranty@revendeur-test.example",
+                    "support@jabra.example",
+                    "support@locaprint-test.example",
+                ]
+            )
+        )
+        write_settings(
+            session,
+            PolicySettings(email_allowlist=allowlist),
+        )
         append_event(
             session,
             EventType.DEMO_RESET,
@@ -142,6 +289,9 @@ def reset_demo(engine: Engine, settings: AppSettings) -> None:
                     + len(dataset.documents)
                     + len(dataset.facts)
                     + len(dataset.rights)
+                    + len(dataset.suppliers)
+                    + len(document_links)
+                    + 1
                 )
             },
         )

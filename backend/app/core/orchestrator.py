@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from sqlalchemy import and_, insert, or_, select, update
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.actions.browser.settings import BrowserSettings
 from app.contracts.enums import (
     ActionResultStatus,
     CaseStatus,
@@ -16,6 +17,7 @@ from app.contracts.enums import (
     EventType,
     FactField,
     PolicyOutcome,
+    PurchaseGuardState,
 )
 from app.contracts.interfaces import (
     ActionAdapter,
@@ -26,6 +28,8 @@ from app.contracts.interfaces import (
 from app.contracts.models import (
     Action,
     ActionResult,
+    BrowserPortalClaim,
+    BrowserPortalPayload,
     Case,
     Equipment,
     Fact,
@@ -36,6 +40,7 @@ from app.contracts.models import (
     Rule,
     Settings,
     Verdict,
+    utc_now,
 )
 from app.core.journal import append_event
 from app.core.policy import decide
@@ -48,11 +53,16 @@ from app.core.tables import (
     case_steps,
     cases,
     data_checklists,
+    documents,
+    equipment_documents,
+    equipment_suppliers,
     events,
     incidents,
     people,
     policy_decisions,
+    purchase_requests,
     rights,
+    suppliers,
     verdicts,
 )
 from app.core.tables import (
@@ -386,18 +396,22 @@ class Orchestrator:
                 {"idempotency_key": action.idempotency_key},
                 attempt=attempt,
             )
-            session.execute(
-                insert(actions).values(
-                    id=str(action.id),
-                    case_id=str(case_id),
-                    channel=action.channel.value,
-                    kind=action.kind,
-                    idempotency_key=action.idempotency_key,
-                    payload=action.payload,
-                    badge=action.badge.value,
-                    requires_data_checklist=action.requires_data_checklist,
+            existing_action = session.execute(
+                select(actions.c.id).where(actions.c.id == str(action.id))
+            ).first()
+            if existing_action is None:
+                session.execute(
+                    insert(actions).values(
+                        id=str(action.id),
+                        case_id=str(case_id),
+                        channel=action.channel.value,
+                        kind=action.kind,
+                        idempotency_key=action.idempotency_key,
+                        payload=action.payload,
+                        badge=action.badge.value,
+                        requires_data_checklist=action.requires_data_checklist,
+                    )
                 )
-            )
             append_event(
                 session,
                 EventType.ACTION_STARTED,
@@ -471,30 +485,232 @@ class Orchestrator:
             )
         )
         attempt = latest_attempt + 1
-        idempotency_key = f"case:{case.id}:execute:{attempt}"
         incident_row = session.execute(
-            select(incidents.c.reporter_id).where(incidents.c.id == str(case.incident_id))
+            select(incidents.c.reporter_id, incidents.c.description).where(
+                incidents.c.id == str(case.incident_id)
+            )
         ).first()
-        recipient = None
+        person_row = None
         if incident_row is not None:
             person_row = session.execute(
-                select(people.c.email).where(people.c.id == incident_row.reporter_id)
+                select(people.c.name, people.c.email).where(people.c.id == incident_row.reporter_id)
             ).first()
-            if person_row is not None:
-                recipient = person_row.email
         equipment_row = session.execute(
-            select(equipment_table.c.category).where(equipment_table.c.id == str(case.equipment_id))
+            select(
+                equipment_table.c.brand,
+                equipment_table.c.model,
+                equipment_table.c.serial,
+                equipment_table.c.category,
+                equipment_table.c.purchase_date,
+                equipment_table.c.invoice_number,
+            ).where(equipment_table.c.id == str(case.equipment_id))
         ).first()
         category = str(equipment_row.category).casefold() if equipment_row is not None else ""
         channel = (case.verdict.channel if case.verdict is not None else None) or case.channel
         adapter = self.action_adapters.get(channel)
+        recipient: str | None = None
+        if channel == Channel.EMAIL_RESELLER:
+            supplier_row = session.execute(
+                select(suppliers.c.email)
+                .join(
+                    equipment_suppliers,
+                    equipment_suppliers.c.supplier_id == suppliers.c.id,
+                )
+                .where(equipment_suppliers.c.equipment_id == str(case.equipment_id))
+            ).first()
+            recipient = (
+                str(supplier_row.email)
+                if supplier_row is not None
+                else "warranty@revendeur-test.example"
+            )
+        elif channel == Channel.EMAIL_MANUFACTURER_SUPPORT:
+            brand = str(equipment_row.brand).casefold() if equipment_row is not None else "jabra"
+            recipient = f"support@{brand}.example"
+        elif channel == Channel.EMAIL_LESSOR:
+            recipient = "support@locaprint-test.example"
+
+        if channel == Channel.BROWSER_PORTAL:
+            target = str(equipment_row.serial) if equipment_row is not None else "unknown"
+        elif recipient is not None:
+            target = recipient
+        else:
+            target = str(case.equipment_id or case.id)
+        idempotency_key = f"case:{case.id}:{channel.value}:{target}"
         payload: dict[str, Any] = {
             "case_id": str(case.id),
             "incident_id": str(case.incident_id),
-            **({"to": recipient} if recipient else {}),
         }
+        if recipient is not None:
+            payload["to"] = recipient
+        if channel.value.startswith("email"):
+            document_ids: set[str] = set(
+                session.execute(
+                    select(equipment_documents.c.document_id).where(
+                        equipment_documents.c.equipment_id == str(case.equipment_id)
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            linked_rights = session.execute(
+                select(rights.c.rule_id, rights.c.evidence).where(
+                    rights.c.equipment_id == str(case.equipment_id)
+                )
+            ).all()
+            contract_reference = ""
+            for right in linked_rights:
+                contract_reference = contract_reference or str(right.rule_id)
+                if isinstance(right.evidence, list):
+                    document_ids.update(
+                        str(proof["document_id"])
+                        for proof in right.evidence
+                        if isinstance(proof, dict) and proof.get("document_id")
+                    )
+            document_rows = (
+                session.execute(
+                    select(
+                        documents.c.id,
+                        documents.c.kind,
+                        documents.c.filename,
+                        documents.c.sha256,
+                    )
+                    .where(documents.c.id.in_(document_ids))
+                    .order_by(documents.c.filename)
+                )
+                .mappings()
+                .all()
+                if document_ids
+                else []
+            )
+            if not contract_reference:
+                contract_reference = next(
+                    (
+                        str(document["filename"])
+                        for document in document_rows
+                        if document["kind"] == "contract"
+                    ),
+                    "",
+                )
+            invoice_number = (
+                str(equipment_row.invoice_number)
+                if equipment_row is not None and equipment_row.invoice_number
+                else ""
+            )
+            if not invoice_number:
+                invoice_number_fact = session.execute(
+                    select(facts_table.c.value)
+                    .where(
+                        facts_table.c.equipment_id == str(case.equipment_id),
+                        facts_table.c.field == "invoice_number",
+                    )
+                    .limit(1)
+                ).scalar_one_or_none()
+                if invoice_number_fact is not None:
+                    invoice_number = str(invoice_number_fact)
+            payload.update(
+                {
+                    "language": "fr",
+                    "equipment_label": (
+                        f"{equipment_row.brand} {equipment_row.model}"
+                        if equipment_row is not None
+                        else "Équipement"
+                    ),
+                    "serial_number": str(equipment_row.serial) if equipment_row is not None else "",
+                    "purchase_date": (
+                        equipment_row.purchase_date.isoformat()
+                        if equipment_row is not None and equipment_row.purchase_date
+                        else ""
+                    ),
+                    "invoice_number": invoice_number,
+                    "issue_description": (
+                        str(incident_row.description) if incident_row is not None else ""
+                    ),
+                    "company_name": "Appelia SAS",
+                    "purchase_country": "France",
+                    "contract_reference": contract_reference,
+                    "documents": [
+                        {
+                            "id": str(document["id"]),
+                            "kind": str(document["kind"]),
+                            "filename": str(document["filename"]),
+                            "sha256": str(document["sha256"]),
+                        }
+                        for document in document_rows
+                    ],
+                }
+            )
         if channel == Channel.BROWSER_PORTAL:
-            payload["url"] = case.verdict.target_url if case.verdict else ""
+            browser_settings = BrowserSettings.from_env()
+            target_url = (
+                case.verdict.target_url
+                if case.verdict is not None and case.verdict.target_url
+                else browser_settings.portal_url
+            )
+            payload["url"] = target_url
+            if equipment_row is not None and incident_row is not None and person_row is not None:
+                full_name = str(person_row.name).strip().split(maxsplit=1)
+                first_name = full_name[0] if full_name else "Démo"
+                last_name = full_name[1] if len(full_name) > 1 else "Appelia"
+                person_email = str(person_row.email or "")
+                contact_email = (
+                    person_email
+                    if person_email.rsplit("@", 1)[-1].casefold().endswith(".example")
+                    else f"contact-{incident_row.reporter_id}@appelia.example"
+                )
+                incident_description = str(incident_row.description).strip()
+                problem_description = (
+                    incident_description
+                    if len(incident_description) >= 20
+                    else (
+                        f"Incident matériel {equipment_row.brand} {equipment_row.model} : "
+                        f"{incident_description}"
+                    )
+                )[:2000]
+                category_text = problem_description.casefold()
+                problem_category: Literal[
+                    "Ne démarre pas",
+                    "Écran",
+                    "Clavier/pavé tactile",
+                    "Batterie/alimentation",
+                    "Disque/stockage",
+                    "Carte mère/autre matériel",
+                    "Logiciel",
+                ]
+                if "démarr" in category_text or "allum" in category_text:
+                    problem_category = "Ne démarre pas"
+                elif "écran" in category_text or "affichage" in category_text:
+                    problem_category = "Écran"
+                elif "clavier" in category_text or "pavé tactile" in category_text:
+                    problem_category = "Clavier/pavé tactile"
+                elif "batterie" in category_text or "charge" in category_text:
+                    problem_category = "Batterie/alimentation"
+                elif "disque" in category_text or "stockage" in category_text:
+                    problem_category = "Disque/stockage"
+                elif "logiciel" in category_text:
+                    problem_category = "Logiciel"
+                else:
+                    problem_category = "Carte mère/autre matériel"
+                portal_claim = BrowserPortalClaim(
+                    service_tag=str(equipment_row.serial),
+                    problem_category=problem_category,
+                    problem_description=problem_description,
+                    contact_first_name=first_name,
+                    contact_last_name=last_name,
+                    contact_email=contact_email,
+                    contact_phone="0102030405",
+                    company_name="Appelia SAS",
+                    address_line1="1 rue de l'Exemple",
+                    postal_code="75000",
+                    city="Paris",
+                    availability_date=self.app_settings.demo_today + timedelta(days=1),
+                    availability_slot="Matin 8h–12h",
+                )
+                payload.update(
+                    BrowserPortalPayload(
+                        url=target_url,
+                        portal_claim=portal_claim,
+                    ).model_dump(mode="json")
+                )
         action = Action(
             case_id=case.id,
             channel=channel,
@@ -504,6 +720,22 @@ class Orchestrator:
             badge=adapter.badge if adapter is not None else case.badge,
             requires_data_checklist=category in {"computer", "laptop", "notebook"},
         )
+        prior_action = (
+            session.execute(select(actions).where(actions.c.idempotency_key == idempotency_key))
+            .mappings()
+            .first()
+        )
+        if prior_action is not None:
+            action = Action(
+                id=UUID(prior_action["id"]),
+                case_id=UUID(prior_action["case_id"]),
+                channel=prior_action["channel"],
+                kind=prior_action["kind"],
+                idempotency_key=prior_action["idempotency_key"],
+                payload=prior_action["payload"],
+                badge=prior_action["badge"],
+                requires_data_checklist=prior_action["requires_data_checklist"],
+            )
         return action, adapter, attempt, prior_running
 
     def _assert_action_allowed(self, action: Action) -> None:
@@ -558,6 +790,20 @@ class Orchestrator:
                         updated_at=datetime.now(UTC).isoformat(),
                     )
                 )
+            if action.channel == Channel.MANUAL:
+                takeover = transition(CaseStatus.SENDING, CaseStatus.MANUAL_TAKEOVER)
+                self._set_status(session, case, takeover)
+                append_event(
+                    session,
+                    EventType.STATUS_CHANGED,
+                    case_id=str(case.id),
+                    payload={
+                        "from": CaseStatus.SENDING.value,
+                        "to": takeover.value,
+                        "reason": "prise en main humaine requise",
+                    },
+                )
+                return case.model_copy(update={"status": takeover})
             if result.status == ActionResultStatus.SUCCESS:
                 current = CaseStatus.SENDING
                 sent = transition(current, CaseStatus.SENT, action_result=result)
@@ -642,6 +888,35 @@ class Orchestrator:
         if any(payload.get("status") == "resolved" for payload in follow_up_payloads):
             resolved_status = transition(tracked_status, CaseStatus.RESOLVED)
             self._set_status(session, case, resolved_status)
+            linked_purchases = (
+                session.execute(
+                    select(purchase_requests).where(purchase_requests.c.case_id == str(case.id))
+                )
+                .mappings()
+                .all()
+            )
+            for purchase in linked_purchases:
+                values: dict[str, Any] = {
+                    "resolved_at": utc_now().isoformat(),
+                }
+                if purchase["cancelled_at"]:
+                    values["state"] = PurchaseGuardState.SAVING_REALIZED.value
+                session.execute(
+                    update(purchase_requests)
+                    .where(purchase_requests.c.id == purchase["id"])
+                    .values(**values)
+                )
+                if purchase["cancelled_at"]:
+                    append_event(
+                        session,
+                        EventType.PURCHASE_GUARD_SAVING_REALIZED,
+                        actor="agent",
+                        case_id=str(case.id),
+                        payload={
+                            "purchase_request_id": purchase["id"],
+                            "amount_eur": float(purchase["amount"]),
+                        },
+                    )
             append_event(
                 session,
                 EventType.STATUS_CHANGED,
