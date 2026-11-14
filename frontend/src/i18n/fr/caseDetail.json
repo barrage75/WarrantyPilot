@@ -10,6 +10,8 @@
   "liveSse": "En direct (SSE)",
   "title": "Détail du dossier",
   "validate": "Valider",
+  "validationPending": "Envoi dans 5 s",
+  "validationQueued": "Envoi prévu…",
   "reject": "Rejeter",
   "reason": "Motif",
   "reasonRequired": "Un motif est obligatoire pour rejeter le dossier.",

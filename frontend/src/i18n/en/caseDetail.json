@@ -10,6 +10,8 @@
   "liveSse": "Live (SSE)",
   "title": "Case details",
   "validate": "Validate",
+  "validationPending": "Sending in 5 s",
+  "validationQueued": "Send queued…",
   "reject": "Reject",
   "reason": "Reason",
   "reasonRequired": "A reason is required to reject the case.",
