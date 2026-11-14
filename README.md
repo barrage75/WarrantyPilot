@@ -1,129 +1,237 @@
-# WarrantyPilot
+<div align="center">
 
-## Tester la démo sur mon PC
+# 🛡️ WarrantyPilot
 
-Tout fonctionne **sur votre ordinateur**, avec des données fictives. Aucun dossier
-n'est envoyé à Dell : le portail Dell est une **reproduction locale**.
+### L'agent IA qui transforme les garanties oubliées en économies.
 
-### Sur Windows (pas besoin de Make ni de Bash)
+WarrantyPilot repère l'équipement en panne, retrouve sa facture, vérifie la garantie
+et ouvre lui-même le dossier chez le fabricant. Vous gardez toujours la décision.
 
-1. Installez [Git pour Windows](https://git-scm.com/downloads/win), puis récupérez
-   le dépôt, ou plus simplement [téléchargez le ZIP de la branche integration](https://github.com/barrage75/gare/archive/refs/heads/integration.zip)
-   et **extrayez-le** dans un dossier (pas dans le ZIP).
-2. Installez **uv**, qui gère Python pour vous. Ouvrez PowerShell et collez la
-   commande officielle de [docs.astral.sh](https://docs.astral.sh/uv/getting-started/installation/) :
+[![CI](https://github.com/barrage75/gare/actions/workflows/ci.yml/badge.svg?branch=integration)](https://github.com/barrage75/gare/actions/workflows/ci.yml)
+![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Windows · macOS · Linux](https://img.shields.io/badge/Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-démo%20locale-111111)
 
+[**Lancer la démo**](#-lancer-la-démo-en-5-minutes) · [Fonctionnement](#-comment-ça-marche) · [Captures](#-aperçu) · [Architecture](#-architecture) · [Documentation](#-documentation)
+
+<br/>
+
+<img src="docs/images/accueil.png" alt="Accueil de WarrantyPilot" width="900"/>
+
+</div>
+
+---
+
+## 💡 Le problème
+
+Une entreprise rachète chaque année du matériel encore sous garantie : la facture est
+introuvable, la durée de garantie est inconnue, et la démarche chez le fabricant est trop
+longue. **WarrantyPilot s'occupe de tout le travail administratif**, de la facture jusqu'au
+dossier résolu.
+
+## ✨ Ce que fait WarrantyPilot
+
+| | Fonction | En pratique |
+|---|---|---|
+| 📄 | **Lit les factures** | PDF et Factur-X. Dates, numéros de série et durées de garantie extraits, chaque information gardant sa preuve. |
+| ⚖️ | **Calcule la couverture** | Un moteur de règles déterministe donne un verdict par équipement : couvert, probable, non couvert, hors garantie ou à vérifier. |
+| 💬 | **Reçoit les pannes** | Par chat ou par e-mail : « Mon casque Jabra ne marche plus » suffit. L'agent identifie l'équipement et sa facture. |
+| 🤖 | **Agit chez le fabricant** | Un navigateur automatisé remplit le formulaire du portail fabricant, puis suit le dossier jusqu'à sa résolution. |
+| ✋ | **Vous laisse décider** | Rien ne part sans politique d'envoi claire ou sans votre validation, avec 5 secondes pour annuler. |
+| 🛒 | **Garde-fou d'achat** | Il vous prévient avant de racheter un équipement encore sous garantie. |
+| 🔏 | **Journal infalsifiable** | Chaque action est signée (HMAC) et ancrée : la trace complète est vérifiable à tout moment. |
+
+## 🧭 Comment ça marche
+
+```mermaid
+flowchart LR
+    A["💬 Panne signalée<br/>chat ou e-mail"] --> B["🔎 Équipement<br/>identifié"]
+    B --> C["📄 Facture<br/>retrouvée"]
+    C --> D["⚖️ Règles de<br/>garantie"]
+    D --> E{"✋ Validation<br/>humaine"}
+    E -->|accord| F["🤖 Dossier ouvert<br/>chez le fabricant"]
+    E -->|annulé| X["Aucun envoi"]
+    F --> G["🔁 Suivi<br/>automatique"]
+    G --> H["✅ Résolu<br/>économie prouvée"]
+```
+
+## 🖼️ Aperçu
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/signalement.png" alt="Signalement d'une panne"/><p align="center"><b>Signalement</b> : une phrase suffit</p></td>
+    <td width="50%"><img src="docs/images/dossier.png" alt="Dossier de garantie"/><p align="center"><b>Dossier</b> : le parcours de l'agent, étape par étape</p></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/parc.png" alt="Parc d'équipements"/><p align="center"><b>Parc</b> : la garantie de chaque équipement</p></td>
+    <td width="50%"><img src="docs/images/garde-fou.png" alt="Garde-fou d'achat"/><p align="center"><b>Garde-fou</b> : réparer avant de racheter</p></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/documents.png" alt="Documents"/><p align="center"><b>Documents</b> : factures déposées ou reçues par e-mail</p></td>
+    <td width="50%"><img src="docs/images/journal.png" alt="Journal intègre"/><p align="center"><b>Journal</b> : chaque action vérifiable</p></td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="docs/images/mobile-accueil.png" alt="Version mobile" width="260"/><br/>
+  <sub>Interface Bento, en français et en anglais, sur ordinateur et sur mobile, avec recherche <kbd>⌘K</kbd>.</sub>
+</p>
+
+## 🚀 Lancer la démo en 5 minutes
+
+> Tout tourne **sur votre ordinateur**, avec des données fictives (l'entreprise Appelia).
+> Le portail Dell est une **reproduction locale** : rien n'est envoyé à un vrai fabricant,
+> et aucun vrai e-mail ne part.
+
+### Windows
+
+1. [Téléchargez le ZIP de la branche `integration`](https://github.com/barrage75/gare/archive/refs/heads/integration.zip)
+   et **extrayez-le** (pas besoin de Git).
+2. Installez **uv**, qui gère Python pour vous. Dans PowerShell :
    ```powershell
    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
    ```
+3. Installez **[Node.js LTS](https://nodejs.org/)**, puis fermez et rouvrez vos terminaux.
+4. Double-cliquez sur **`demo.cmd`**.
 
-3. Installez **Node.js LTS**, npm inclus, avec l'installateur de
-   [nodejs.org](https://nodejs.org/). Fermez et rouvrez votre terminal après installation.
-4. Dans le dossier extrait, **double-cliquez sur `demo.cmd`**, ou ouvrez un terminal
-   dans ce dossier et lancez :
+### macOS / Linux
 
-   ```powershell
-   .\demo.cmd
-   ```
-
-La première fois, les dépendances, Python 3.12 et Chromium sont téléchargés : cela
-peut prendre plusieurs minutes. La base locale est initialisée. Un navigateur
-s'ouvre sur **http://127.0.0.1:5173** quand tout est prêt. Choisissez **Karim Benali** ;
-le mot de passe de démonstration par défaut, lu dans les réglages du backend, est
-indiqué dans la console. Si vous avez personnalisé `WP_DEMO_PASSWORD` dans `.env`,
-utilisez votre propre valeur. Ne projetez pas cette console devant le jury.
-
-Gardez la fenêtre du lanceur ouverte. **Ctrl+C** arrête les quatre services ;
-vous pouvez ensuite fermer la fenêtre. Sous Windows, la fermeture de cette
-fenêtre arrête également ses processus enfants. Les relances conservent les
-données ; pour repartir à zéro (base WarrantyPilot **et** portail Dell) :
-
-```powershell
-.\demo.cmd --reset
-```
-
-Pour la démonstration de clôture Dell, ouvrez un **deuxième terminal** dans le même
-dossier, après avoir créé et validé le dossier Dell dans l'interface :
-
-```powershell
-.\demo.cmd advance
-```
-
-Cette commande avance le dernier dossier du portail local jusqu'à « clôturé »,
-puis déclenche le suivi authentifié de WarrantyPilot. Voir le parcours complet
-dans [le script de démonstration de 3 minutes](docs/demo/SCRIPT_3MIN.md).
-
-### macOS / Linux et options
-
-Installez [uv](https://docs.astral.sh/uv/) et Node.js LTS, puis lancez
-`sh demo.sh` (ou `sh demo.sh advance`). La commande directe sur tous les systèmes :
-`uv run --project backend python scripts/demo.py`.
-
-- `--no-browser` : ne pas ouvrir automatiquement le navigateur.
-- `--skip-setup` : ignorer installations et migrations, uniquement après une
-  première préparation réussie. `--reset` reste actif avec cette option.
-- Le lanceur utilise le moteur navigateur **scripted**, le SMTP local et le
-  runtime Dell persistant `repro/dell/runtime`, jamais un dossier temporaire.
-  Le suivi s'exécute toutes les 5 secondes. Les identifiants Gmail sont refusés.
-
-**En cas de souci :**
-- Port occupé (8001, 5173, 2525 ou 8100) : arrêtez l'ancienne démo ou le programme
-  indiqué ; ne lancez pas `make dev` en parallèle.
-- Antivirus / pare-feu : autorisez Python et Node pour cette démo locale si
-  demandé, sans désactiver votre protection ni ouvrir de port sur Internet.
-- Premier lancement long : laissez les téléchargements se terminer ; consultez
-  `runtime/logs/` si une erreur apparaît (la fenêtre Windows reste ouverte).
-- Outil introuvable : rouvrez le terminal après installation ; pour Python,
-  lancez `uv python install 3.12`. Sur Linux, si Chromium signale une bibliothèque
-  système absente, suivez le diagnostic Playwright (`uv run --project backend playwright install-deps chromium`).
-
-Agent local qui transforme une panne d'équipement en demande de garantie
-documentée, validée par un humain, envoyée et suivie. Le dépôt contient le
-socle L0; les connecteurs et les données des lots suivants ne sont pas encore
-présents.
-
-## Installer
-
-Prérequis : Python 3.12 géré par [uv](https://docs.astral.sh/uv/), et Node/npm
-(nvm est utilisé sur la VM). Installer uv depuis sa documentation officielle;
-pour installer Node sur une machine qui utilise déjà nvm :
+Installez [uv](https://docs.astral.sh/uv/) et Node.js LTS, puis :
 
 ```sh
-export NVM_DIR="$HOME/.nvm"
-. "$NVM_DIR/nvm.sh"
-nvm install --lts
+sh demo.sh
+```
+
+### Ensuite
+
+Le premier lancement télécharge Python 3.12, les dépendances et Chromium (2 à 5 minutes).
+Les suivants prennent quelques secondes. Le navigateur s'ouvre seul sur
+**http://127.0.0.1:5173**.
+
+| Quoi | Détail |
+|---|---|
+| 👤 **Connexion** | **Karim Benali** (administrateur) ou **Paul Martin** (opérateur) |
+| 🔑 **Mot de passe** | `appelia-demo` par défaut, affiché dans la console (`WP_DEMO_PASSWORD` dans `.env`) |
+| 🎬 **Scénario** | [`docs/demo/SCRIPT_3MIN.md`](docs/demo/SCRIPT_3MIN.md) |
+| ⏹️ **Arrêter** | <kbd>Ctrl</kbd>+<kbd>C</kbd> dans la console (répondez `O` si Windows le demande) |
+
+**Options du lanceur**
+
+| Commande | Effet |
+|---|---|
+| `demo.cmd --reset` / `sh demo.sh --reset` | Remet la démo à zéro (base et portail Dell local) |
+| `demo.cmd advance` / `sh demo.sh advance` | Fait avancer le dossier Dell local jusqu'à « Résolu », dans un second terminal |
+| `--skip-setup` | Saute installations et migrations, après une première préparation réussie |
+| `--no-browser` | N'ouvre pas le navigateur automatiquement |
+
+<details>
+<summary><b>🛠️ En cas de souci</b></summary>
+
+- **Port occupé** (8001, 5173, 2525 ou 8100) : arrêtez l'ancienne démo ou l'application
+  qui utilise ce port. Ne lancez pas `make dev` en parallèle.
+- **Antivirus ou pare-feu** : autorisez Python et Node pour cette démo locale, sans
+  désactiver votre protection ni ouvrir de port sur Internet.
+- **Premier lancement long** : laissez les téléchargements se terminer. En cas d'erreur,
+  consultez `runtime/logs/` (la fenêtre Windows reste ouverte).
+- **Outil introuvable** : rouvrez le terminal après l'installation. Pour Python :
+  `uv python install 3.12`. Sur Linux, si Chromium signale une bibliothèque absente :
+  `uv run --project backend playwright install-deps chromium`.
+
+</details>
+
+## 🧪 Réel, reproduit ou simulé ?
+
+La démo affiche un badge sur chaque élément, pour ne jamais présenter un faux succès.
+
+| Badge | Signification |
+|---|---|
+| 🟢 **Réel** | Exécuté par le code, sans service externe : lecture des factures, règles, validation, journal. |
+| 🟠 **Reproduction locale** | Action réellement exécutée vers une cible locale fictive : serveur e-mail local, copie du portail Dell. |
+| ⚪ **Simulé** | Donnée fictive : l'entreprise Appelia, le colis de remplacement. |
+
+## 🏗️ Architecture
+
+```mermaid
+flowchart LR
+    UI["🖥️ Interface<br/>React · Vite<br/>:5173"] -->|/api| API["⚙️ API<br/>FastAPI · SQLite<br/>:8001"]
+    API --> SMTP["✉️ SMTP local<br/>Maildir<br/>:2525"]
+    API -->|Playwright| DELL["🏭 Portail Dell<br/>reproduction<br/>:8100"]
+```
+
+Les quatre services écoutent uniquement sur `127.0.0.1`.
+
+| Couche | Technologies |
+|---|---|
+| **Interface** | React 19, TypeScript, Vite, Tailwind CSS v4, TanStack Query, React Router, i18next, cmdk, Motion, Sonner, lucide-react |
+| **Serveur** | Python 3.12, FastAPI, SQLAlchemy, Pydantic, Alembic, SQLite |
+| **Lecture des documents** | PDF et Factur-X, avec la provenance de chaque information |
+| **Action navigateur** | Playwright (Chromium) vers la reproduction locale du portail Dell |
+| **Outillage** | uv, npm, pytest, Vitest, Playwright, GitHub Actions |
+
+<details>
+<summary><b>📁 Structure du dépôt</b></summary>
+
+```text
+backend/          API FastAPI, règles, lecture des documents, actions, suivi
+  app/ingestion/    lecture PDF et Factur-X
+  app/rules/        moteur de règles de garantie
+  app/actions/      e-mail et navigateur
+  app/followup/     suivi des dossiers fabricant
+  app/purchase_guard/  garde-fou d'achat
+frontend/         interface React (Bento)
+repro/dell/       reproduction locale du portail Dell
+data/appelia/     données fictives de démonstration
+scripts/demo.py   lanceur de démo multiplateforme
+docs/             architecture, API, sécurité, démo, design
+```
+
+</details>
+
+## 👩‍💻 Développement
+
+```sh
 cp .env.example .env
 uv python install 3.12
 make setup
+make dev          # API sur 127.0.0.1:8001, interface sur 127.0.0.1:5173
 ```
 
-`WP_JOURNAL_ANCHOR_KEY` dans `.env` doit être remplacée avant toute utilisation
-qui dépasse les données fictives locales. Ne jamais committer `.env`.
-
-## Lancer
-
 ```sh
-make dev
-```
-
-L'API écoute sur `http://127.0.0.1:8001/api`; l'interface Vite est sur
-`http://localhost:5173`. Swagger : `/docs`. L'API L0 n'a pas d'authentification
-et doit rester liée à la machine locale.
-
-## Commandes
-
-```sh
-make test
+make test         # tests serveur
 make lint
 make typecheck
 make frontend-build
 make openapi
-make reset       # API lancée
-make preflight   # API lancée
+make reset        # API lancée
+make preflight    # API lancée
 ```
 
-Architecture et frontières de confiance : [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-Voir aussi [l'API](docs/API_DOCUMENTATION.md), la
-[sécurité](docs/SECURITY.md), les [contributions](docs/CONTRIBUTING.md) et la
-[propriété des dossiers](OWNERSHIP.md), les
-[décisions](DECISIONS.md) et le [changelog](CHANGELOG.md).
+Remplacez `WP_JOURNAL_ANCHOR_KEY` dans `.env` avant toute utilisation au-delà des données
+fictives locales. Ne committez jamais `.env`.
+
+## 📚 Documentation
+
+| Document | Contenu |
+|---|---|
+| [Architecture](docs/ARCHITECTURE.md) | Composants et frontières de confiance |
+| [API](docs/API_DOCUMENTATION.md) | Points d'entrée (Swagger sur `/docs`) |
+| [Base de données](docs/DATABASE.md) | Schéma et migrations |
+| [Sécurité](docs/SECURITY.md) · [Audit](docs/audit/AUDIT_SECURITE.md) | Modèle de menace et audit |
+| [Design system](docs/design/DESIGN_SYSTEM.md) | Composants Bento |
+| [Démo](docs/demo/SCRIPT_3MIN.md) · [Runbook](docs/demo/RUNBOOK.md) · [Pitch](docs/demo/PITCH.md) | Préparer une présentation |
+| [Contribuer](docs/CONTRIBUTING.md) · [Propriété](OWNERSHIP.md) · [Décisions](DECISIONS.md) · [Changelog](CHANGELOG.md) | Travailler sur le projet |
+
+## 🗺️ Prochaines étapes
+
+- [ ] Brancher une vraie boîte mail (Gmail)
+- [ ] Connecter un premier vrai portail fabricant, en mode test
+- [ ] Lecture OCR des factures scannées
+- [ ] Import des factures d'une vraie entreprise
+
+---
+
+<div align="center">
+<sub>WarrantyPilot · démonstration locale avec des données fictives · aucun fabricant réel n'est contacté</sub>
+</div>
