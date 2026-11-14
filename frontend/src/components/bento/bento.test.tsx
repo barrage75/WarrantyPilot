@@ -63,8 +63,11 @@ it("keeps every PillNav link keyboard-accessible when hiding the native scrollba
  renderWithApi(<PillNav label="Navigation" items={items}/>);
  expect(screen.getByRole("navigation")).toHaveClass("overflow-x-auto", "[scrollbar-width:none]", "[&::-webkit-scrollbar]:hidden");
  for (const item of items) {
+  const link = screen.getByRole("link", { name: item.label });
+  link.scrollIntoView = vi.fn();
   await userEvent.tab();
-  expect(screen.getByRole("link", { name: item.label })).toHaveFocus();
-  expect(screen.getByRole("link", { name: item.label })).toHaveAttribute("href", item.to);
+  expect(link).toHaveFocus();
+  expect(link).toHaveAttribute("href", item.to);
+  expect(link.scrollIntoView).toHaveBeenCalledWith({ block: "nearest", inline: "nearest", behavior: "instant" });
  }
 });
