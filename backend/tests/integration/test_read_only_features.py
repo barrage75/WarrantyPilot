@@ -17,7 +17,7 @@ from app.contracts.enums import EventType
 from app.contracts.models import Action, ActionResult
 from app.core.journal import append_event
 from app.core.settings_store import read_settings, write_settings
-from app.core.tables import action_results, actions, cases, events
+from app.core.tables import action_results, actions, cases, equipment, events
 from app.followup.reminders import ReminderPlanner
 from tests.auth_helpers import KARIM_ID, login
 from tests.integration.helpers import create_case
@@ -52,6 +52,30 @@ def test_empty_database(client):
         for key in ("covered_equipment_eur", "possible_savings_eur", "realized_savings_eur")
     )
     assert len(client.get("/api/reports/savings.csv").content.decode("utf-8-sig").splitlines()) == 1
+
+
+@pytest.mark.parametrize("value", ["=1+1", "+1", "-1", "@SUM(1,2)", "\t=1+1", "\r=1+1"])
+def test_savings_csv_escapes_formulas_and_uses_french_labels(client, session_factory, value):
+    login(client, person_id=KARIM_ID)
+    case, _ = create_case(session_factory)
+    with session_factory.begin() as session:
+        session.execute(
+            update(equipment).where(equipment.c.id == str(case.equipment_id)).values(brand=value)
+        )
+        append_event(
+            session,
+            EventType.FOLLOWUP_RECEIVED,
+            case_id=str(case.id),
+            payload={"case_number": value},
+        )
+    response = client.get("/api/reports/savings.csv")
+    assert response.status_code == 200
+    rows = list(csv.reader(io.StringIO(response.content.decode("utf-8-sig")), delimiter=";"))
+    assert len(rows) == 2
+    assert rows[1][1] == f"'{value} Evolve2 65"
+    assert rows[1][2] == f"'{value}"
+    assert rows[1][3:5] == ["E-mail revendeur", "Préparé"]
+    assert rows[1][8] == f"'{value}"
 
 
 def test_seed_overview_filters_and_timing(client):

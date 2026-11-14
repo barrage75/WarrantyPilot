@@ -26,7 +26,7 @@ jobs:
       - run: uv run ruff format --check app tests
       - run: >-
           MYPYPATH=.:../data uv run mypy --strict --explicit-package-bases
-          app/contracts app/core app/ingestion app/rules app/api/routers/overview.py app/api/routers/reports.py app/api/routers/notifications.py ../data/appelia
+          app/contracts app/core app/ingestion app/rules app/api ../data/appelia
           app/actions app/followup app/intake app/testing
       - run: uv run pytest tests ../data/appelia/tests -m "not p0"
 

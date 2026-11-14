@@ -36,6 +36,18 @@ async def test_scan_purchase_read_runs_off_loop(monkeypatch, app_settings, purch
     session.__enter__.return_value = session
     session.execute.return_value.mappings.return_value.all.return_value = purchases
 
+    def totals(current, *_):
+        assert get_ident() != loop_thread
+        assert current is session
+        return {
+            "covered_equipment_eur": 20.0,
+            "possible_savings_eur": 0.0,
+            "realized_savings_eur": 12.0 if purchases else 0.0,
+        }
+
+    load_totals = MagicMock(side_effect=totals)
+    monkeypatch.setattr(scan, "savings_totals", load_totals)
+
     def factory():
         assert get_ident() != loop_thread
         return session
@@ -52,6 +64,8 @@ async def test_scan_purchase_read_runs_off_loop(monkeypatch, app_settings, purch
     await scan._run_scan(application, "scan")
     result = application.state.scans["scan"]
     assert result["status"] == "completed"
+    load_totals.assert_called_once()
+    assert result["covered_equipment_eur"] == 20.0
     assert result["realized_savings_eur"] == (12 if purchases else 0)
 
 

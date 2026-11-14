@@ -7,7 +7,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy import select
 
-from app.contracts.enums import CaseStatus, Channel
+from app.contracts.enums import CaseStatus, Channel, enum_label
 from app.contracts.models import utc_now
 from app.core import tables
 from app.core.journal import verify
@@ -117,6 +117,12 @@ def savings(request: Request) -> SavingsReport:
     )
 
 
+def _csv_cell(value: str) -> str:
+    if value.lstrip().startswith(("=", "+", "-", "@")) or value.startswith(("\t", "\r", "\n")):
+        return "'" + value
+    return value
+
+
 @router.get("/savings.csv")
 def savings_csv(request: Request) -> Response:
     report = savings(request)
@@ -138,15 +144,18 @@ def savings_csv(request: Request) -> Response:
     for line in report.lines:
         writer.writerow(
             [
-                line.case_id,
-                line.equipment_label,
-                line.manufacturer,
-                line.channel.value,
-                line.status.value,
-                f"{line.amount_eur:.2f}",
-                "oui" if line.realized else "non",
-                line.resolved_at or "",
-                line.reference or "",
+                _csv_cell(value)
+                for value in (
+                    line.case_id,
+                    line.equipment_label,
+                    line.manufacturer,
+                    enum_label(line.channel),
+                    enum_label(line.status),
+                    f"{line.amount_eur:.2f}",
+                    "oui" if line.realized else "non",
+                    line.resolved_at or "",
+                    line.reference or "",
+                )
             ]
         )
     return Response(
