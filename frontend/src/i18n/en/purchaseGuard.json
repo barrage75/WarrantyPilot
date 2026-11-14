@@ -1,4 +1,10 @@
 {
+  "advice": {
+    "covered": "Still under warranty: try a repair before buying.",
+    "notCovered": "Coverage not confirmed: review other options before buying.",
+    "verify": "Check coverage before deciding on a new purchase."
+  },
+  "updating": "Saving your decision…",
   "neverBlock": "Purchases are never blocked automatically. The decision is yours.",
   "level1": "1 · Recommendation",
   "level2": "2 · Your decision",
