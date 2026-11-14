@@ -35,9 +35,11 @@ it("handles empty checks without adding invented results", async () => {
 it("keeps reset confirmation, sends RESET only after confirmation, and reports progress and success", async () => {
  let finish!: () => void; gate = new Promise<void>(resolve => { finish = resolve; });
  renderWithApi(<Demo/>); await screen.findByText("Prêt pour la démonstration");
+ expect(screen.getByRole("button", { name: "Réinitialiser la démo" })).toHaveClass("text-white");
  await userEvent.click(screen.getByRole("button", { name: "Réinitialiser la démo" }));
  expect(calls.some(call => call.path === "/api/demo/reset")).toBe(false);
  const dialog = within(screen.getByRole("dialog"));
+ expect(dialog.getByRole("button", { name: "Confirmer la remise à zéro" })).toHaveClass("text-white");
  await userEvent.click(dialog.getByRole("button", { name: "Confirmer la remise à zéro" }));
  expect(dialog.getByRole("button", { name: "Confirmer la remise à zéro" })).toBeDisabled();
  expect(dialog.getByText("Réinitialisation de la démo…")).toBeInTheDocument();
