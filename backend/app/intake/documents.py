@@ -155,14 +155,15 @@ class DocumentIntake:
             append_event(
                 session,
                 EventType.FACT_EXTRACTED,
-                actor="intake",
+                actor="system",
                 payload={"fact_id": str(fact.id), "document_id": str(document.id)},
             )
         append_event(
             session,
             EventType.FOLLOWUP_RECEIVED,
-            actor="intake",
+            actor="system",
             payload={
+                "component": "intake",
                 "intake_kind": "document",
                 "document_id": str(document.id),
                 "original_filename": name,

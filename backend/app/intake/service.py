@@ -42,7 +42,7 @@ class IntakeService:
             identity = message_id if message_id else "sha256:" + hashlib.sha256(raw).hexdigest()
             previous = session.execute(
                 select(events.c.id).where(
-                    events.c.actor == "intake",
+                    events.c.actor == "system",
                     events.c.payload["intake_message_id"].as_string() == identity,
                 )
             ).first()
@@ -57,9 +57,14 @@ class IntakeService:
             append_event(
                 session,
                 EventType.FOLLOWUP_RECEIVED,
-                actor="intake",
+                actor="system",
                 case_id=str(result["case_id"]) if result.get("case_id") else None,
-                payload={"intake_message_id": identity, "untrusted": True, **result},
+                payload={
+                    "component": "intake",
+                    "intake_message_id": identity,
+                    "untrusted": True,
+                    **result,
+                },
             )
             if result.get("state") in {"ignored", "quarantined"}:
                 logger.info("intake %s reason=%s", result["state"], result.get("reason", ""))
@@ -77,12 +82,13 @@ class IntakeService:
             filename = part.get_filename()
             if filename is not None or part.get_content_disposition() == "attachment":
                 content = part.get_payload(decode=True)
+                payload = content if isinstance(content, bytes) else b""
                 try:
-                    inspect_document(filename or "", content or b"")
+                    inspect_document(filename or "", payload)
                 except InvalidDocument:
                     rejected.append("invalid_attachment")
                 else:
-                    attachments.append((filename or "", content or b""))
+                    attachments.append((filename or "", payload))
             elif part.get_content_maintype() == "text":
                 content = part.get_content()
                 if isinstance(content, str):

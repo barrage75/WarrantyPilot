@@ -32,7 +32,7 @@ Le reçu Message-ID et les dossiers/documents/faits sont atomiques dans la base
 SQLite existante, dont `BEGIN IMMEDIATE` sérialise les écritures, même entre
 processus. Une interruption avant commit autorise la reprise sans doublon.
 Les messages sans identifiant unique sont ignorés et journalisés par empreinte.
-`FOLLOWUP_RECEIVED(actor=intake)` sert de reçu en attendant des événements dédiés.
+`FOLLOWUP_RECEIVED(actor=system, component=intake)` sert de reçu en attendant des événements dédiés.
 Un stockage différent de SQLite nécessitera une contrainte unique dédiée.
 
 `POST /api/documents/upload` accepte un seul champ multipart `file`, PDF ou XML

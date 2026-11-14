@@ -59,7 +59,7 @@ async def create_failure(
         )
     if reply.case_id is not None:
         case_id = reply.case_id
-        incident_id = session.execute(
+        incident_id: str = session.execute(
             select(cases.c.incident_id).where(cases.c.id == case_id)
         ).scalar_one()
         session.execute(
@@ -92,7 +92,7 @@ async def create_failure(
         append_event(
             session,
             EventType.CASE_CREATED,
-            actor="intake",
+            actor="system",
             case_id=case_id,
             payload={"incident_id": str(incident.id), "reported_via": "email"},
         )
@@ -116,7 +116,7 @@ async def create_failure(
     append_event(
         session,
         EventType.VERDICT_COMPUTED,
-        actor="intake",
+        actor="system",
         case_id=case_id,
         payload={"value": "to_verify", "reported_via": "email", "questions": reply.questions},
     )

@@ -30,7 +30,8 @@ class MaildirInbox:
     badge = RealityBadge.REPRODUCTION
 
     def __init__(self, path: Path = Path("runtime/inbox")) -> None:
-        path.mkdir(parents=True, exist_ok=True)
+        for folder in ("cur", "new", "tmp"):
+            (path / folder).mkdir(parents=True, exist_ok=True)
         self.maildir = mailbox.Maildir(str(path), create=True)
 
     def fetch_replies(self) -> list[EmailMessage]:

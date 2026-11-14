@@ -22,7 +22,15 @@ from app.intake.classifier import Classifier
 from app.intake.documents import MAX_DOCUMENT_BYTES, DocumentIntake
 from app.intake.service import IntakeService
 from app.intake.transports import READONLY_SCOPE, GmailTransport, MaildirInbox
-from tests.unit.ingestion.fixture_generator import cii, facturx_pdf, invoice_pdf, ubl
+from tests.unit.ingestion.fixture_generator import cii, facturx_pdf, invoice_pdf
+
+
+def ubl() -> bytes:
+    return b"""<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2">
+    <ID>APP-UBL-INTAKE</ID><IssueDate>2026-01-02</IssueDate>
+    <AccountingSupplierParty><Party><PartyName><Name>Fournisseur fictif</Name></PartyName>
+    </Party></AccountingSupplierParty><LegalMonetaryTotal><TaxInclusiveAmount>12.00
+    </TaxInclusiveAmount></LegalMonetaryTotal></Invoice>"""
 
 
 def mail(
@@ -141,7 +149,7 @@ def test_unknown_sender_ignored_and_journaled(
     with session_factory() as session:
         assert session.scalar(select(func.count()).select_from(cases)) == 0
         receipt = session.execute(select(events)).one()
-        assert receipt.actor == "intake" and receipt.payload["reason"] == "unknown_sender"
+        assert receipt.actor == "system" and receipt.payload["reason"] == "unknown_sender"
 
 
 @pytest.mark.parametrize("html", [False, True])
@@ -284,6 +292,52 @@ def test_plain_pdf_without_key_is_saved_pending(
         result = intake.documents.ingest(session, "facture.pdf", invoice_pdf())
         assert result["state"] == "pending_extraction"
         assert result["facts"] == 0
+
+
+def test_semantic_duplicate_keeps_one_invoice(
+    session_factory: sessionmaker[Session], intake: IntakeService
+) -> None:
+    with session_factory.begin() as session:
+        first = intake.documents.ingest(session, "facture.xml", ubl())
+        changed_encoding = ubl().replace(b"<IssueDate>", b"\n<IssueDate>")
+        second = intake.documents.ingest(session, "copie.xml", changed_encoding)
+        assert second["duplicate"] and second["reason"] == "invoice_supplier"
+        assert second["document_id"] == first["document_id"]
+        assert session.scalar(select(func.count()).select_from(documents)) == 1
+
+
+def test_extraction_failure_preserves_document_for_verification(
+    session_factory: sessionmaker[Session], intake: IntakeService, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def unavailable(*args: Any, **kwargs: Any) -> list[Any]:
+        raise ValueError("Unavailable")
+
+    monkeypatch.setattr(intake.documents.registry, "extract", unavailable)
+    with session_factory.begin() as session:
+        result = intake.documents.ingest(session, "facture.xml", ubl())
+        assert result["state"] == "pending_extraction"
+        assert result["facts"] == 0
+        assert session.scalar(select(func.count()).select_from(documents)) == 1
+
+
+def test_upload_requires_one_complete_file_part(
+    db_engine: Engine,
+    session_factory: sessionmaker[Session],
+    app_settings: AppSettings,
+    intake: IntakeService,
+) -> None:
+    with client(db_engine, session_factory, app_settings, intake) as api:
+        assert api.post("/api/documents/upload", content=ubl()).status_code == 415
+        malformed = api.post(
+            "/api/documents/upload",
+            content=b"not multipart",
+            headers={"content-type": "multipart/form-data; boundary=missing"},
+        )
+        assert malformed.status_code == 400
+        multiple = api.post(
+            "/api/documents/upload", files=[("file", ("a.xml", ubl())), ("file", ("b.xml", ubl()))]
+        )
+        assert multiple.status_code == 400
 
 
 def test_hidden_instructions_are_security_facts(
