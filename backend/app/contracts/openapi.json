@@ -128,6 +128,75 @@
         }
       }
     },
+    "/api/equipment/overview": {
+      "get": {
+        "tags": [
+          "equipment"
+        ],
+        "summary": "Overview",
+        "operationId": "overview_api_equipment_overview_get",
+        "parameters": [
+          {
+            "name": "coverage",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Coverage"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Coverage"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EquipmentWarrantyOverview"
+                  },
+                  "title": "Response Overview Api Equipment Overview Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/documents": {
       "get": {
         "tags": [
@@ -1148,6 +1217,71 @@
         }
       }
     },
+    "/api/reports/savings": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Savings",
+        "operationId": "savings_api_reports_savings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavingsReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reports/savings.csv": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Savings Csv",
+        "operationId": "savings_csv_api_reports_savings_csv_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Notifications",
+        "operationId": "notifications_api_notifications_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Notification"
+                  },
+                  "type": "array",
+                  "title": "Response Notifications Api Notifications Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/purchase-requests": {
       "get": {
         "tags": [
@@ -1671,6 +1805,24 @@
         ],
         "title": "ActionResultStatus"
       },
+      "Assignee": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "Assignee"
+      },
       "Case": {
         "properties": {
           "id": {
@@ -2059,6 +2211,17 @@
         "type": "object",
         "title": "ChecklistStepUpdate"
       },
+      "Coverage": {
+        "type": "string",
+        "enum": [
+          "active",
+          "expiring_soon",
+          "expired",
+          "leased",
+          "unknown"
+        ],
+        "title": "Coverage"
+      },
       "DataChecklist": {
         "properties": {
           "id": {
@@ -2381,6 +2544,125 @@
         ],
         "title": "Equipment"
       },
+      "EquipmentWarrantyOverview": {
+        "properties": {
+          "equipment_id": {
+            "type": "string",
+            "title": "Equipment Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "brand": {
+            "type": "string",
+            "title": "Brand"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "serial": {
+            "type": "string",
+            "title": "Serial"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Assignee"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "purchase_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purchase Date"
+          },
+          "warranty_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warranty End"
+          },
+          "days_left": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Left"
+          },
+          "coverage": {
+            "$ref": "#/components/schemas/Coverage"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/VerdictValue"
+          },
+          "open_case_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Open Case Id"
+          },
+          "invoice_document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Document Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "equipment_id",
+          "label",
+          "brand",
+          "model",
+          "serial",
+          "category",
+          "assigned_to",
+          "purchase_date",
+          "warranty_end",
+          "days_left",
+          "coverage",
+          "verdict",
+          "open_case_id",
+          "invoice_document_id"
+        ],
+        "title": "EquipmentWarrantyOverview"
+      },
       "Event": {
         "properties": {
           "id": {
@@ -2701,6 +2983,102 @@
         "additionalProperties": false,
         "type": "object",
         "title": "ManualTakeoverRequest"
+      },
+      "Notification": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "warranty_expiring",
+              "case_awaiting_validation",
+              "reminder_due",
+              "return_deadline",
+              "case_failed"
+            ],
+            "title": "Kind"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "info",
+              "warning",
+              "critical"
+            ],
+            "title": "Severity"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "equipment_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equipment Id"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "params": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Params"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "severity",
+          "case_id",
+          "equipment_id",
+          "due_at",
+          "params"
+        ],
+        "title": "Notification"
       },
       "Person": {
         "properties": {
@@ -3065,6 +3443,130 @@
           "detail"
         ],
         "title": "RuleCheck"
+      },
+      "SavingsLine": {
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "equipment_label": {
+            "type": "string",
+            "title": "Equipment Label"
+          },
+          "manufacturer": {
+            "type": "string",
+            "title": "Manufacturer"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/Channel"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CaseStatus"
+          },
+          "amount_eur": {
+            "type": "number",
+            "title": "Amount Eur"
+          },
+          "realized": {
+            "type": "boolean",
+            "title": "Realized"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_id",
+          "equipment_label",
+          "manufacturer",
+          "channel",
+          "status",
+          "amount_eur",
+          "realized",
+          "resolved_at",
+          "reference"
+        ],
+        "title": "SavingsLine"
+      },
+      "SavingsReport": {
+        "properties": {
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "company": {
+            "type": "string",
+            "title": "Company"
+          },
+          "covered_equipment_eur": {
+            "type": "number",
+            "title": "Covered Equipment Eur"
+          },
+          "possible_savings_eur": {
+            "type": "number",
+            "title": "Possible Savings Eur"
+          },
+          "realized_savings_eur": {
+            "type": "number",
+            "title": "Realized Savings Eur"
+          },
+          "journal_ok": {
+            "type": "boolean",
+            "title": "Journal Ok"
+          },
+          "journal_head": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Journal Head"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/SavingsLine"
+            },
+            "type": "array",
+            "title": "Lines"
+          }
+        },
+        "type": "object",
+        "required": [
+          "generated_at",
+          "company",
+          "covered_equipment_eur",
+          "possible_savings_eur",
+          "realized_savings_eur",
+          "journal_ok",
+          "journal_head",
+          "lines"
+        ],
+        "title": "SavingsReport"
       },
       "ScanStartResponse": {
         "properties": {

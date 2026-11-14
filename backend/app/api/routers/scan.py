@@ -9,21 +9,16 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import select
 
 from app.contracts.enums import (
     DocumentKind,
     DocumentSource,
-    IncidentKind,
-    IncidentReportedVia,
-    PurchaseGuardState,
     RealityBadge,
     RightType,
 )
 from app.contracts.interfaces import RulesEngine
 from app.contracts.models import Equipment, Fact, Incident, Right, Rule, Verdict
-from app.core.tables import purchase_requests
-from app.ingestion.normalize import normalize_facts
+from app.core.warranty import evaluate_equipment, savings_totals
 from app.ingestion.pdf_executor import run_pdf_task
 from app.ingestion.registry import ExtractorRegistry
 from app.rules import DeterministicRulesEngine
@@ -75,9 +70,10 @@ def _evaluate_equipment(
     rules: list[Rule],
     rights: list[Right],
 ) -> Verdict:
-    return engine.evaluate(
+    return evaluate_equipment(
+        engine,
         equipment,
-        normalize_facts(facts, equipment),
+        facts,
         incident,
         rules,
         rights,
@@ -112,28 +108,9 @@ async def _run_scan(application: Any, scan_id: str) -> None:
         for right in dataset.rights:
             rights_by_equipment.setdefault(right.equipment_id, []).append(right)
 
-        covered_value = 0.0
         expiring: list[ExpiringRight] = []
-        fallback_reporter = dataset.people[0].id
         today = application.state.app_settings.demo_today
         for item in dataset.equipment:
-            incident = Incident(
-                kind=IncidentKind.FAILURE,
-                reporter_id=item.assigned_to or fallback_reporter,
-                equipment_id=item.id,
-                description="Panne matérielle à vérifier",
-                reported_via=IncidentReportedVia.CHAT,
-            )
-            verdict = _evaluate_equipment(
-                engine,
-                item,
-                extracted_facts,
-                incident,
-                rules,
-                rights_by_equipment.get(item.id, []),
-            )
-            if verdict.value.value in {"covered", "likely_covered"} and item.purchase_price:
-                covered_value += float(item.purchase_price)
             for right in rights_by_equipment.get(item.id, []):
                 if today <= right.end_date <= today + timedelta(days=30):
                     expiring.append(
@@ -145,16 +122,8 @@ async def _run_scan(application: Any, scan_id: str) -> None:
                         )
                     )
 
-        possible_savings = 0.0
-        realized_savings = 0.0
         with application.state.session_factory() as session:
-            requests = session.execute(select(purchase_requests)).mappings().all()
-        for purchase in requests:
-            amount = float(purchase["amount"])
-            if purchase["state"] == PurchaseGuardState.SAVING_REALIZED.value:
-                realized_savings += amount
-            elif purchase["state"] != PurchaseGuardState.PURCHASE_KEPT.value:
-                possible_savings += amount
+            totals = savings_totals(session, engine, rules)
 
         state.update(
             {
@@ -163,9 +132,7 @@ async def _run_scan(application: Any, scan_id: str) -> None:
                 "invoices": sum(
                     document.kind == DocumentKind.INVOICE for document in dataset.documents
                 ),
-                "covered_equipment_eur": round(covered_value, 2),
-                "possible_savings_eur": round(possible_savings, 2),
-                "realized_savings_eur": round(realized_savings, 2),
+                **totals,
                 "expiring": expiring,
                 "badge": RealityBadge.REPRODUCTION,
             }

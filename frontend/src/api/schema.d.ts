@@ -89,6 +89,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/equipment/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Overview */
+        get: operations["overview_api_equipment_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/documents": {
         parameters: {
             query?: never;
@@ -514,6 +531,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reports/savings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Savings */
+        get: operations["savings_api_reports_savings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/savings.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Savings Csv */
+        get: operations["savings_csv_api_reports_savings_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Notifications */
+        get: operations["notifications_api_notifications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/purchase-requests": {
         parameters: {
             query?: never;
@@ -792,6 +860,13 @@ export interface components {
          * @enum {string}
          */
         ActionResultStatus: "success" | "failure";
+        /** Assignee */
+        Assignee: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+        };
         /** Case */
         Case: {
             /**
@@ -926,6 +1001,11 @@ export interface components {
             /** Person Id */
             person_id?: string | null;
         };
+        /**
+         * Coverage
+         * @enum {string}
+         */
+        Coverage: "active" | "expiring_soon" | "expired" | "leased" | "unknown";
         /** DataChecklist */
         DataChecklist: {
             /**
@@ -1045,6 +1125,34 @@ export interface components {
             delivery_date?: string | null;
             /** Ship Date */
             ship_date?: string | null;
+        };
+        /** EquipmentWarrantyOverview */
+        EquipmentWarrantyOverview: {
+            /** Equipment Id */
+            equipment_id: string;
+            /** Label */
+            label: string;
+            /** Brand */
+            brand: string;
+            /** Model */
+            model: string;
+            /** Serial */
+            serial: string;
+            /** Category */
+            category: string;
+            assigned_to: components["schemas"]["Assignee"] | null;
+            /** Purchase Date */
+            purchase_date: string | null;
+            /** Warranty End */
+            warranty_end: string | null;
+            /** Days Left */
+            days_left: number | null;
+            coverage: components["schemas"]["Coverage"];
+            verdict: components["schemas"]["VerdictValue"];
+            /** Open Case Id */
+            open_case_id: string | null;
+            /** Invoice Document Id */
+            invoice_document_id: string | null;
         };
         /** Event */
         Event: {
@@ -1166,6 +1274,31 @@ export interface components {
         ManualTakeoverRequest: {
             /** Person Id */
             person_id?: string | null;
+        };
+        /** Notification */
+        Notification: {
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "warranty_expiring" | "case_awaiting_validation" | "reminder_due" | "return_deadline" | "case_failed";
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "info" | "warning" | "critical";
+            /** Case Id */
+            case_id: string | null;
+            /** Equipment Id */
+            equipment_id: string | null;
+            /** Due At */
+            due_at: string | null;
+            /** Params */
+            params: {
+                [key: string]: string | number | boolean | null;
+            };
         };
         /** Person */
         Person: {
@@ -1290,6 +1423,47 @@ export interface components {
             passed: boolean | null;
             /** Detail */
             detail: string;
+        };
+        /** SavingsLine */
+        SavingsLine: {
+            /** Case Id */
+            case_id: string;
+            /** Equipment Label */
+            equipment_label: string;
+            /** Manufacturer */
+            manufacturer: string;
+            channel: components["schemas"]["Channel"];
+            status: components["schemas"]["CaseStatus"];
+            /** Amount Eur */
+            amount_eur: number;
+            /** Realized */
+            realized: boolean;
+            /** Resolved At */
+            resolved_at: string | null;
+            /** Reference */
+            reference: string | null;
+        };
+        /** SavingsReport */
+        SavingsReport: {
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Company */
+            company: string;
+            /** Covered Equipment Eur */
+            covered_equipment_eur: number;
+            /** Possible Savings Eur */
+            possible_savings_eur: number;
+            /** Realized Savings Eur */
+            realized_savings_eur: number;
+            /** Journal Ok */
+            journal_ok: boolean;
+            /** Journal Head */
+            journal_head: string | null;
+            /** Lines */
+            lines: components["schemas"]["SavingsLine"][];
         };
         /** ScanStartResponse */
         ScanStartResponse: {
@@ -1563,6 +1737,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SessionInfo"];
+                };
+            };
+        };
+    };
+    overview_api_equipment_overview_get: {
+        parameters: {
+            query?: {
+                coverage?: components["schemas"]["Coverage"] | null;
+                q?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EquipmentWarrantyOverview"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -2300,6 +2506,66 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    savings_api_reports_savings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavingsReport"];
+                };
+            };
+        };
+    };
+    savings_csv_api_reports_savings_csv_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    notifications_api_notifications_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Notification"][];
                 };
             };
         };

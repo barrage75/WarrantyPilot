@@ -73,7 +73,7 @@ from app.core.tables import (
 from app.core.tables import (
     settings as settings_table,
 )
-from app.ingestion.normalize import normalize_facts
+from app.core.warranty import evaluate_equipment
 
 
 def _case_number_from_proof(proof: str | None) -> str | None:
@@ -113,9 +113,10 @@ class Orchestrator:
         rules: list[Rule],
         rights: list[Right],
     ) -> Verdict:
-        return rules_engine.evaluate(
+        return evaluate_equipment(
+            rules_engine,
             equipment,
-            normalize_facts(facts, equipment),
+            facts,
             incident,
             rules,
             rights,

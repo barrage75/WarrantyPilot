@@ -424,7 +424,7 @@ def get_case_screenshot(
     )
     if action_row is None:
         raise HTTPException(status_code=404, detail="Screenshot not found")
-    step_payloads = (
+    step_payloads: list[Any] = list(
         session.execute(
             select(events.c.payload).where(
                 events.c.case_id == str(case_id),
