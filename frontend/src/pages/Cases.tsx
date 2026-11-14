@@ -28,20 +28,17 @@ function useEquipmentName() {
  const equipment = useEquipment();
  return (id?: string | null) => equipmentLabel(equipment.data?.find(item => item.id === id)) ?? short(id);
 }
-function dellCaseNumber(event: { type: string; payload: Record<string, unknown> }) {
- const { text, proof } = event.payload;
- if (typeof text === "string") { const match = /Dossier Dell (?:créé|déjà créé)\s*:?\s*\(?([A-Z0-9-]+)\)?/i.exec(text) ?? /Dossier déjà créé \(([^)]+)\)/.exec(text); if (match) return match[1]; }
- if (typeof proof === "string") return proofCaseNumber(proof);
- return undefined;
-}
 function proofCaseNumber(proof?: string | null) {
  if (!proof) return undefined;
  try { const value: unknown = JSON.parse(proof); return value && typeof value === "object" && "case_number" in value && typeof value.case_number === "string" ? value.case_number : undefined; } catch { return undefined; }
 }
 function BrowserStep({ payload }: { payload: Record<string, unknown> }) {
  const { t } = useTranslation("caseDetail");
- const number = dellCaseNumber({ type: "action_step", payload });
- return <div className="mt-2 space-y-1 text-sm"><p>{typeof payload.text === "string" ? payload.text : "—"}</p>{number && <p className="font-semibold text-teal-900">{t("dellCase", { number })}</p>}{typeof payload.screenshot_path === "string" && payload.screenshot_path && <p className="break-all text-slate-600">{t("screenshot")} : <code>{payload.screenshot_path}</code></p>}</div>;
+ const [expanded, setExpanded] = useState(false);
+ const number = typeof payload.case_number === "string" ? payload.case_number : undefined;
+ const screenshotUrl = typeof payload.screenshot_url === "string" ? payload.screenshot_url : undefined;
+ const screenshotAlt = t("screenshotAlt");
+ return <div className="mt-2 space-y-1 text-sm"><p>{typeof payload.text === "string" ? payload.text : "—"}</p>{number && <p className="font-semibold text-teal-900">{t("dellCase", { number })}</p>}{screenshotUrl && <><button type="button" aria-label={t("expandScreenshot")} className="block cursor-zoom-in" onClick={() => setExpanded(true)}><img src={screenshotUrl} alt={screenshotAlt} className="max-h-64 rounded border border-slate-200 object-contain"/></button><Dialog open={expanded} onOpenChange={setExpanded}><DialogContent className="max-w-5xl"><DialogTitle>{t("screenshot")}</DialogTitle><DialogDescription className="sr-only">{screenshotAlt}</DialogDescription><img src={screenshotUrl} alt={screenshotAlt} className="max-h-[80vh] w-full rounded object-contain"/></DialogContent></Dialog></>}</div>;
 }
 function ActionHistory({ history }: { history: CaseActionHistory }) {
  const { t } = useTranslation("caseDetail");

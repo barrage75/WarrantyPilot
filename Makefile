@@ -1,4 +1,4 @@
-.PHONY: setup dev smtp test lint typecheck openapi reset preflight frontend-build
+.PHONY: setup dev smtp test p0 lint typecheck openapi reset preflight frontend-build
 
 setup:
 	uv sync --project backend
@@ -18,7 +18,31 @@ smtp:
 	uv run --project backend python -m app.actions.email.local_smtp_server --port "$${WP_SMTP_PORT:-2525}" --maildir runtime/mail
 
 test:
-	uv run --project backend pytest backend/tests
+	uv run --project backend pytest -m "not p0" backend/tests
+
+p0:
+	uv sync --project repro/dell --locked
+	uv run --project backend playwright install chromium
+	@set -eu; \
+	(cd repro/dell && DELL_REPRO_PORT=8100 DELL_REPRO_RUNTIME="$$(mktemp -d)" uv run --locked python -m dell_repro) & \
+	dell_pid=$$!; \
+	trap 'kill "$$dell_pid" 2>/dev/null || true; wait "$$dell_pid" 2>/dev/null || true' EXIT; \
+	attempt=0; \
+	ready=0; \
+	while kill -0 "$$dell_pid" 2>/dev/null; do \
+		if curl --fail --silent http://127.0.0.1:8100/__test__/cases >/dev/null; then \
+			ready=1; \
+			break; \
+		fi; \
+		attempt=$$((attempt + 1)); \
+		if [ "$$attempt" -ge 60 ]; then break; fi; \
+		sleep 1; \
+	done; \
+	if [ "$$ready" -ne 1 ]; then \
+		echo "Dell reproduction did not start on 127.0.0.1:8100" >&2; \
+		exit 1; \
+	fi; \
+	uv run --project backend pytest -m p0 backend/tests/p0/test_p0_gate.py
 
 lint:
 	uv run --project backend ruff check backend/app backend/tests data/appelia

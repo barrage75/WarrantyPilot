@@ -105,16 +105,22 @@ it("flags a stored person that no longer exists", async () => {
  render(<QueryClientProvider client={cache}><OperatorProvider><OperatorSelector/></OperatorProvider></QueryClientProvider>);
  expect(await screen.findByRole("alert")).toHaveTextContent("Personne inconnue dans la base de démo");
 });
-it("renders browser steps with screenshot path, Dell case number and the actions history", async () => {
+it("renders browser steps with screenshots and the structured Dell case number", async () => {
  events = [
-  { seq: 1, case_id: caseId, type: "action_step", actor: "agent", at: "2026-01-01T12:00:00Z", payload: { text: "Formulaire rempli avec les données de l'action", screenshot_path: "/runtime/screens/filled.png" } },
-  { seq: 2, case_id: caseId, type: "action_step", actor: "agent", at: "2026-01-01T12:00:05Z", payload: { text: "Dossier Dell créé : DELL-REP-123456", screenshot_path: "/runtime/screens/confirmation.png" } }
+  { seq: 1, case_id: caseId, type: "action_step", actor: "agent", at: "2026-01-01T12:00:00Z", payload: { text: "Formulaire rempli avec les données de l'action", screenshot_path: "/runtime/screens/filled.png", screenshot_url: "/api/cases/case/screenshots/filled.png?action_id=a1" } },
+  { seq: 2, case_id: caseId, type: "action_step", actor: "agent", at: "2026-01-01T12:00:05Z", payload: { text: "Dossier créé au portail", case_number: "DELL-REP-123456", screenshot_path: "/runtime/screens/confirmation.png", screenshot_url: "/api/cases/case/screenshots/confirmation.png?action_id=a1" } }
  ];
  actions = [{ action: { id: "a1", case_id: caseId, channel: "browser_portal", kind: "dell_repair_request", badge: "reproduction" }, results: [{ id: "r1", action_id: "a1", status: "success", proof: JSON.stringify({ case_number: "DELL-REP-123456", screenshot_path: "/runtime/screens/confirmation.png" }) }] }];
  show("detail");
  expect(await screen.findByText("Formulaire rempli avec les données de l'action")).toBeInTheDocument();
- expect(screen.getByText("/runtime/screens/filled.png")).toBeInTheDocument();
+ const screenshot = screen.getAllByRole("img", { name: "Capture de l’étape navigateur" })[0];
+ expect(screenshot).toHaveAttribute("src", "/api/cases/case/screenshots/filled.png?action_id=a1");
+ expect(screen.queryByText("/runtime/screens/filled.png")).not.toBeInTheDocument();
  expect(screen.getAllByText("Numéro de dossier Dell : DELL-REP-123456")).toHaveLength(2);
  expect(screen.getAllByRole("heading", { name: "Étape navigateur" })).toHaveLength(2);
  expect(screen.getByText(/Dell Latitude 5440/, { selector: "span" })).toBeInTheDocument();
+ await userEvent.click(screen.getAllByRole("button", { name: "Agrandir la capture" })[0]);
+ expect(screen.getByRole("dialog")).toBeInTheDocument();
+ await i18n.changeLanguage("en");
+ expect(screen.getAllByRole("img", { name: "Browser step screenshot" }).length).toBeGreaterThan(0);
 });

@@ -90,6 +90,8 @@
   },
   "browserStep": "Browser step",
   "screenshot": "Screenshot",
+  "screenshotAlt": "Browser step screenshot",
+  "expandScreenshot": "Enlarge screenshot",
   "dellCase": "Dell case number: {{number}}",
   "result": "Result",
   "proofLabel": "Proof",
