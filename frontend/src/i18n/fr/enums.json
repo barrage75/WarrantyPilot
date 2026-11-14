@@ -132,6 +132,8 @@
     "journal_anchored": "Journal ancré",
     "demo_reset": "Démo réinitialisée",
     "followup_received": "Suivi reçu",
+    "intake_message_received": "Message reçu",
+    "intake_document_received": "Document reçu",
     "reminder_drafted": "Rappel préparé",
     "action_step": "Étape navigateur"
   }

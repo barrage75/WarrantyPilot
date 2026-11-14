@@ -1,0 +1,60 @@
+{
+  "title": "Documents",
+  "uploadTitle": "Upload an invoice or document",
+  "drop": "Drop a PDF or XML here, or press to choose a file",
+  "formats": "PDF or XML only · Maximum 10 MB · Documents are treated as untrusted data.",
+  "choose": "Choose a file",
+  "uploading": "Uploading and analysing document…",
+  "polling": "Checking the inbox…",
+  "invalidType": "Unsupported format: choose a .pdf or .xml file.",
+  "tooLarge": "File too large: the limit is 10 MB.",
+  "serverError": "The server rejected the document: {{detail}}",
+  "resultTitle": "Upload result",
+  "duplicate": "Document already exists — duplicate detected: {{reason}}",
+  "unknownReason": "document identity",
+  "reasons": {
+    "sha256": "identical content",
+    "invoice_supplier": "same invoice and supplier"
+  },
+  "results": {
+    "quarantined": "Document quarantined: suspicious content ignored",
+    "pending_extraction": "Document saved, extraction pending.",
+    "extracted_one": "Document extracted: {{count}} fact.",
+    "extracted_other": "Document extracted: {{count}} facts."
+  },
+  "factsTitle": "View extracted facts",
+  "confidence": "Confidence: {{value}}",
+  "inboxTitle": "Inbox",
+  "poll": "Check the inbox",
+  "summary": "Inbox summary",
+  "pollStates": {
+    "failure": "Failure reports: {{count}}",
+    "invoice": "Invoices: {{count}}",
+    "duplicate": "Duplicates: {{count}}",
+    "quarantined": "Quarantined: {{count}}",
+    "ignored": "Ignored: {{count}}"
+  },
+  "listTitle": "Saved documents",
+  "total_one": "{{count}} document",
+  "total_other": "{{count}} documents",
+  "columns": {
+    "name": "Name",
+    "source": "Source",
+    "state": "State",
+    "suspicious": "Suspicious",
+    "facts": "Facts",
+    "date": "Date"
+  },
+  "states": {
+    "extracted": "Extracted",
+    "pending_extraction": "Pending extraction",
+    "quarantined": "Quarantined"
+  },
+  "yes": "Yes",
+  "no": "No",
+  "empty": "No saved documents.",
+  "pagination": "Document pagination",
+  "previous": "Previous",
+  "next": "Next",
+  "page": "Page {{number}}"
+}

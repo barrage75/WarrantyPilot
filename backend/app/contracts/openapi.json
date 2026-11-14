@@ -5,6 +5,104 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/api/documents": {
+      "get": {
+        "tags": [
+          "intake"
+        ],
+        "summary": "List Documents",
+        "operationId": "list_documents_api_documents_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/documents/{document_id}": {
+      "get": {
+        "tags": [
+          "intake"
+        ],
+        "summary": "Get Document",
+        "operationId": "get_document_api_documents__document_id__get",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/intake/poll": {
       "post": {
         "tags": [
@@ -1880,6 +1978,184 @@
         ],
         "title": "DataChecklist"
       },
+      "DocumentDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "source": {
+            "$ref": "#/components/schemas/DocumentSource"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "extracted",
+              "pending_extraction",
+              "quarantined"
+            ],
+            "title": "State"
+          },
+          "suspicious": {
+            "type": "boolean",
+            "title": "Suspicious"
+          },
+          "facts_count": {
+            "type": "integer",
+            "title": "Facts Count"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentFact"
+            },
+            "type": "array",
+            "title": "Facts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "source",
+          "state",
+          "suspicious",
+          "facts_count",
+          "created_at",
+          "facts"
+        ],
+        "title": "DocumentDetail"
+      },
+      "DocumentFact": {
+        "properties": {
+          "field": {
+            "type": "string",
+            "title": "Field"
+          },
+          "value": {
+            "title": "Value"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "field",
+          "value",
+          "confidence"
+        ],
+        "title": "DocumentFact"
+      },
+      "DocumentItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "source": {
+            "$ref": "#/components/schemas/DocumentSource"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "extracted",
+              "pending_extraction",
+              "quarantined"
+            ],
+            "title": "State"
+          },
+          "suspicious": {
+            "type": "boolean",
+            "title": "Suspicious"
+          },
+          "facts_count": {
+            "type": "integer",
+            "title": "Facts Count"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "source",
+          "state",
+          "suspicious",
+          "facts_count",
+          "created_at"
+        ],
+        "title": "DocumentItem"
+      },
+      "DocumentPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "DocumentPage"
+      },
+      "DocumentSource": {
+        "type": "string",
+        "enum": [
+          "upload",
+          "gmail",
+          "facturx"
+        ],
+        "title": "DocumentSource"
+      },
       "Equipment": {
         "properties": {
           "id": {
@@ -2083,6 +2359,8 @@
           "journal_anchored",
           "demo_reset",
           "followup_received",
+          "intake_message_received",
+          "intake_document_received",
           "reminder_drafted",
           "chat_disclosure"
         ],

@@ -7,22 +7,15 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import insert, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_orchestrator, get_session
-from app.contracts.enums import (
-    CaseStatus,
-    Channel,
-    EventType,
-    IncidentKind,
-    IncidentReportedVia,
-    RealityBadge,
-)
-from app.contracts.models import utc_now
+from app.contracts.enums import EventType, IncidentReportedVia
 from app.core.journal import append_event
 from app.core.orchestrator import Orchestrator
-from app.core.tables import cases, equipment, incidents, people
+from app.core.tables import people
+from app.intake.reporting import report_failure
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -107,20 +100,6 @@ def start_conversation(
     )
 
 
-def _equipment_category(text: str) -> str | None:
-    folded = text.casefold()
-    terms = (
-        (("casque", "écouteur", "micro"), "headset"),
-        (("ordinateur", "portable", "latitude", "pc"), "laptop"),
-        (("écran", "moniteur"), "monitor"),
-        (("imprimante", "laserjet"), "printer"),
-    )
-    for words, category in terms:
-        if any(word in folded for word in words):
-            return category
-    return None
-
-
 @router.post(
     "/conversations/{conversation_id}/messages",
     response_model=ChatReply,
@@ -143,91 +122,18 @@ async def send_message(
         raise HTTPException(status_code=404, detail="Reporter not found")
 
     messages.append(ChatMessage(id=str(uuid4()), role="human", text=body.text.strip()))
-    rows = (
-        session.execute(
-            select(
-                equipment.c.id,
-                equipment.c.brand,
-                equipment.c.model,
-                equipment.c.serial,
-                equipment.c.category,
-            )
-            .where(equipment.c.assigned_to == str(body.reporter_id))
-            .order_by(equipment.c.model, equipment.c.serial)
-        )
-        .mappings()
-        .all()
+    result = report_failure(
+        session, body.reporter_id, body.text, reported_via=IncidentReportedVia.CHAT
     )
-    category = _equipment_category(body.text)
-    folded_text = body.text.casefold()
-    explicit = [
-        row
-        for row in rows
-        if str(row["serial"]).casefold() in folded_text
-        or str(row["model"]).casefold() in folded_text
-    ]
-    candidates = explicit or [
-        row for row in rows if category is None or row["category"] == category
-    ]
-    questions: list[str] = []
-    identified = None
-    case_id: str | None = None
-    if len(candidates) != 1:
-        if not candidates:
-            questions = ["Quel équipement est concerné ?"]
-        else:
-            labels = ", ".join(f"{row['brand']} {row['model']}" for row in candidates)
-            questions = [f"Quel équipement est concerné parmi {labels} ?"]
-        reply_text = questions[0]
-    else:
-        identified = candidates[0]
-        incident_id = uuid4()
-        case_uuid = uuid4()
-        created_at = utc_now()
-        session.execute(
-            insert(incidents).values(
-                id=str(incident_id),
-                kind=IncidentKind.FAILURE.value,
-                reporter_id=str(body.reporter_id),
-                equipment_id=identified["id"],
-                description=body.text.strip(),
-                reported_via=IncidentReportedVia.CHAT.value,
-                created_at=created_at.isoformat(),
-            )
-        )
-        session.execute(
-            insert(cases).values(
-                id=str(case_uuid),
-                incident_id=str(incident_id),
-                equipment_id=identified["id"],
-                status=CaseStatus.PREPARED.value,
-                channel=Channel.MANUAL.value,
-                verdict_id=None,
-                policy_id=None,
-                badge=RealityBadge.SIMULATED.value,
-                created_at=created_at.isoformat(),
-                updated_at=created_at.isoformat(),
-            )
-        )
-        append_event(
-            session,
-            EventType.CASE_CREATED,
-            case_id=str(case_uuid),
-            payload={
-                "incident_id": str(incident_id),
-                "equipment_id": str(identified["id"]),
-                "reported_via": IncidentReportedVia.CHAT.value,
-            },
-        )
+    case_id = result.case_id
+    equipment_label = result.equipment_label
+    questions = result.questions
+    if case_id is not None:
         session.commit()
-        await orchestrator.run(case_uuid)
-        case_id = str(case_uuid)
-        equipment_label = f"{identified['brand']} {identified['model']}"
+        await orchestrator.run(UUID(case_id))
         reply_text = f"J'ai identifié {equipment_label} et créé le dossier de garantie."
-
-    equipment_label = (
-        f"{identified['brand']} {identified['model']}" if identified is not None else None
-    )
+    else:
+        reply_text = questions[0]
     assistant: ChatLLM | None = request.app.state.services.get("chat_llm")
     if os.getenv("MISTRAL_API_KEY") and assistant is not None:
         rephrase: Callable[..., Awaitable[str]] = assistant.rephrase_reply

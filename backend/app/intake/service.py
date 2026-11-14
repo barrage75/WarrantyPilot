@@ -4,7 +4,7 @@ from email.message import EmailMessage
 from email.utils import getaddresses
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.contracts.enums import DocumentSource, EventType
@@ -43,6 +43,13 @@ class IntakeService:
             previous = session.execute(
                 select(events.c.id).where(
                     events.c.actor == "system",
+                    or_(
+                        events.c.type == EventType.INTAKE_MESSAGE_RECEIVED.value,
+                        and_(
+                            events.c.type == EventType.FOLLOWUP_RECEIVED.value,
+                            events.c.payload["component"].as_string() == "intake",
+                        ),
+                    ),
                     events.c.payload["intake_message_id"].as_string() == identity,
                 )
             ).first()
@@ -56,11 +63,10 @@ class IntakeService:
             )
             append_event(
                 session,
-                EventType.FOLLOWUP_RECEIVED,
+                EventType.INTAKE_MESSAGE_RECEIVED,
                 actor="system",
                 case_id=str(result["case_id"]) if result.get("case_id") else None,
                 payload={
-                    "component": "intake",
                     "intake_message_id": identity,
                     "untrusted": True,
                     **result,

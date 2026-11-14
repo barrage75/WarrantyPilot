@@ -11,12 +11,13 @@ const Decisions = lazy(() => import("./pages/Cases").then(module => ({ default: 
 const CasesPage = lazy(() => import("./pages/Cases").then(module => ({ default: module.CasesPage })));
 const CaseDetail = lazy(() => import("./pages/Cases").then(module => ({ default: module.CaseDetail })));
 const Chat = lazy(() => import("./pages/Chat"));
+const Documents = lazy(() => import("./pages/Documents"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const PurchaseGuard = lazy(() => import("./pages/PurchaseGuard"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Demo = lazy(() => import("./pages/Demo"));
 const Journal = lazy(() => import("./pages/Journal"));
-const pages = [["decisions", "/"], ["cases", "/cases"], ["chat", "/chat"], ["dashboard", "/dashboard"], ["purchaseGuard", "/purchase-guard"], ["settings", "/settings"], ["demo", "/demo"], ["journal", "/journal"]] as const;
+const pages = [["decisions", "/"], ["cases", "/cases"], ["chat", "/chat"], ["documents", "/documents"], ["dashboard", "/dashboard"], ["purchaseGuard", "/purchase-guard"], ["settings", "/settings"], ["demo", "/demo"], ["journal", "/journal"]] as const;
 function Header() {
  const { t, i18n } = useTranslation();
  const agent = useAgentStatus(), toggle = useToggleAgent(), journal = useJournal();
@@ -40,7 +41,7 @@ export default function App() {
  <aside className="bg-slate-950 p-5 text-slate-100"><div className="mb-8 flex items-center gap-3 text-lg font-bold"><ShieldCheck className="text-teal-300"/>{t("product")}</div><nav aria-label={t("navigation")} className="flex flex-wrap gap-1 lg:flex-col">{pages.map(([ns, path]) => <NavLink key={path} to={path} end={path === "/"} className={({ isActive }) => "rounded-lg px-4 py-3 text-sm font-medium " + (isActive ? "bg-teal-800 text-white" : "text-slate-300 hover:bg-slate-800")}>{t(ns + ":title")}</NavLink>)}</nav></aside>
  <div className="min-w-0"><Header/><main className="mx-auto max-w-7xl p-6 lg:p-10"><Suspense fallback={<p role="status">{t("loading")}</p>}><Routes>
  <Route path="/" element={<Decisions/>}/><Route path="/cases" element={<CasesPage/>}/><Route path="/cases/:id" element={<CaseDetail/>}/>
- <Route path="/chat" element={<Chat/>}/><Route path="/dashboard" element={<Dashboard/>}/><Route path="/purchase-guard" element={<PurchaseGuard/>}/>
+ <Route path="/chat" element={<Chat/>}/><Route path="/documents" element={<Documents/>}/><Route path="/dashboard" element={<Dashboard/>}/><Route path="/purchase-guard" element={<PurchaseGuard/>}/>
  <Route path="/settings" element={<Settings/>}/><Route path="/demo" element={<Demo/>}/><Route path="/journal" element={<Journal/>}/>
  <Route path="*" element={<h1>{t("notFound")}</h1>}/></Routes></Suspense></main></div></div><Toaster richColors/></BrowserRouter></OperatorProvider>;
 }

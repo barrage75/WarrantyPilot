@@ -160,10 +160,9 @@ class DocumentIntake:
             )
         append_event(
             session,
-            EventType.FOLLOWUP_RECEIVED,
+            EventType.INTAKE_DOCUMENT_RECEIVED,
             actor="system",
             payload={
-                "component": "intake",
                 "intake_kind": "document",
                 "document_id": str(document.id),
                 "original_filename": name,
