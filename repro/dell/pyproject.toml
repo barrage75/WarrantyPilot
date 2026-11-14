@@ -1,0 +1,20 @@
+[project]
+name = "dell-repro"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = ["fastapi", "uvicorn", "jinja2", "python-multipart", "itsdangerous"]
+
+[dependency-groups]
+dev = ["pytest", "httpx", "playwright", "ruff", "mypy"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.mypy]
+files = ["dell_repro"]
+strict = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = ["e2e: real loopback server and headless Chromium journeys"]

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+  <section class="banner">
+    <div class="breadcrumbs">
+      <a href="{{ home }}" aria-label="Accueil">{{ icon('home') }}</a>
+      <span>/</span>
+      <a href="{{ home }}">Accueil du support</a>
+      <span>/</span>
+      <span>Votre demande</span>
+    </div>
+    <h1>{{ 'Votre demande a été reçue' if confirmation else 'État de votre demande' }}</h1>
+  </section>
+  <section class="container surface">
+    <h2>Dossier <span id="case-number" data-case-number="{{ case.number }}">{{ case.number }}</span></h2>
+    <p>{{ item.model }} — {{ case.tag }}</p>
+    <p id="case-status" class="status {{ case.status }}" data-status="{{ case.status }}">{{ labels[states.index(case.status)] }}</p>
+    <ol class="stepper">
+      {% for state in states %}
+        <li {% if state == case.status %}class="current" aria-current="step"{% endif %}>{{ labels[loop.index0] }}</li>
+      {% endfor %}
+    </ol>
+    <h2>Récapitulatif</h2>
+    <dl class="case-details">
+      {% for key, label in fields.items() %}
+        <dt>{{ label }}</dt>
+        <dd>{{ case.payload[key] or '—' }}</dd>
+      {% endfor %}
+      <dt>Pièce jointe</dt>
+      <dd>{{ case.payload.attachment.name or 'Aucune' }} — {{ case.payload.attachment.size }} octets</dd>
+    </dl>
+    <h2>Historique</h2>
+    <ul class="history">
+      {% for event in case.history %}
+        <li>
+          <time datetime="{{ event.date }}">{{ event.date | history_date }}</time>
+          — {{ labels[states.index(event.status)] }}
+        </li>
+      {% endfor %}
+    </ul>
+    <a class="button" href="/support/status/{{ case.number }}">Consulter l’état de la demande</a>
+  </section>
+{% endblock %}

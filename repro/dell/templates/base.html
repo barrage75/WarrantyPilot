@@ -1,0 +1,86 @@
+{% from 'icons.html' import icon %}
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>{% block title %}Support Dell — Démonstration locale{% endblock %}</title>
+    <link rel="icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/style.css">
+  </head>
+  <body class="{% block body_class %}{% endblock %}">
+    <a class="skip" href="#main">Passer au contenu principal</a>
+    {% block header %}
+      <header>
+        <div class="topbar">
+          <a class="brand" href="{{ home }}">
+            <img class="logo" src="/static/img/dell-technologies-logo.svg" alt="Dell Technologies">
+          </a>
+          <form action="{{ home }}" class="global-search">
+            <input id="mh-search-input" name="servicetag" type="search"
+                   placeholder="Recherchez sur le site Dell ou identifiez votre produit"
+                   aria-label="Recherchez sur le site Dell ou identifiez votre produit">
+            <button class="icon-button" aria-label="Rechercher">{{ icon('search') }}</button>
+          </form>
+          <a class="header-link" href="{{ signin }}">
+            {{ icon('person') }} Se connecter {{ icon('chevron') }}
+          </a>
+          <a class="header-link" href="{{ home }}">
+            {{ icon('headset') }} Nous contacter
+          </a>
+          <span class="header-link">{{ icon('globe') }} FR/FR {{ icon('chevron') }}</span>
+          <span class="header-link">{{ icon('cart') }} Panier {{ icon('chevron') }}</span>
+        </div>
+        <nav aria-label="Navigation principale">
+          <a href="{{ home }}">Produits</a>
+          <a href="{{ home }}">Solutions</a>
+          <a href="{{ home }}">Services</a>
+          <a href="{{ home }}">Support {{ icon('chevron') }}</a>
+        </nav>
+      </header>
+      <aside class="info" id="local-info">
+        {{ icon('info') }}
+        <span>Reproduction locale du support Dell France — données fictives, aucun envoi à Dell.</span>
+        <button class="icon-button" aria-label="Fermer le bandeau d’information"
+                onclick="document.getElementById('local-info').hidden = true">
+          {{ icon('close') }}
+        </button>
+      </aside>
+    {% endblock %}
+    <main id="main">
+      {% block content %}{% endblock %}
+    </main>
+    <footer>
+      <div class="footer-grid">
+        <section>
+          <h3 class="header-link">{{ icon('globe') }} FR/FR {{ icon('chevron') }}</h3>
+          <a href="{{ home }}">Plan du site</a>
+        </section>
+        {% set footer_groups = [
+          ('Compte', ['Mon compte', 'État de la commande', 'Paramètres du profil', 'Mes Produits']),
+          ('Support', ['Accueil du support', 'Contacter le support technique', 'Retours/Droit de retractation']),
+          ('Entrez en contact avec nous', ['Communauté', 'Nous contacter']),
+          ('Nos offres', ['Intelligence artificielle', 'Produits', 'Solutions', 'Services', 'Offres']),
+          ('Notre société', ['Qui sommes-nous ?', 'Carrières chez Dell', 'Capital Dell Technologies',
+            'Investisseurs', 'Salle de presse', 'Recyclage', 'Impact sur l’entreprise', 'Témoignages clients']),
+          ('Nos partenaires', ['Trouver un partenaire', 'Trouver un détaillant', 'Solutions OEM', 'Programme de partenariat']),
+          ('Ressources', ['Blog', 'Dell Rewards', 'Événements', 'Inscription à notre newsletter',
+            'Centre de Protection de données personnelles', 'Centre de confiance et de sécurité'])
+        ] %}
+        {% for title, links in footer_groups %}
+          <section>
+            <h3>{{ title }}</h3>
+            {% for link in links %}
+              <a href="{{ home }}">{{ link }}</a>
+            {% endfor %}
+          </section>
+        {% endfor %}
+      </div>
+      <p>Dell Technologies　　Dell Premier pour les entreprises</p>
+      <p>Copyright © 2026 Dell Inc.　　Conditions générales de vente　　Confidentialité　　Mes choix en matière de confidentialité</p>
+      <p>Cookies, Publicités et courriers électroniques　　Conformité légale　　Accessibilité</p>
+    </footer>
+    <div id="repro-badge" role="note">REPRODUCTION LOCALE — DÉMO</div>
+  </body>
+</html>
