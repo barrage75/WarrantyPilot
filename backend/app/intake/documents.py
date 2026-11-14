@@ -128,17 +128,17 @@ class DocumentIntake:
         source: DocumentSource = DocumentSource.UPLOAD,
         inspection: tuple[str, str, bool] | None = None,
     ) -> dict[str, object]:
-        if inspection is None:
-            inspection = await inspect_document_async(filename, content)
-        name, mime, structured = inspection
-        sha = hashlib.sha256(content).hexdigest()
+        def extract() -> tuple[str, str, Document, SuspicionReport, list[Fact], str]:
+            name, mime, structured = inspection or inspect_document(filename, content)
+            sha = hashlib.sha256(content).hexdigest()
+            document = self._new_document(name, sha, mime, structured, source)
+            report, extracted, state = self._extract_content(document, content, mime, structured)
+            return name, sha, document, report, extracted, state
+
+        name, sha, document, report, extracted, state = await run_pdf_task(extract)
         duplicate = self._duplicate_sha(session, sha)
         if duplicate is not None:
             return duplicate
-        document = self._new_document(name, sha, mime, structured, source)
-        report, extracted, state = await run_pdf_task(
-            self._extract_content, document, content, mime, structured
-        )
         return self._store_document(
             session, name, source, sha, document, report, extracted, state, content
         )

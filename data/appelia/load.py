@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import json
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from dataclasses import dataclass
 from datetime import date, timedelta
+from functools import partial
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from uuid import UUID, uuid5
 
 from app.contracts.enums import (
@@ -18,6 +19,7 @@ from app.contracts.enums import (
 )
 from app.contracts.interfaces import DocumentExtractor
 from app.contracts.models import Document, Equipment, Fact, Person, Provenance, Right
+from app.ingestion.pdf_executor import run_pdf_task
 from app.ingestion.registry import ExtractorRegistry
 from app.ingestion.text_invoice import TextInvoiceExtractor
 
@@ -47,6 +49,40 @@ def load_dataset(
     on_document: Callable[[int, int], None] | None = None,
 ) -> AppeliaDataset:
     """Load the committed synthetic records without writing to or connecting to a database."""
+    steps = _dataset_steps(directory, facturx_extractor)
+    while True:
+        try:
+            step, done, total = next(steps)
+        except StopIteration as completed:
+            return cast(AppeliaDataset, completed.value)
+        if step is not None:
+            step()
+        if on_document is not None:
+            on_document(done, total)
+
+
+async def load_dataset_async(
+    directory: Path | None = None,
+    *,
+    facturx_extractor: DocumentExtractor | None = None,
+    on_document: Callable[[int, int], None] | None = None,
+) -> AppeliaDataset:
+    steps = _dataset_steps(directory, facturx_extractor)
+    while True:
+        try:
+            step, done, total = next(steps)
+        except StopIteration as completed:
+            return cast(AppeliaDataset, completed.value)
+        if step is not None:
+            await run_pdf_task(step)
+        if on_document is not None:
+            on_document(done, total)
+
+
+def _dataset_steps(
+    directory: Path | None,
+    facturx_extractor: DocumentExtractor | None,
+) -> Generator[tuple[Callable[[], None] | None, int, int], None, AppeliaDataset]:
     data_directory = directory or DATA_DIRECTORY
     people_records = _read_json(data_directory / "people.json")
     equipment_records = _read_json(data_directory / "equipment.json")
@@ -99,13 +135,9 @@ def load_dataset(
     annotations_by_filename = {item["filename"]: item for item in annotations}
     extracted_facts: list[Fact] = []
     registry = facturx_extractor or ExtractorRegistry()
-    if on_document is not None:
-        on_document(0, len(documents))
-    for index, document in enumerate(documents, start=1):
-        if document.kind != DocumentKind.INVOICE:
-            if on_document is not None:
-                on_document(index, len(documents))
-            continue
+    yield None, 0, len(documents)
+
+    def extract_document(document: Document) -> None:
         annotation = annotations_by_filename[document.filename]
         line_serials = [line["serials"] for line in annotation["lines"]]
         related_equipment = list(
@@ -144,8 +176,12 @@ def load_dataset(
                         }
                     )
                 )
-        if on_document is not None:
-            on_document(index, len(documents))
+
+    for index, document in enumerate(documents, start=1):
+        step = (
+            partial(extract_document, document) if document.kind == DocumentKind.INVOICE else None
+        )
+        yield step, index, len(documents)
 
     facts = list(extracted_facts)
     rights: list[Right] = []

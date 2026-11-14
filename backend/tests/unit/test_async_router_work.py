@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
+from data.appelia import load
 from starlette.requests import Request
 
 from app.api.main import create_app
@@ -55,7 +56,7 @@ async def test_scan_purchase_read_runs_off_loop(monkeypatch, app_settings, purch
     dataset = SimpleNamespace(
         documents=[], facts=[], rights=[], equipment=[], people=[SimpleNamespace(id=uuid4())]
     )
-    monkeypatch.setattr(scan, "run_pdf_task", AsyncMock(return_value=dataset))
+    monkeypatch.setattr(load, "load_dataset_async", AsyncMock(return_value=dataset))
     application = SimpleNamespace(
         state=SimpleNamespace(
             scans={"scan": {}}, services={}, app_settings=app_settings, session_factory=factory
@@ -73,7 +74,7 @@ async def test_scan_database_error_is_reported(monkeypatch, app_settings) -> Non
     dataset = SimpleNamespace(
         documents=[], facts=[], rights=[], equipment=[], people=[SimpleNamespace(id=uuid4())]
     )
-    monkeypatch.setattr(scan, "run_pdf_task", AsyncMock(return_value=dataset))
+    monkeypatch.setattr(load, "load_dataset_async", AsyncMock(return_value=dataset))
     application = SimpleNamespace(
         state=SimpleNamespace(
             scans={"scan": {}},
