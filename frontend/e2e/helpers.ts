@@ -53,7 +53,7 @@ export async function resolveFromUi(page: Page, request: APIRequestContext = pag
  const item = await fakeCase(request, identities.jabra, identities.person);
  expect(item.status).toBe("awaiting_validation");
  await page.goto("/");
- const card = page.locator("section").filter({ has: page.getByRole("link", { name: new RegExp(item.id.slice(0, 8)) }) });
+ const card = page.locator("section").filter({ has: page.locator(`a[href="/cases/${item.id}"]`) });
  await expect(card).toBeVisible();
  await expectSignedIn(page);
  await card.getByRole("button", { name: "Valider", exact: true }).click();
