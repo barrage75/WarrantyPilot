@@ -1,0 +1,36 @@
+{
+  "userMenu": "{{name}} menu",
+  "notifications": {
+    "button": "Notifications: {{count}} to review",
+    "title": "Notifications",
+    "loading": "Loading notifications…",
+    "error": "Unable to load notifications.",
+    "empty": "No notifications right now."
+  },
+  "severity": {
+    "critical": "Urgent",
+    "warning": "To review",
+    "info": "Information"
+  },
+  "kinds": {
+    "warranty_expiring": "{{equipment_label}}: warranty expires in {{days_left}} days.",
+    "case_awaiting_validation": "A case is waiting for your approval.",
+    "reminder_due": "Reminder {{reminder_number}} is ready to prepare.",
+    "return_deadline": "Equipment return due in {{days_left}} days ({{source}}).",
+    "case_failed": "A case needs your attention."
+  },
+  "ring": {
+    "daysShort": "{{value}} d",
+    "yearShort": "{{value}} year",
+    "yearsShort": "{{value}} years",
+    "expiredShort": "ended",
+    "leasedShort": "lease",
+    "unknownShort": "?",
+    "accessible": {
+      "remaining": "Warranty: {{count}} days remaining.",
+      "expired": "Warranty expired.",
+      "leased": "Leased equipment.",
+      "unknown": "Warranty duration unknown."
+    }
+  }
+}

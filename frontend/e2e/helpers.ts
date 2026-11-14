@@ -1,12 +1,17 @@
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 export const KARIM = "97225c38-d686-5d99-a6cf-53e18aa92e8d";
+export async function openUserMenu(page: Page) {
+ await page.getByTestId("user-menu-trigger").click();
+}
 export async function loginUi(page: Page, person = KARIM) {
  await page.goto("/");
  await expect(page.getByRole("heading", { name: "Connexion opérateur" })).toBeVisible();
  await page.getByLabel("Personne", { exact: true }).selectOption(person);
  await page.getByLabel("Mot de passe", { exact: true }).fill(process.env.WP_DEMO_PASSWORD ?? "appelia-demo");
  await page.getByRole("button", { name: "Se connecter", exact: true }).click();
+ await openUserMenu(page);
  await expect(page.getByText(/Opérateur actif : /)).toBeVisible();
+ await page.keyboard.press("Escape");
 }
 export async function resetFromUi(page: Page) {
  if (await page.getByRole("heading", { name: "Connexion opérateur" }).isVisible().catch(() => false) || page.url() === "about:blank") await loginUi(page);
@@ -26,7 +31,9 @@ export async function demoIdentities(request: APIRequestContext): Promise<{ pers
  return { person: person.id, jabra: jabra.id, dell: dell.id };
 }
 export async function expectSignedIn(page: Page) {
+ await openUserMenu(page);
  await expect(page.getByText(/Opérateur actif : /)).toBeVisible();
+ await page.keyboard.press("Escape");
 }
 export async function configureDemo(request: APIRequestContext) {
  const response = await request.get("/api/settings"); expect(response.ok()).toBeTruthy();
