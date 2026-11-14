@@ -11,6 +11,27 @@ from app.core.journal import ZERO_HASH, anchor, append_event, verify
 from app.core.tables import events
 
 
+def test_anchor_rollback_does_not_write_file(session_factory, app_settings) -> None:
+    with session_factory() as session:
+        append_event(session, EventType.DEMO_RESET)
+        anchor(session, app_settings)
+        assert not app_settings.anchor_file.exists()
+        session.rollback()
+        assert verify(session, app_settings)["ok"] is True
+        session.commit()
+    assert not app_settings.anchor_file.exists()
+
+
+def test_anchor_commit_writes_file(session_factory, app_settings) -> None:
+    with session_factory() as session:
+        append_event(session, EventType.DEMO_RESET)
+        result = anchor(session, app_settings)
+        assert not app_settings.anchor_file.exists()
+        session.commit()
+        assert json.loads(app_settings.anchor_file.read_text()) == result
+        assert verify(session, app_settings)["ok"] is True
+
+
 def test_hash_chain_is_valid_and_secrets_are_redacted(session_factory, app_settings) -> None:
     with session_factory.begin() as session:
         first = append_event(

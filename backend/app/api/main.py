@@ -5,12 +5,13 @@ from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 from threading import Lock
+from typing import Any, cast
 from urllib.parse import quote
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Engine, ScalarResult
 from sqlalchemy.orm import Session, sessionmaker
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -164,12 +165,15 @@ def _build_email_adapters(
 
     selected_transport = transport or _build_mail_transport(app_settings)
     selected_ledger = ledger or _build_sent_ledger(app_settings, session_factory)
-    return build_email_adapters(
-        selected_transport,
-        settings_provider,
-        app_settings.email_sender,
-        selected_ledger,
-        app_settings.email_ai_disclosure,
+    return cast(
+        dict[Channel, ActionAdapter],
+        build_email_adapters(
+            selected_transport,
+            settings_provider,
+            app_settings.email_sender,
+            selected_ledger,
+            app_settings.email_ai_disclosure,
+        ),
     )
 
 
@@ -177,7 +181,7 @@ def _resolve_portal_reference(
     session_factory: sessionmaker[Session], case: Case
 ) -> PortalReference | None:
     with session_factory() as session:
-        action_events = session.execute(
+        action_events: ScalarResult[Any] = session.execute(
             select(events.c.payload)
             .where(
                 events.c.case_id == str(case.id),
@@ -316,6 +320,7 @@ def create_app(
     application.state.session_factory = active_session_factory
     application.state.chat_conversations = {}
     application.state.scans = {}
+    application.state.scan_tasks = set()
     application.middleware("http")(origin_guard_and_anchor)
     application.add_middleware(
         CORSMiddleware,

@@ -22,7 +22,7 @@ smtp:
 	uv run --project backend python -m app.actions.email.local_smtp_server --port "$${WP_SMTP_PORT:-2525}" --maildir runtime/mail
 
 test:
-	uv run --project backend pytest -m "not p0" backend/tests
+	uv run --project backend pytest -m "not p0" backend/tests data/appelia/tests
 
 p0:
 	uv run --project backend python -m app.core.port_check
@@ -55,7 +55,7 @@ lint:
 	cd frontend && npm run lint
 
 typecheck:
-	cd backend && MYPYPATH=.:../data uv run --project . mypy --strict --explicit-package-bases app/contracts app/core app/ingestion app/rules app/api/routers/overview.py app/api/routers/reports.py app/api/routers/notifications.py ../data/appelia
+	cd backend && MYPYPATH=.:../data uv run --project . mypy --strict --explicit-package-bases app/contracts app/core app/ingestion app/rules app/api ../data/appelia app/actions app/followup app/intake app/testing
 	cd frontend && npm run typecheck
 
 openapi:

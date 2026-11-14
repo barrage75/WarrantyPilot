@@ -3,12 +3,14 @@ from datetime import date
 from decimal import Decimal
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import insert, select, update
 
 from app.api.main import create_app
 from app.contracts.enums import CaseStatus, Channel, EventType, VerdictValue
 from app.contracts.models import Verdict
+from app.core.db import create_schema, make_engine
 from app.core.settings_store import read_settings, write_settings
 from app.core.tables import (
     actions,
@@ -207,9 +209,20 @@ def test_unknown_service_tag_produces_clarifying_question(
     assert result.json()["clarifying_questions"]
 
 
-def test_scan_runs_in_background_and_reports_document_progress(db_engine, app_settings) -> None:
+@pytest.fixture
+def scan_engine(tmp_path):
+    engine = make_engine(f"sqlite:///{tmp_path / 'scan.sqlite3'}")
+    create_schema(engine)
+    try:
+        yield engine
+    finally:
+        engine.dispose()
+
+
+def test_scan_runs_in_background_and_reports_document_progress(scan_engine, app_settings) -> None:
     app_settings.demo_today = date(2026, 12, 20)
-    application = create_app(app_settings=app_settings, app_engine=db_engine)
+    app_settings.database_url = str(scan_engine.url)
+    application = create_app(app_settings=app_settings, app_engine=scan_engine)
     with TestClient(application) as client:
         login(client, person_id=KARIM_ID)
         _reset(client)
