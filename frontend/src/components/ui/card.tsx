@@ -1,3 +1,3 @@
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
-export function Card({ className, ...props }: ComponentProps<"section">) { return <section className={cn("rounded-xl border border-slate-200 bg-white p-6 shadow-sm", className)} {...props} />; }
+export function Card({ className, ...props }: ComponentProps<"section">) { return <section className={cn("rounded-[28px] bg-surface p-6", className)} {...props} />; }

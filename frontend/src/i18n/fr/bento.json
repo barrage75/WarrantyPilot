@@ -1,0 +1,36 @@
+{
+  "userMenu": "Menu de {{name}}",
+  "notifications": {
+    "button": "Notifications : {{count}} à traiter",
+    "title": "Notifications",
+    "loading": "Chargement des notifications…",
+    "error": "Impossible de charger les notifications.",
+    "empty": "Aucune notification pour le moment."
+  },
+  "severity": {
+    "critical": "Urgent",
+    "warning": "À traiter",
+    "info": "Information"
+  },
+  "kinds": {
+    "warranty_expiring": "{{equipment_label}} : garantie à échéance dans {{days_left}} jours.",
+    "case_awaiting_validation": "Un dossier attend votre validation.",
+    "reminder_due": "Relance {{reminder_number}} à préparer.",
+    "return_deadline": "Retour attendu dans {{days_left}} jours ({{source}}).",
+    "case_failed": "Un dossier nécessite votre attention."
+  },
+  "ring": {
+    "daysShort": "{{value}} j",
+    "yearShort": "{{value}} an",
+    "yearsShort": "{{value}} ans",
+    "expiredShort": "fini",
+    "leasedShort": "loc.",
+    "unknownShort": "?",
+    "accessible": {
+      "remaining": "Garantie : {{count}} jours restants.",
+      "expired": "Garantie expirée.",
+      "leased": "Équipement en location.",
+      "unknown": "Durée de garantie inconnue."
+    }
+  }
+}

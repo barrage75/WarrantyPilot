@@ -13,7 +13,9 @@
     "openapi": "openapi-typescript ../backend/app/contracts/openapi.json -o src/api/schema.d.ts"
   },
   "dependencies": {
+    "@fontsource/inter-tight": "^5.3.0",
     "@radix-ui/react-dialog": "^1.3.1",
+    "@radix-ui/react-popover": "^1.3.1",
     "@radix-ui/react-slot": "^1.5.0",
     "@tailwindcss/vite": "^4.3.5",
     "@tanstack/react-query": "^5.107.1",
@@ -21,6 +23,7 @@
     "clsx": "^2.1.1",
     "i18next": "^27.1.1",
     "lucide-react": "^1.72.0",
+    "motion": "^14.14.0",
     "openapi-fetch": "^0.17.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
