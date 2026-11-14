@@ -1778,15 +1778,17 @@ def generate_dataset(output_directory: Path | None = None) -> None:
     invoice_directory_names: dict[str, str] = {}
     invoice_annotations: list[dict[str, Any]] = []
     invoice_paths: dict[str, Path] = {}
-    paul_equipment_id = next(
-        item["id"] for item in equipment if item["scenario"] == "demo-paul"
-    )
+    facturx_equipment_ids = {
+        item["id"]
+        for item in equipment
+        if item["scenario"] in {"demo-paul", "demo-dell"}
+    }
 
     for index, invoice in enumerate(invoice_records):
         filename = f"invoice-{index + 1:03d}.pdf" if index < 49 else f"invoice-{index + 2:03d}.pdf"
         invoice_format = (
             "facturx"
-            if index >= 49 or paul_equipment_id in invoice["equipment_ids"]
+            if index >= 49 or facturx_equipment_ids.intersection(invoice["equipment_ids"])
             else "pdf"
         )
         relative_filename = f"invoices/{filename}"

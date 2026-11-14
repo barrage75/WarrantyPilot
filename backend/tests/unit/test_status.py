@@ -77,3 +77,8 @@ def test_manual_takeover_requires_human_proof_to_reach_sent() -> None:
         )
         == CaseStatus.SENT
     )
+
+
+def test_sent_and_tracked_cases_can_be_handed_to_a_human() -> None:
+    assert transition(CaseStatus.SENT, CaseStatus.MANUAL_TAKEOVER) == CaseStatus.MANUAL_TAKEOVER
+    assert transition(CaseStatus.TRACKED, CaseStatus.MANUAL_TAKEOVER) == CaseStatus.MANUAL_TAKEOVER

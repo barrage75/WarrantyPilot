@@ -324,8 +324,8 @@
     "filename": "invoices/invoice-041.pdf",
     "kind": "invoice",
     "mime": "application/pdf",
-    "source": "upload",
-    "sha256": "033f0c49a65e5300aeac8202ce1798e0426820c8fad78b5610fda2e1a4010ee7"
+    "source": "facturx",
+    "sha256": "33a27a0d31ec94289fbd341cbc50b971e1f36c60fc0d8f557b725eb799ef584d"
   },
   {
     "id": "d3d38733-6840-59cb-a3bb-6fde883a3b88",

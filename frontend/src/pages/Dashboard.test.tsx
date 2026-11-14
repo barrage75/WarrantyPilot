@@ -4,14 +4,13 @@ import userEvent from "@testing-library/user-event";
 import Dashboard from "./Dashboard";
 import i18n from "@/i18n";
 import { renderWithApi, stubHttp, type Call } from "@/test/http";
-const soon = new Date(Date.now() + 10 * 86400000).toISOString().slice(0, 10);
 const base = { scanId: "s1", company: "Appelia", invoices: 0, coveredEquipmentEur: 0, possibleSavingsEur: 0, realizedSavingsEur: 0, expiring: [], progress: 0, documentsTotal: 65, documentsDone: 0, badge: "reproduction", error: null };
 let calls: Call[], polls: number, scanStatus: number;
 beforeEach(async () => {
  await i18n.changeLanguage("fr"); polls = 0; scanStatus = 200;
  calls = stubHttp(call => {
   if (call.method === "POST" && call.path === "/api/scan") return scanStatus === 200 ? Response.json({ scan_id: "s1" }, { status: 202 }) : Response.json({ detail: "down" }, { status: scanStatus });
-  if (call.path === "/api/scan/s1") { polls += 1; return Response.json(polls === 1 ? { ...base, status: "running", documentsDone: 50, progress: 77 } : { ...base, status: "completed", invoices: 60, coveredEquipmentEur: 8346, possibleSavingsEur: 120, realizedSavingsEur: 0, progress: 100, documentsDone: 65, expiring: [{ equipment: "Jabra Evolve2 65", right: "manufacturer_warranty", endsAt: soon }] }); }
+  if (call.path === "/api/scan/s1") { polls += 1; return Response.json(polls === 1 ? { ...base, status: "running", documentsDone: 50, progress: 77 } : { ...base, status: "completed", invoices: 60, coveredEquipmentEur: 8346, possibleSavingsEur: 120, realizedSavingsEur: 0, progress: 100, documentsDone: 65, expiring: [{ equipment: "Jabra Evolve2 65", right: "manufacturer_warranty", endsAt: "2026-12-30", daysLeft: 10 }] }); }
   return undefined;
  });
 });

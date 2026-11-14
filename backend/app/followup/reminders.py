@@ -109,6 +109,10 @@ class ReminderOutbox:
         with closing(self._connect()) as conn, conn:
             conn.execute("UPDATE followup_outbox SET acknowledged=1 WHERE key=?", (key,))
 
+    def clear(self) -> None:
+        with closing(self._connect()) as conn, conn:
+            conn.execute("DELETE FROM followup_outbox")
+
 
 class ReminderScheduler:
     def __init__(self, planner: ReminderPlanner, outbox: ReminderOutbox) -> None:

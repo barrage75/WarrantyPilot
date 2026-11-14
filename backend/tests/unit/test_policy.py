@@ -139,6 +139,21 @@ def test_non_email_channels_are_not_low_commitment(action_kind: str) -> None:
     assert result.outcome != PolicyOutcome.AUTO_SEND
 
 
+def test_browser_claim_can_be_validated_without_completing_a_data_checklist() -> None:
+    case, verdict, equipment, settings = make_inputs()
+    result = decide(
+        case,
+        verdict,
+        equipment,
+        "portal_claim",
+        settings,
+        checklist_complete=False,
+        requires_data_checklist=False,
+    )
+    assert result.outcome == PolicyOutcome.NEEDS_VALIDATION
+    assert result.conditions["low_commitment_action"] is False
+
+
 def test_lessor_email_is_low_commitment() -> None:
     case, verdict, equipment, settings = make_inputs()
     result = decide(case, verdict, equipment, "lessor_request", settings)

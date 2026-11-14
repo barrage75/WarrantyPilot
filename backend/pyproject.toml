@@ -43,7 +43,10 @@ include = ["app*"]
 asyncio_mode = "auto"
 pythonpath = [".."]
 testpaths = ["tests"]
-markers = ["live: requires configured external credentials"]
+markers = [
+    "live: requires configured external credentials",
+    "p0: repeatable end-to-end demo gate",
+]
 
 [tool.ruff]
 line-length = 100
@@ -51,6 +54,9 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "appelia"]
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends"]

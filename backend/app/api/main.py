@@ -1,9 +1,14 @@
+import asyncio
+import json
+import logging
 from collections.abc import AsyncIterator, Callable
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
+from threading import Lock
 from urllib.parse import quote
 
 from fastapi import FastAPI
+from sqlalchemy import select
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -15,9 +20,11 @@ from app.actions.browser.adapter import (
 from app.actions.browser.settings import BrowserSettings
 from app.actions.email.adapter import build_email_adapters
 from app.actions.email.ledger import ActionResultsLedger, JsonlSentLedger
+from app.actions.email.replies import EmailReplyChecker
 from app.actions.email.transports import (
     GmailTransport,
     LocalSmtpTransport,
+    MailTransport,
     refresh_token_provider,
 )
 from app.actions.manual import ManualAdapter
@@ -26,6 +33,7 @@ from app.api.routers import (
     cases,
     chat,
     demo,
+    followup,
     health,
     intake,
     journal,
@@ -33,20 +41,24 @@ from app.api.routers import (
     scan,
     settings,
 )
-from app.contracts.enums import Channel, EventType
+from app.api.routers.followup import run_followup_tick
+from app.contracts.enums import ActionResultStatus, Channel, EventType
 from app.contracts.interfaces import ActionAdapter
-from app.contracts.models import Settings
+from app.contracts.models import Case, Settings
 from app.core.db import SessionLocal, create_schema, engine, make_session_factory
 from app.core.journal import append_event
 from app.core.settings import AppSettings, get_settings
 from app.core.settings_store import read_settings
 from app.core.status import recover_interrupted_sends
+from app.core.tables import action_results, actions, events
+from app.followup.composite import CompositeFollowUp
+from app.followup.portal import DellPortalFollowUp, PortalReference
+from app.followup.reminders import ReminderOutbox, ReminderPlanner, ReminderScheduler
 from app.ingestion.registry import ExtractorRegistry
 from app.rules import DEFAULT_RULES_DIR, DeterministicRulesEngine, load_rules
 from app.rules.classifier import KeywordIncidentClassifier
-from app.testing.fakes import (
-    FakeFollowUp,
-)
+
+logger = logging.getLogger(__name__)
 
 
 def _browser_step_recorder(
@@ -92,10 +104,7 @@ def _browser_step_recorder(
     return record
 
 
-def _build_email_adapters(
-    app_settings: AppSettings,
-    session_factory: sessionmaker[Session],
-) -> dict[Channel, ActionAdapter]:
+def _build_mail_transport(app_settings: AppSettings) -> MailTransport:
     credentials = (
         app_settings.gmail_client_id,
         app_settings.gmail_client_secret,
@@ -111,7 +120,7 @@ def _build_email_adapters(
         assert client_secret is not None
         assert refresh_token is not None
         assert label_id is not None
-        transport = GmailTransport(
+        return GmailTransport(
             token_provider=refresh_token_provider(
                 client_id.get_secret_value(),
                 client_secret.get_secret_value(),
@@ -119,27 +128,92 @@ def _build_email_adapters(
             ),
             label_id=label_id,
         )
-    else:
-        transport = LocalSmtpTransport(
-            port=app_settings.smtp_port,
-            maildir_path=app_settings.maildir_path,
-        )
+    return LocalSmtpTransport(
+        port=app_settings.smtp_port,
+        maildir_path=app_settings.maildir_path,
+    )
 
+
+def _build_sent_ledger(
+    app_settings: AppSettings,
+    session_factory: sessionmaker[Session],
+) -> JsonlSentLedger:
+    return JsonlSentLedger(
+        app_settings.email_sent_ledger_path,
+        read_ledger=ActionResultsLedger(session_factory),
+    )
+
+
+def _build_email_adapters(
+    app_settings: AppSettings,
+    session_factory: sessionmaker[Session],
+    transport: MailTransport | None = None,
+    ledger: JsonlSentLedger | None = None,
+) -> dict[Channel, ActionAdapter]:
     def settings_provider() -> Settings:
         with session_factory() as session:
             return read_settings(session)
 
-    ledger = JsonlSentLedger(
-        app_settings.email_sent_ledger_path,
-        read_ledger=ActionResultsLedger(session_factory),
-    )
+    selected_transport = transport or _build_mail_transport(app_settings)
+    selected_ledger = ledger or _build_sent_ledger(app_settings, session_factory)
     return build_email_adapters(
-        transport,
+        selected_transport,
         settings_provider,
         app_settings.email_sender,
-        ledger,
+        selected_ledger,
         app_settings.email_ai_disclosure,
     )
+
+
+def _resolve_portal_reference(
+    session_factory: sessionmaker[Session], case: Case
+) -> PortalReference | None:
+    with session_factory() as session:
+        action_events = session.execute(
+            select(events.c.payload)
+            .where(
+                events.c.case_id == str(case.id),
+                events.c.type == EventType.ACTION_SUCCEEDED.value,
+            )
+            .order_by(events.c.seq.desc())
+        ).scalars()
+        for event_payload in action_events:
+            if not isinstance(event_payload, dict):
+                continue
+            action_id = event_payload.get("action_id")
+            if not isinstance(action_id, str):
+                continue
+            proof = session.execute(
+                select(action_results.c.proof)
+                .join(actions, actions.c.id == action_results.c.action_id)
+                .where(
+                    actions.c.id == action_id,
+                    actions.c.case_id == str(case.id),
+                    actions.c.channel == Channel.BROWSER_PORTAL.value,
+                    action_results.c.status == ActionResultStatus.SUCCESS.value,
+                )
+            ).scalar_one_or_none()
+            if not isinstance(proof, str):
+                continue
+            try:
+                parsed = json.loads(proof)
+            except (TypeError, ValueError):
+                continue
+            case_number = parsed.get("case_number") if isinstance(parsed, dict) else None
+            if isinstance(case_number, str) and case_number:
+                return PortalReference.from_number(case_number)
+    return None
+
+
+async def _periodic_followup(application: FastAPI, interval_s: float) -> None:
+    while True:
+        await asyncio.sleep(interval_s)
+        try:
+            await asyncio.to_thread(run_followup_tick, application)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Periodic follow-up pass failed")
 
 
 def create_app(
@@ -162,10 +236,11 @@ def create_app(
         application.state.engine = active_engine
         application.state.session_factory = active_session_factory
         application.state.app_settings = active_settings
-        application.state.services = (
-            services
-            if services is not None
-            else {
+        application.state.followup_tick_lock = Lock()
+        if services is None:
+            mail_transport = _build_mail_transport(active_settings)
+            sent_ledger = _build_sent_ledger(active_settings, active_session_factory)
+            application.state.services = {
                 "extractor": ExtractorRegistry(),
                 "rules_engine": DeterministicRulesEngine(
                     today=active_settings.demo_today,
@@ -173,19 +248,48 @@ def create_app(
                 ),
                 "rules": load_rules(DEFAULT_RULES_DIR),
                 "action_adapters": {
-                    **_build_email_adapters(active_settings, active_session_factory),
+                    **_build_email_adapters(
+                        active_settings,
+                        active_session_factory,
+                        mail_transport,
+                        sent_ledger,
+                    ),
                     Channel.BROWSER_PORTAL: BrowserPortalAdapter(
                         BrowserSettings.from_env(),
                         on_step=_browser_step_recorder(active_session_factory),
                     ),
                     Channel.MANUAL: ManualAdapter(),
                 },
-                "follow_up": FakeFollowUp(),
             }
-        )
-        yield
-        if app_engine is None:
-            active_engine.dispose()
+            application.state.services["follow_up"] = CompositeFollowUp(
+                email=EmailReplyChecker(
+                    mail_transport,
+                    sent_ledger,
+                    sender=active_settings.email_sender,
+                ),
+                portal=DellPortalFollowUp(
+                    lambda case: _resolve_portal_reference(active_session_factory, case)
+                ),
+            )
+        else:
+            application.state.services = services
+        outbox = ReminderOutbox(active_settings.followup_outbox_path)
+        application.state.reminder_outbox = outbox
+        application.state.reminder_scheduler = ReminderScheduler(ReminderPlanner(), outbox)
+        task = None
+        if active_settings.followup_interval_s > 0:
+            task = asyncio.create_task(
+                _periodic_followup(application, active_settings.followup_interval_s)
+            )
+        try:
+            yield
+        finally:
+            if task is not None:
+                task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await task
+            if app_engine is None:
+                active_engine.dispose()
 
     application = FastAPI(title="WarrantyPilot API", version="0.1.0", lifespan=lifespan)
     application.state.chat_conversations = {}
@@ -194,6 +298,7 @@ def create_app(
         intake.router,
         health.router,
         cases.router,
+        followup.router,
         chat.router,
         scan.router,
         purchase_guard.router,

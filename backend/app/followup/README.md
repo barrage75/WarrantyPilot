@@ -1,7 +1,7 @@
-# Suivi L8 — composants à brancher par le lead
+# Suivi L8 — service API
 
-Ces composants ne modifient ni `Case`, ni l'orchestrateur, ni les adaptateurs. Ils
-n'envoient aucun message, ne retournent aucun matériel et n'accordent aucune
+L'API compose ces composants avec le transport e-mail L6 et l'orchestrateur.
+Ils n'envoient aucun message, ne retournent aucun matériel et n'accordent aucune
 autorisation. Les pages Dell sont une **reproduction locale**, jamais Dell réel.
 
 ## Constructeurs / contrat FollowUpChecker
@@ -24,7 +24,7 @@ from app.followup import (
 email = EmailReplyChecker(transport=transport_l6, ledger=sent_ledger_l6)
 dell = DellPortalFollowUp(resolve_reference=resolve_reference)
 follow_up = CompositeFollowUp(email=email, portal=dell)
-# Injecter follow_up dans Orchestrator(..., follow_up=follow_up).
+# Le service de production est construit par app.api.main.
 ```
 
 `resolve_reference(case: Case) -> PortalReference | None` lit la **preuve de
@@ -51,9 +51,9 @@ L6 n'est pas convertie en résolution.
 
 ## Appel périodique et idempotence
 
-Le cœur actuel ne consulte le suivi qu'après envoi. Le lead doit prévoir un
-tick périodique local (par exemple toutes les minutes, configurable), relisant
-les dossiers `sent/tracked` depuis la base avant chaque traitement :
+`POST /api/followup/tick` et la tâche périodique configurée par
+`WP_FOLLOWUP_INTERVAL_S` (0 désactive la tâche) relisent les dossiers
+`sent/tracked` depuis la base avant chaque traitement :
 
 1. Appeler `follow_up.check(case)` ; journaliser les nouveautés (e-mail par
    `message_id`, Dell par `case_number + portal_status`, et non par horodatage).
@@ -71,7 +71,7 @@ les dossiers `sent/tracked` depuis la base avant chaque traitement :
    retourne uniquement les nouvelles recommandations. Les lectures suivantes
    passent par `scheduler.pending(case, state)` : reprise après crash et
    suppression des brouillons devenus inéligibles après réponse/résolution.
-4. Pour chaque brouillon, le lead gère la validation humaine et la politique
+4. Pour chaque brouillon, un humain gère la validation et la politique
    d'envoi existantes. Avant toute exécution, recharger/revérifier le dossier
    et l'éligibilité, y compris pause, canal et réponse reçue. Réutiliser
    `idempotency_key` dans l'adaptateur d'envoi L6. Une tentative inconnue ne doit
@@ -81,8 +81,8 @@ les dossiers `sent/tracked` depuis la base avant chaque traitement :
    un humain : ne pas utiliser L4b pour soumettre une seconde demande de réparation.
 5. Après deux relances **effectivement envoyées** puis encore N jours sans
    réponse, le résultat est `manual_takeover_recommended` (pas une troisième
-   relance). Le lead journalise et applique une transition si le graphe du cœur
-   la permet ; le lot n'impose pas de transition illégale.
+   relance). L'API journalise la recommandation et utilise les transitions du
+   graphe de statuts.
 
 Les brouillons ne sont **pas** des relances envoyées : sans confirmation
 d'envoi, le compteur reste inchangé. Les clés sont bornées à trois par dossier

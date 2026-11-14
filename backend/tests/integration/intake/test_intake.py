@@ -17,7 +17,17 @@ from app.contracts.enums import RealityBadge
 from app.core.db import create_schema, make_engine, make_session_factory
 from app.core.journal import verify
 from app.core.settings import AppSettings
-from app.core.tables import actions, cases, documents, equipment, events, facts, incidents, people
+from app.core.tables import (
+    actions,
+    cases,
+    data_checklists,
+    documents,
+    equipment,
+    events,
+    facts,
+    incidents,
+    people,
+)
 from app.intake.classifier import Classifier
 from app.intake.documents import MAX_DOCUMENT_BYTES, DocumentIntake
 from app.intake.service import IntakeService
@@ -122,6 +132,51 @@ def test_poll_idempotent_across_restart(
         assert session.scalar(select(incidents.c.reported_via)) == "email"
         assert session.scalar(select(func.count()).select_from(actions)) == 0
         assert verify(session)["ok"]
+
+
+def test_laptop_email_case_gets_data_checklist(
+    db_engine: Engine,
+    session_factory: sessionmaker[Session],
+    app_settings: AppSettings,
+    intake: IntakeService,
+) -> None:
+    seed(session_factory)
+    laptop_id = str(uuid4())
+    with session_factory.begin() as session:
+        person_id = session.execute(select(people.c.id)).scalar_one()
+        session.execute(
+            insert(equipment).values(
+                id=laptop_id,
+                brand="Dell",
+                model="Latitude 7440",
+                serial="TEST-LAPTOP-01",
+                category="laptop",
+                assigned_to=person_id,
+                currency="EUR",
+                in_loan_stock=False,
+            )
+        )
+    add(
+        intake.inbox,
+        mail(
+            "Dell Latitude 7440 Service Tag TEST-LAPTOP-01: l'écran ne démarre plus.",
+            message_id="<laptop-intake@appelia.example>",
+        ),
+    )
+
+    with client(db_engine, session_factory, app_settings, intake) as api:
+        response = api.post("/api/intake/poll")
+        assert response.status_code == 200, response.text
+        case_id = response.json()["messages"][0]["case_id"]
+
+    with session_factory() as session:
+        case = session.execute(select(cases).where(cases.c.id == case_id)).one()
+        steps = session.execute(
+            select(data_checklists.c.steps).where(data_checklists.c.case_id == case_id)
+        ).scalar_one()
+    assert case.equipment_id == laptop_id
+    assert len(steps) == 7
+    assert all(not step["done"] for step in steps.values())
 
 
 @pytest.mark.parametrize(

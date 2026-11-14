@@ -1,18 +1,25 @@
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.contracts.enums import CaseStatus, Channel, EventType, VerdictValue
 from app.contracts.models import Verdict
 from app.core.journal import append_event, verify
 from app.core.orchestrator import Orchestrator
 from app.core.status import recover_interrupted_sends
-from app.core.tables import action_results, actions, case_steps, cases, events
+from app.core.tables import (
+    action_results,
+    actions,
+    case_steps,
+    cases,
+    data_checklists,
+    equipment,
+    events,
+)
 from app.testing.fakes import (
     CrashingActionAdapter,
     FailingActionAdapter,
     FakeBrowserAdapter,
     FakeEmailAdapter,
     FakeExtractor,
-    FakeFollowUp,
     FakeRulesEngine,
 )
 from tests.integration.helpers import create_case
@@ -24,7 +31,6 @@ def make_orchestrator(factory, app_settings, adapter=None, rules_engine=None):
         extractor=FakeExtractor(),
         rules_engine=rules_engine or FakeRulesEngine(),
         action_adapters={adapter.channel: adapter} if adapter is not None else {},
-        follow_up=FakeFollowUp(),
         app_settings=app_settings,
     )
 
@@ -40,7 +46,7 @@ def approve(factory, case_id, person_id):
         )
 
 
-async def test_case_runs_from_prepared_through_resolved(session_factory, app_settings) -> None:
+async def test_case_runs_from_prepared_through_tracked(session_factory, app_settings) -> None:
     case, person_id = create_case(
         session_factory,
         email="allowed@example.test",
@@ -52,9 +58,9 @@ async def test_case_runs_from_prepared_through_resolved(session_factory, app_set
     pending = await orchestrator.run(case.id)
     assert pending.status == CaseStatus.AWAITING_VALIDATION
     approve(session_factory, case.id, person_id)
-    resolved = await orchestrator.run(case.id)
+    tracked = await orchestrator.run(case.id)
 
-    assert resolved.status == CaseStatus.RESOLVED
+    assert tracked.status == CaseStatus.TRACKED
     assert len(adapter.calls) == 1
     with session_factory() as session:
         persisted_status = session.execute(
@@ -75,7 +81,7 @@ async def test_case_runs_from_prepared_through_resolved(session_factory, app_set
             .all()
         )
         journal_status = verify(session, app_settings)
-    assert persisted_status == CaseStatus.RESOLVED.value
+    assert persisted_status == CaseStatus.TRACKED.value
     assert {
         "identify",
         "find_proof",
@@ -87,6 +93,32 @@ async def test_case_runs_from_prepared_through_resolved(session_factory, app_set
     } <= set(step_names)
     assert EventType.ACTION_SUCCEEDED.value in event_types
     assert journal_status["ok"] is True
+
+
+async def test_computer_case_gets_data_checklist_from_orchestrator(
+    session_factory, app_settings
+) -> None:
+    case, _ = create_case(session_factory)
+    with session_factory.begin() as session:
+        session.execute(
+            update(equipment)
+            .where(equipment.c.id == str(case.equipment_id))
+            .values(category="computer")
+        )
+
+    orchestrator = make_orchestrator(
+        session_factory,
+        app_settings,
+        FakeEmailAdapter(),
+    )
+    await orchestrator.run(case.id)
+
+    with session_factory() as session:
+        steps = session.execute(
+            select(data_checklists.c.steps).where(data_checklists.c.case_id == str(case.id))
+        ).scalar_one()
+    assert len(steps) == 7
+    assert all(not step["done"] for step in steps.values())
 
 
 async def test_failure_can_retry_once_with_a_stable_idempotency_key(
@@ -105,7 +137,7 @@ async def test_failure_can_retry_once_with_a_stable_idempotency_key(
 
     retry = FakeEmailAdapter()
     orchestrator.action_adapters[retry.channel] = retry
-    assert (await orchestrator.run(case.id)).status == CaseStatus.RESOLVED
+    assert (await orchestrator.run(case.id)).status == CaseStatus.TRACKED
     assert len(failing.calls) == 1
     assert len(retry.calls) == 1
     assert failing.calls[0] == retry.calls[0]
@@ -247,7 +279,7 @@ async def test_browser_adapter_uses_verdict_channel_and_url(session_factory, app
 
     result = await orchestrator.run(case.id)
 
-    assert result.status == CaseStatus.RESOLVED
+    assert result.status == CaseStatus.TRACKED
     with session_factory() as session:
         action = session.execute(select(actions)).mappings().one()
     assert action["channel"] == Channel.BROWSER_PORTAL.value
@@ -280,7 +312,7 @@ async def test_case_channel_is_used_when_verdict_channel_is_missing(
 
     result = await orchestrator.run(case.id)
 
-    assert result.status == CaseStatus.RESOLVED
+    assert result.status == CaseStatus.TRACKED
     with session_factory() as session:
         action = session.execute(select(actions)).mappings().one()
     assert action["channel"] == case.channel.value

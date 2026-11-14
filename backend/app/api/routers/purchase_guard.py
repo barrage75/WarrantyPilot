@@ -21,6 +21,7 @@ from app.contracts.enums import (
     VerdictValue,
 )
 from app.contracts.models import utc_now
+from app.core.checklists import ensure_data_checklist
 from app.core.journal import append_event
 from app.core.orchestrator import Orchestrator
 from app.core.tables import cases, equipment, incidents, purchase_requests, rights
@@ -124,6 +125,33 @@ def _serialize(row, today) -> PurchaseRecommendation:
 def _ensure_linked_case(session: Session, row) -> UUID:
     if row["case_id"]:
         return UUID(row["case_id"])
+    existing_case_id = session.execute(
+        select(cases.c.id)
+        .join(incidents, incidents.c.id == cases.c.incident_id)
+        .where(
+            cases.c.equipment_id == row["equipment_id"],
+            incidents.c.kind == IncidentKind.FAILURE.value,
+            cases.c.status.in_(
+                [
+                    CaseStatus.AWAITING_VALIDATION.value,
+                    CaseStatus.SENDING.value,
+                    CaseStatus.SENT.value,
+                    CaseStatus.TRACKED.value,
+                    CaseStatus.MANUAL_TAKEOVER.value,
+                ]
+            ),
+        )
+        .order_by(cases.c.updated_at.desc(), cases.c.created_at.desc())
+        .limit(1)
+    ).scalar_one_or_none()
+    if existing_case_id is not None:
+        ensure_data_checklist(session, existing_case_id, row["equipment_id"])
+        session.execute(
+            update(purchase_requests)
+            .where(purchase_requests.c.id == row["id"])
+            .values(case_id=existing_case_id)
+        )
+        return UUID(existing_case_id)
     incident_id = uuid4()
     case_id = uuid4()
     created_at = utc_now()
@@ -155,6 +183,7 @@ def _ensure_linked_case(session: Session, row) -> UUID:
             updated_at=created_at.isoformat(),
         )
     )
+    ensure_data_checklist(session, case_id, row["equipment_id"])
     session.execute(
         update(purchase_requests)
         .where(purchase_requests.c.id == row["id"])

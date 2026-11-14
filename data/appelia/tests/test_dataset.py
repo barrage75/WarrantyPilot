@@ -7,11 +7,12 @@ from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree
 
-from appelia.generate import HIDDEN_PROMPT, generate_dataset
-from appelia.load import load_dataset
 from pypdf import PdfReader
 
 from app.contracts.models import Document, Equipment, Person
+from app.ingestion.normalize import normalize_facts
+from appelia.generate import HIDDEN_PROMPT, generate_dataset
+from appelia.load import load_dataset
 
 DATA_DIRECTORY = Path(__file__).resolve().parents[1]
 XML_NAMESPACES = {
@@ -72,7 +73,7 @@ def test_facturx_xml_matches_annotations() -> None:
         item for item in _read_json("annotations.json") if item["format"] == "facturx"
     ]
     suppliers = {item["id"]: item for item in _read_json("suppliers.json")}
-    assert len(annotations) == 12
+    assert len(annotations) == 13
 
     for annotation in annotations:
         reader = PdfReader(str(DATA_DIRECTORY / annotation["filename"]))
@@ -296,6 +297,16 @@ def test_loader_validates_contract_models() -> None:
         and fact.field == "invoice_date"
     ]
     assert paul_invoice_dates and set(paul_invoice_dates) == {"2025-03-20"}
+    dell_equipment = next(item for item in dataset.equipment if item.serial == "7XK4L93")
+    dell_invoice = next(
+        item for item in dataset.annotations if item["filename"] == "invoices/invoice-041.pdf"
+    )
+    assert dell_invoice["format"] == "facturx"
+    dell_facts = normalize_facts(list(dataset.facts), dell_equipment)
+    dell_serials = {
+        str(fact.value) for fact in dell_facts if fact.field == "serial_number"
+    }
+    assert dell_serials == {"7XK4L93"}
     assert all(
         item["condition"] in {"new", "refurbished"} for item in equipment_records
     )

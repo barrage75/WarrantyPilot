@@ -21,6 +21,7 @@ from app.contracts.enums import (
     VerdictValue,
 )
 from app.contracts.models import Case, Incident, Verdict, utc_now
+from app.core.checklists import ensure_data_checklist
 from app.core.journal import append_event
 from app.core.orchestrator import Orchestrator
 from app.core.tables import cases, incidents, verdicts
@@ -59,14 +60,16 @@ async def create_failure(
         )
     if reply.case_id is not None:
         case_id = reply.case_id
-        incident_id: str = session.execute(
-            select(cases.c.incident_id).where(cases.c.id == case_id)
-        ).scalar_one()
+        case_row = session.execute(
+            select(cases.c.incident_id, cases.c.equipment_id).where(cases.c.id == case_id)
+        ).one()
+        incident_id: str = case_row.incident_id
         session.execute(
             update(incidents)
             .where(incidents.c.id == incident_id)
             .values(reported_via=IncidentReportedVia.EMAIL.value)
         )
+        ensure_data_checklist(session, case_id, case_row.equipment_id)
     else:
         incident = Incident(
             reporter_id=reporter_id,

@@ -2,7 +2,7 @@ import json
 from uuid import UUID
 
 from fastapi.testclient import TestClient
-from sqlalchemy import insert, select
+from sqlalchemy import select, update
 
 from app.actions.browser import BrowserPortalAdapter, BrowserSettings
 from app.api.main import _browser_step_recorder, create_app
@@ -84,9 +84,9 @@ def test_dell_chat_validation_files_one_portal_case(
         )
         with session_factory.begin() as session:
             session.execute(
-                insert(data_checklists).values(
-                    id=str(checklist.id),
-                    case_id=case_id,
+                update(data_checklists)
+                .where(data_checklists.c.case_id == case_id)
+                .values(
                     steps=checklist.model_dump(mode="json")["steps"],
                 )
             )

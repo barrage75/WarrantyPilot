@@ -39,7 +39,6 @@ def get_orchestrator(request: Request) -> Orchestrator:
         extractor=services["extractor"],
         rules_engine=services["rules_engine"],
         action_adapters=services["action_adapters"],
-        follow_up=services["follow_up"],
         app_settings=request.app.state.app_settings,
         rules=rules,
     )

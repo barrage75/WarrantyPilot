@@ -24,12 +24,16 @@ TRANSITIONS: dict[CaseStatus, frozenset[CaseStatus]] = {
         {CaseStatus.SENDING, CaseStatus.FAILED, CaseStatus.CANCELLED}
     ),
     CaseStatus.SENDING: frozenset({CaseStatus.SENT, CaseStatus.FAILED, CaseStatus.MANUAL_TAKEOVER}),
-    CaseStatus.SENT: frozenset({CaseStatus.TRACKED, CaseStatus.RESOLVED}),
+    CaseStatus.SENT: frozenset(
+        {CaseStatus.TRACKED, CaseStatus.RESOLVED, CaseStatus.MANUAL_TAKEOVER}
+    ),
     CaseStatus.FAILED: frozenset(
         {CaseStatus.SENDING, CaseStatus.MANUAL_TAKEOVER, CaseStatus.CANCELLED}
     ),
     CaseStatus.MANUAL_TAKEOVER: frozenset({CaseStatus.SENT, CaseStatus.CANCELLED}),
-    CaseStatus.TRACKED: frozenset({CaseStatus.RESOLVED, CaseStatus.FAILED}),
+    CaseStatus.TRACKED: frozenset(
+        {CaseStatus.RESOLVED, CaseStatus.FAILED, CaseStatus.MANUAL_TAKEOVER}
+    ),
     CaseStatus.RESOLVED: frozenset(),
     CaseStatus.CANCELLED: frozenset(),
 }

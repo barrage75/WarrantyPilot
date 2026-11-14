@@ -9,7 +9,7 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import insert, select, update
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
@@ -22,6 +22,7 @@ from app.contracts.enums import (
     Channel,
     ChecklistStepName,
     EventType,
+    PurchaseGuardState,
 )
 from app.contracts.models import (
     Action,
@@ -48,6 +49,7 @@ from app.core.tables import (
     events,
     people,
     policy_decisions,
+    purchase_requests,
     verdicts,
 )
 
@@ -80,6 +82,20 @@ class ManualProofRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     person_id: UUID
     proof: str = Field(min_length=1)
+
+
+class CaseResolveRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    person_id: UUID
+    note: str = Field(min_length=1)
+
+    @field_validator("note")
+    @classmethod
+    def note_must_not_be_blank(cls, value: str) -> str:
+        note = value.strip()
+        if not note:
+            raise ValueError("Note must not be blank")
+        return note
 
 
 class CaseActionHistory(BaseModel):
@@ -580,6 +596,67 @@ def submit_manual_proof(
         case_id=str(case_id),
         payload={"from": case.status.value, "to": new_status.value},
     )
+    session.commit()
+    return case.model_copy(update={"status": new_status, "updated_at": updated_at})
+
+
+@router.post("/cases/{case_id}/resolve", response_model=Case)
+def resolve_case(
+    case_id: UUID,
+    request_body: CaseResolveRequest,
+    session: Session = Depends(get_session),
+) -> Case:
+    case = _load_case(session, case_id)
+    _require_person(session, request_body.person_id)
+    if case.status not in {CaseStatus.SENT, CaseStatus.TRACKED}:
+        raise HTTPException(status_code=409, detail="Case is not sent or tracked")
+    try:
+        new_status = transition(case.status, CaseStatus.RESOLVED)
+    except InvalidTransition as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    actor = f"human:{request_body.person_id}"
+    updated_at = utc_now()
+    session.execute(
+        update(cases)
+        .where(cases.c.id == str(case_id))
+        .values(status=new_status.value, updated_at=updated_at.isoformat())
+    )
+    append_event(
+        session,
+        EventType.STATUS_CHANGED,
+        actor=actor,
+        case_id=str(case_id),
+        payload={
+            "from": case.status.value,
+            "to": new_status.value,
+            "note": request_body.note,
+        },
+    )
+    purchase_rows = session.execute(
+        select(
+            purchase_requests.c.id,
+            purchase_requests.c.amount,
+            purchase_requests.c.cancelled_at,
+        ).where(purchase_requests.c.case_id == str(case_id))
+    ).mappings()
+    for row in purchase_rows:
+        values: dict[str, Any] = {"resolved_at": updated_at.isoformat()}
+        if row["cancelled_at"]:
+            values["state"] = PurchaseGuardState.SAVING_REALIZED.value
+        session.execute(
+            update(purchase_requests).where(purchase_requests.c.id == row["id"]).values(**values)
+        )
+        if row["cancelled_at"]:
+            append_event(
+                session,
+                EventType.PURCHASE_GUARD_SAVING_REALIZED,
+                actor=actor,
+                case_id=str(case_id),
+                payload={
+                    "purchase_request_id": row["id"],
+                    "amount_eur": float(row["amount"]),
+                },
+            )
     session.commit()
     return case.model_copy(update={"status": new_status, "updated_at": updated_at})
 
