@@ -32,6 +32,7 @@ it("renders a bento equipment tile with the API category, amount and covered ver
  expect(card.getByText(/^120,00\s€$/)).toHaveClass("rounded-full");
  expect(card.getByText("Couvert")).toHaveClass("bg-ok/15");
  await waitFor(() => expect(card.getByText("Encore sous garantie : privilégiez la réparation avant d’acheter.")).toBeVisible());
+ expect(card.getByText("Casque encore sous garantie fabricant.")).toHaveClass("text-ink");
  await waitFor(() => expect(view.container.querySelector('[data-icon="headphones"]')).toBeInTheDocument());
 });
 it.each([
