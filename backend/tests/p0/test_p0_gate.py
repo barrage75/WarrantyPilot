@@ -16,8 +16,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.actions.browser.drivers._session import GuardedBrowser
 from app.actions.email.local_smtp_server import LocalSmtpServer
 from app.api.main import create_app
-from app.contracts.enums import Channel, ChecklistStepName, EventType, VerdictValue
-from app.contracts.models import Verdict
+from app.contracts.enums import CaseStatus, EventType
 from app.core.settings import AppSettings
 
 
@@ -31,38 +30,6 @@ def _status_reached(events: list[dict[str, Any]], status: str) -> bool:
         event["type"] == EventType.STATUS_CHANGED.value and event["payload"].get("to") == status
         for event in events
     )
-
-
-class P0RulesEngine:
-    def __init__(self, delegate: Any, dell_serial: str, paul_serial: str) -> None:
-        self.delegate = delegate
-        self.dell_serial = dell_serial
-        self.paul_serial = paul_serial
-
-    def evaluate(
-        self,
-        equipment: Any,
-        facts: Any,
-        incident: Any,
-        rules: Any,
-        rights: Any,
-    ) -> Any:
-        if equipment.serial == self.dell_serial:
-            return Verdict(
-                value=VerdictValue.COVERED,
-                channel=Channel.BROWSER_PORTAL,
-                target_url="http://127.0.0.1:8100",
-                explanation_fr="La garantie Dell est active.",
-                explanation_en="Dell coverage is active.",
-            )
-        if equipment.serial == self.paul_serial:
-            return Verdict(
-                value=VerdictValue.TO_VERIFY,
-                channel=Channel.MANUAL,
-                explanation_fr="Une validation humaine est requise.",
-                explanation_en="Human validation is required.",
-            )
-        return self.delegate.evaluate(equipment, facts, incident, rules, rights)
 
 
 @pytest.mark.p0
@@ -156,6 +123,7 @@ async def test_p0_gate(
                     paul_case = _json(await client.get(f"/api/cases/{paul_case_id}"))
                     assert paul_case["verdict"]["value"] == "covered"
                     assert paul_case["policy"]["outcome"] == "auto_send"
+                    assert paul_case["status"] != CaseStatus.RESOLVED.value
                     paul_events = _json(await client.get(f"/api/cases/{paul_case_id}/events"))
                     assert _status_reached(paul_events, "sent")
                     paul_actions = _json(await client.get(f"/api/cases/{paul_case_id}/actions"))
@@ -166,11 +134,11 @@ async def test_p0_gate(
                     email_result = paul_actions[0]["results"][0]
                     assert email_result["status"] == "success"
                     email_proof = json.loads(email_result["proof"])
-
-                    application.state.services["rules_engine"] = P0RulesEngine(
-                        application.state.services["rules_engine"],
-                        dell_serial="7XK4L93",
-                        paul_serial=paul_headset["serial"],
+                    email_tick = await client.post("/api/followup/tick")
+                    assert email_tick.status_code == 200, email_tick.text
+                    assert (
+                        _json(await client.get(f"/api/cases/{paul_case_id}"))["status"]
+                        == CaseStatus.TRACKED.value
                     )
                     dell_conversation = _json(await client.post("/api/chat/conversations"))
                     dell_reply = _json(
@@ -187,14 +155,13 @@ async def test_p0_gate(
                     )
                     dell_case_id = dell_reply["case_id"]
                     assert dell_case_id
-                    for step in ChecklistStepName:
-                        checklist = await client.post(
-                            f"/api/cases/{dell_case_id}/checklist/{step.value}",
-                            json={"person_id": operator["id"]},
-                        )
-                        assert checklist.status_code == 200, checklist.text
                     dell_case = _json(await client.get(f"/api/cases/{dell_case_id}"))
+                    assert dell_case["verdict"]["value"] in {"covered", "likely_covered"}
+                    assert dell_case["verdict"]["channel"] == "browser_portal"
                     assert dell_case["status"] == "awaiting_validation"
+                    checklist = _json(await client.get(f"/api/cases/{dell_case_id}/checklist"))
+                    assert checklist["steps"]
+                    assert all(not step["done"] for step in checklist["steps"].values())
 
                     validated = _json(
                         await client.post(
@@ -202,7 +169,7 @@ async def test_p0_gate(
                             json={"person_id": operator["id"]},
                         )
                     )
-                    assert validated["status"] in {"tracked", "resolved"}
+                    assert validated["status"] in {"sent", "tracked"}
 
                     dell_case_events = _json(await client.get(f"/api/cases/{dell_case_id}/events"))
                     assert _status_reached(dell_case_events, "sent")
@@ -238,6 +205,35 @@ async def test_p0_gate(
                     assert len(repro_cases) == 1
                     assert repro_cases[0]["tag"] == "7XK4L93"
                     assert repro_cases[0]["number"] == case_number
+                    for portal_status in ("in_progress", "part_shipped", "closed"):
+                        advanced = await repro.post(f"/__test__/advance/{case_number}")
+                        assert advanced.status_code == 200, advanced.text
+                        assert advanced.json()["status"] == portal_status
+                        tick = await client.post("/api/followup/tick")
+                        assert tick.status_code == 200, tick.text
+                        current_dell = _json(await client.get(f"/api/cases/{dell_case_id}"))
+                        if portal_status == "closed":
+                            assert current_dell["status"] == CaseStatus.RESOLVED.value
+                        else:
+                            assert current_dell["status"] == CaseStatus.TRACKED.value
+                    dell_case_events = _json(await client.get(f"/api/cases/{dell_case_id}/events"))
+                    portal_statuses = {
+                        event["payload"]["proof"]["portal_status"]
+                        for event in dell_case_events
+                        if event["type"] == EventType.FOLLOWUP_RECEIVED.value
+                        and isinstance(event["payload"].get("proof"), dict)
+                        and event["payload"]["proof"].get("portal_status")
+                    }
+                    assert {"in_progress", "part_shipped", "closed"} <= portal_statuses
+                    assert any(
+                        event["type"] == EventType.FOLLOWUP_RECEIVED.value
+                        and event["payload"].get("proof", {}).get("portal_status") == "closed"
+                        for event in dell_case_events
+                    )
+                    final_checklist = _json(
+                        await client.get(f"/api/cases/{dell_case_id}/checklist")
+                    )
+                    assert all(not step["done"] for step in final_checklist["steps"].values())
 
                     recommendations = _json(await client.get("/api/purchase-requests"))
                     assert len(recommendations) == 1
@@ -255,8 +251,9 @@ async def test_p0_gate(
                     purchase_case_id = suspended["caseId"]
                     assert purchase_case_id
                     assert suspended["state"] == "purchase_suspended"
+                    assert purchase_case_id == paul_case_id
                     purchase_case = _json(await client.get(f"/api/cases/{purchase_case_id}"))
-                    assert purchase_case["status"] == "awaiting_validation"
+                    assert purchase_case["status"] == CaseStatus.TRACKED.value
 
                     cancelled = _json(
                         await client.post(
@@ -271,27 +268,27 @@ async def test_p0_gate(
                         != "resolved"
                     )
 
-                    takeover = _json(
+                    resolved = _json(
                         await client.post(
-                            f"/api/cases/{purchase_case_id}/validate",
-                            json={"person_id": operator["id"]},
-                        )
-                    )
-                    assert takeover["status"] == "manual_takeover"
-                    manual_proof = _json(
-                        await client.post(
-                            f"/api/cases/{purchase_case_id}/manual-proof",
+                            f"/api/cases/{purchase_case_id}/resolve",
                             json={
                                 "person_id": operator["id"],
-                                "proof": "Dossier de prise en charge confirmé.",
+                                "note": "Remplacement annulé après résolution du dossier.",
                             },
                         )
                     )
-                    assert manual_proof["status"] == "sent"
-                    resolved = _json(
-                        await client.post(f"/api/purchase-requests/{purchase['id']}/resolve-case")
+                    assert resolved["status"] == CaseStatus.RESOLVED.value
+                    resolution_event = next(
+                        event
+                        for event in _json(
+                            await client.get(f"/api/cases/{purchase_case_id}/events")
+                        )
+                        if event["type"] == EventType.STATUS_CHANGED.value
+                        and event["payload"].get("to") == CaseStatus.RESOLVED.value
                     )
-                    assert resolved["state"] == "saving_realized"
+                    assert resolution_event["actor"] == f"human:{operator['id']}"
+                    resolved_purchase = _json(await client.get("/api/purchase-requests"))
+                    assert resolved_purchase[0]["state"] == "saving_realized"
                     assert (
                         _json(await client.get(f"/api/cases/{purchase_case_id}"))["status"]
                         == "resolved"

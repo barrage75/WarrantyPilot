@@ -33,6 +33,7 @@ from app.core.tables import (
     rights,
     suppliers,
 )
+from app.followup.reminders import ReminderOutbox
 
 if TYPE_CHECKING:
     from appelia.load import AppeliaDataset
@@ -58,6 +59,7 @@ def _add_months(value: date, months: int) -> date:
 def reset_demo(engine: Engine, settings: AppSettings) -> None:
     if engine.dialect.name != "sqlite":
         raise ValueError("demo reset is restricted to the local SQLite database")
+    ReminderOutbox(settings.followup_outbox_path).clear()
     maildir_path = settings.maildir_path.expanduser()
     if maildir_path.is_symlink():
         maildir_path.unlink()

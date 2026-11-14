@@ -38,7 +38,6 @@ def test_orchestrator_uses_ingested_suspicious_fact(
             extractor=services["extractor"],
             rules_engine=services["rules_engine"],
             action_adapters=services["action_adapters"],
-            follow_up=services["follow_up"],
             app_settings=app_settings,
             rules=services["rules"],
         )

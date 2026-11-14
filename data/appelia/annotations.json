@@ -3961,7 +3961,7 @@
   },
   {
     "filename": "invoices/invoice-041.pdf",
-    "format": "pdf",
+    "format": "facturx",
     "invoice_number": "APP-2025-0041",
     "supplier_id": "SUP-TECH",
     "supplier_name": "Latitude Services Test",

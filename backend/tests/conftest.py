@@ -18,6 +18,8 @@ def app_settings(tmp_path: Path) -> AppSettings:
         anchor_file=tmp_path / "anchors" / "anchors.jsonl",
         maildir_path=tmp_path / "mail",
         email_sent_ledger_path=tmp_path / "email_sent.jsonl",
+        followup_interval_s=0,
+        followup_outbox_path=tmp_path / "followup.sqlite3",
     )
 
 

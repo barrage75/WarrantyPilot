@@ -45,8 +45,8 @@ p0:
 	uv run --project backend pytest -m p0 backend/tests/p0/test_p0_gate.py
 
 lint:
-	uv run --project backend ruff check backend/app backend/tests data/appelia
-	uv run --project backend ruff format --check backend/app backend/tests
+	cd backend && uv run ruff check app tests ../data/appelia
+	cd backend && uv run ruff format --check app tests
 	cd frontend && npm run lint
 
 typecheck:

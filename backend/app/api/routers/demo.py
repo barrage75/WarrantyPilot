@@ -14,13 +14,13 @@ from app.contracts.enums import (
     IncidentReportedVia,
     RealityBadge,
 )
-from app.contracts.models import Case, DataChecklist, utc_now
+from app.contracts.models import Case, utc_now
 from app.core.journal import append_event
 from app.core.orchestrator import Orchestrator
 from app.core.preflight import preflight_payload, run_checks
 from app.core.reset import reset_demo
 from app.core.settings import AppSettings
-from app.core.tables import cases, data_checklists, equipment, incidents, people
+from app.core.tables import cases, equipment, incidents, people
 
 router = APIRouter()
 
@@ -62,22 +62,19 @@ async def create_fake_case(
     if settings.environment != "dev":
         raise HTTPException(status_code=404, detail="Not found")
     equipment_id = request_body.equipment_id
-    equipment_category: str | None = None
     if equipment_id is None:
         equipment_row = session.execute(
-            select(equipment.c.id, equipment.c.category).order_by(equipment.c.brand).limit(1)
+            select(equipment.c.id).order_by(equipment.c.brand).limit(1)
         ).first()
         if equipment_row is None:
             raise HTTPException(status_code=409, detail="Run /demo/reset first")
         equipment_id = UUID(equipment_row.id)
-        equipment_category = equipment_row.category
     else:
         equipment_row = session.execute(
-            select(equipment.c.category).where(equipment.c.id == str(equipment_id))
+            select(equipment.c.id).where(equipment.c.id == str(equipment_id))
         ).first()
         if equipment_row is None:
             raise HTTPException(status_code=404, detail="Equipment not found")
-        equipment_category = equipment_row.category
     reporter_id = request_body.reporter_id
     if reporter_id is None:
         reporter_row = session.execute(select(people.c.id).limit(1)).first()
@@ -113,15 +110,6 @@ async def create_fake_case(
             updated_at=now.isoformat(),
         )
     )
-    if equipment_category and equipment_category.casefold() in {"computer", "laptop", "notebook"}:
-        checklist = DataChecklist(case_id=case_id)
-        session.execute(
-            insert(data_checklists).values(
-                id=str(checklist.id),
-                case_id=str(case_id),
-                steps=checklist.model_dump(mode="json")["steps"],
-            )
-        )
     append_event(
         session,
         EventType.CASE_CREATED,

@@ -23,6 +23,8 @@ class AppSettings(BaseSettings):
     email_sent_ledger_path: Path = Path("runtime/email_sent.jsonl")
     email_sender: str = "warrantypilot@appelia.example"
     email_ai_disclosure: bool = True
+    followup_interval_s: float = Field(default=0, ge=0)
+    followup_outbox_path: Path = Path("runtime/followup.sqlite3")
     gmail_client_id: SecretStr | None = None
     gmail_client_secret: SecretStr | None = None
     gmail_refresh_token: SecretStr | None = None

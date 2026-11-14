@@ -17,6 +17,8 @@
   "takeover": "Take over manually",
   "manualProof": "Human execution proof",
   "submitProof": "Save proof",
+  "resolveCase": "Mark as resolved",
+  "resolutionNote": "Resolution note",
   "actionSuccess": "Action saved.",
   "evidence": "Evidence",
   "document": "Document",

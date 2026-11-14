@@ -18,12 +18,10 @@ from app.contracts.enums import (
     EventType,
     FactField,
     PolicyOutcome,
-    PurchaseGuardState,
 )
 from app.contracts.interfaces import (
     ActionAdapter,
     DocumentExtractor,
-    FollowUpChecker,
     RulesEngine,
 )
 from app.contracts.models import (
@@ -41,8 +39,8 @@ from app.contracts.models import (
     Rule,
     Settings,
     Verdict,
-    utc_now,
 )
+from app.core.checklists import ensure_data_checklist
 from app.core.journal import append_event
 from app.core.policy import decide
 from app.core.security import SecurityViolation, assert_email_allowed, assert_url_allowed
@@ -61,7 +59,6 @@ from app.core.tables import (
     incidents,
     people,
     policy_decisions,
-    purchase_requests,
     rights,
     suppliers,
     verdicts,
@@ -96,7 +93,6 @@ class Orchestrator:
         extractor: DocumentExtractor,
         rules_engine: RulesEngine,
         action_adapters: Mapping[Channel, ActionAdapter],
-        follow_up: FollowUpChecker,
         app_settings: AppSettings,
         rules: list[Rule] | None = None,
     ) -> None:
@@ -104,7 +100,6 @@ class Orchestrator:
         self.extractor = extractor
         self.rules_engine = rules_engine
         self.action_adapters = action_adapters
-        self.follow_up = follow_up
         self.app_settings = app_settings
         self.rules = rules if rules is not None else []
 
@@ -133,6 +128,7 @@ class Orchestrator:
             if case_row is None:
                 raise KeyError(f"case not found: {case_id}")
             case = self._case_from_row(session, case_row)
+            ensure_data_checklist(session, case.id, case.equipment_id)
             if case.status in {
                 CaseStatus.TRACKED,
                 CaseStatus.RESOLVED,
@@ -307,6 +303,7 @@ class Orchestrator:
             checklist_complete = (
                 _checklist_is_complete(checklist_row.steps) if checklist_row is not None else False
             )
+            action_channel = verdict.channel or case.channel
             policy_settings = self._load_policy_settings(session)
             suspicious_signal = any(
                 fact.field in {FactField.SECURITY_SUSPICIOUS.value, "suspicious"}
@@ -317,10 +314,12 @@ class Orchestrator:
                 case,
                 verdict,
                 equipment_model,
-                _action_kind_for_channel(verdict.channel or case.channel),
+                _action_kind_for_channel(action_channel),
                 policy_settings,
                 checklist_complete=checklist_complete,
-                requires_data_checklist=requires_checklist,
+                requires_data_checklist=(
+                    requires_checklist and action_channel != Channel.BROWSER_PORTAL
+                ),
                 suspicious_signal=suspicious_signal,
             )
             self._record_step(
@@ -753,7 +752,9 @@ class Orchestrator:
             idempotency_key=idempotency_key,
             payload=payload,
             badge=adapter.badge if adapter is not None else case.badge,
-            requires_data_checklist=category in {"computer", "laptop", "notebook"},
+            requires_data_checklist=(
+                category in {"computer", "laptop", "notebook"} and channel != Channel.BROWSER_PORTAL
+            ),
         )
         prior_action = (
             session.execute(select(actions).where(actions.c.idempotency_key == idempotency_key))
@@ -917,55 +918,6 @@ class Orchestrator:
             case_id=str(case.id),
             payload={"from": sent_status.value, "to": tracked_status.value},
         )
-        follow_up_payloads = self.follow_up.check(
-            case.model_copy(update={"status": tracked_status})
-        )
-        for payload in follow_up_payloads:
-            append_event(
-                session,
-                EventType.FOLLOWUP_RECEIVED,
-                case_id=str(case.id),
-                payload=payload,
-            )
-        if any(payload.get("status") == "resolved" for payload in follow_up_payloads):
-            resolved_status = transition(tracked_status, CaseStatus.RESOLVED)
-            self._set_status(session, case, resolved_status)
-            linked_purchases = (
-                session.execute(
-                    select(purchase_requests).where(purchase_requests.c.case_id == str(case.id))
-                )
-                .mappings()
-                .all()
-            )
-            for purchase in linked_purchases:
-                values: dict[str, Any] = {
-                    "resolved_at": utc_now().isoformat(),
-                }
-                if purchase["cancelled_at"]:
-                    values["state"] = PurchaseGuardState.SAVING_REALIZED.value
-                session.execute(
-                    update(purchase_requests)
-                    .where(purchase_requests.c.id == purchase["id"])
-                    .values(**values)
-                )
-                if purchase["cancelled_at"]:
-                    append_event(
-                        session,
-                        EventType.PURCHASE_GUARD_SAVING_REALIZED,
-                        actor="agent",
-                        case_id=str(case.id),
-                        payload={
-                            "purchase_request_id": purchase["id"],
-                            "amount_eur": float(purchase["amount"]),
-                        },
-                    )
-            append_event(
-                session,
-                EventType.STATUS_CHANGED,
-                case_id=str(case.id),
-                payload={"from": tracked_status.value, "to": resolved_status.value},
-            )
-            return resolved_status
         return tracked_status
 
     def _record_step(

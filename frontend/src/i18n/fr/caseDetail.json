@@ -17,6 +17,8 @@
   "takeover": "Prendre en main",
   "manualProof": "Preuve d’exécution humaine",
   "submitProof": "Enregistrer la preuve",
+  "resolveCase": "Marquer comme résolu",
+  "resolutionNote": "Note de résolution",
   "actionSuccess": "Action enregistrée.",
   "evidence": "Preuves",
   "document": "Document",

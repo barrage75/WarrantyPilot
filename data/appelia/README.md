@@ -17,7 +17,7 @@ uv run --project backend python data/appelia/generate.py
 Avec l'environnement virtuel du backend activé, la commande équivalente est
 `python data/appelia/generate.py`.
 
-Le dossier `invoices/` contient 48 PDF ordinaires et 12 factures Factur-X au
+Le dossier `invoices/` contient 47 PDF ordinaires et 13 factures Factur-X au
 profil EN16931. La facture 050 est une copie exacte Factur-X de la facture 001,
 pour le scénario de doublon. Les XML CII embarqués contiennent
 les numéros de série dans la description de ligne (`ram:Description`) : le modèle
@@ -59,7 +59,7 @@ from data.appelia.load import load_dataset
 dataset = load_dataset()
 ```
 
-Le loader passe les douze factures Factur-X par le registre d'extracteurs et expose
+Le loader passe les treize factures Factur-X par le registre d'extracteurs et expose
 les faits et droits déduits des preuves de location, Warranty+ et ProSupport.
 
 Les PDF sont produits avec des métadonnées à date fixe pour que la génération
