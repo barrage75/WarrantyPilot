@@ -50,8 +50,13 @@ export async function resolveFromUi(page: Page, request: APIRequestContext = pag
  await expect(card).toBeVisible();
  await expectSignedIn(page);
  await card.getByRole("button", { name: "Valider", exact: true }).click();
- await expect.poll(async () => (await (await request.get("/api/cases/" + item.id)).json() as { status: string }).status).toBe("resolved");
+ await expect.poll(async () => (await (await request.get("/api/cases/" + item.id)).json() as { status: string }).status).toMatch(/^(sent|tracked|resolved)$/);
  await page.goto("/cases/" + item.id);
+ if ((await (await request.get("/api/cases/" + item.id)).json() as { status: string }).status !== "resolved") {
+  await page.getByLabel("Note de résolution", { exact: true }).fill("Remplacement reçu (démo fictive).");
+  await page.getByRole("button", { name: "Marquer comme résolu", exact: true }).click();
+  await expect.poll(async () => (await (await request.get("/api/cases/" + item.id)).json() as { status: string }).status).toBe("resolved");
+ }
  await expect(page.locator("main header").getByText("Résolu", { exact: true })).toBeVisible();
  await expect(page.getByRole("heading", { name: "Ligne de temps", exact: true })).toBeVisible();
  await expect(page.getByText("Actualisation toutes les 2 s", { exact: true })).toBeVisible();

@@ -335,10 +335,36 @@ def reset_demo(engine: Engine, settings: AppSettings, *, actor: str = "system") 
         )
 
 
-def main() -> int:
+def seed_operators(engine: Engine) -> int:
+    """Create the schema and the Appelia people only, so operators can sign in."""
+    alembic_config = Config(str(Path(__file__).parents[2] / "alembic.ini"))
+    alembic_config.set_main_option("sqlalchemy.url", str(engine.url).replace("%", "%%"))
+    with engine.connect() as connection:
+        alembic_config.attributes["connection"] = connection
+        command.upgrade(alembic_config, "head")
+    with Session(engine) as session, session.begin():
+        if session.execute(select(people.c.id).limit(1)).first() is not None:
+            return 0
+        rows = [
+            {
+                "id": str(person.id),
+                "name": person.name,
+                "email": person.email,
+                "role": person.role,
+                "access_role": access_role_for_job(person.role),
+            }
+            for person in _load_appelia_dataset().people
+        ]
+        session.execute(people.insert(), rows)
+        return len(rows)
+
+
+def main(argv: list[str] | None = None) -> int:
     from app.core.db import make_engine
     from app.core.journal import configure_journal_key
     from app.core.settings import get_settings
+
+    people_only = "--people-only" in (sys.argv[1:] if argv is None else argv)
 
     settings = get_settings()
     if settings.environment != "dev" or not settings.demo_mode:
@@ -347,7 +373,10 @@ def main() -> int:
     configure_journal_key(settings.journal_anchor_key)
     engine = make_engine(settings.database_url)
     try:
-        reset_demo(engine, settings, actor="system")
+        if people_only:
+            seed_operators(engine)
+        else:
+            reset_demo(engine, settings, actor="system")
     finally:
         engine.dispose()
     return 0

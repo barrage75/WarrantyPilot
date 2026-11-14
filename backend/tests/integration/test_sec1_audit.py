@@ -347,3 +347,21 @@ def test_b4_pytest_is_patched() -> None:
 
     major, minor, patch = (int(part) for part in version("pytest").split(".")[:3])
     assert (major, minor, patch) >= (9, 0, 3)
+
+
+def test_c2_people_only_seed_lets_karim_sign_in_as_admin(tmp_path) -> None:
+    from app.core.db import make_engine
+    from app.core.reset import seed_operators
+    from app.core.tables import people
+
+    engine = make_engine(f"sqlite:///{tmp_path / 'seed.db'}")
+    try:
+        assert seed_operators(engine) > 0
+        assert seed_operators(engine) == 0
+        with engine.connect() as connection:
+            role = connection.execute(
+                select(people.c.access_role).where(people.c.id == KARIM_ID)
+            ).scalar_one()
+    finally:
+        engine.dispose()
+    assert role == "admin"
