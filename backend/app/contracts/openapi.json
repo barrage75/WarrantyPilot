@@ -1667,8 +1667,15 @@
       "CaseResolveRequest": {
         "properties": {
           "person_id": {
-            "type": "string",
-            "format": "uuid",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Person Id"
           },
           "note": {
@@ -1680,7 +1687,6 @@
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "person_id",
           "note"
         ],
         "title": "CaseResolveRequest"

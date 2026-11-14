@@ -61,23 +61,11 @@ export function HumanActions({ item }: { item: Case }) {
  const { t } = useTranslation(["caseDetail", "common"]);
  const { personId } = useOperator();
  const action = useHumanAction(item.id ?? "");
-<<<<<<< HEAD
- const [reject, setReject] = useState(false), [reason, setReason] = useState(""), [proof, setProof] = useState(""), [resolutionNote, setResolutionNote] = useState("");
-||||||| parent of 13ec235 (feat(securite): écran de connexion, session frontend, e2e authentifiés et ancrage non bloquant)
- const [reject, setReject] = useState(false), [reason, setReason] = useState(""), [proof, setProof] = useState("");
-=======
- const [reject, setReject] = useState(false), [reason, setReason] = useState(""), [proof, setProof] = useState(""), [proofType, setProofType] = useState<ManualProof["proof_type"]>("case_number"), [proofDate, setProofDate] = useState(new Date().toISOString().slice(0, 10)), [note, setNote] = useState("");
->>>>>>> 13ec235 (feat(securite): écran de connexion, session frontend, e2e authentifiés et ancrage non bloquant)
+ const [reject, setReject] = useState(false), [reason, setReason] = useState(""), [proof, setProof] = useState(""), [proofType, setProofType] = useState<ManualProof["proof_type"]>("case_number"), [proofDate, setProofDate] = useState(new Date().toISOString().slice(0, 10)), [note, setNote] = useState(""), [resolutionNote, setResolutionNote] = useState("");
  const disabled = !personId || action.isPending || !item.id;
  function submit(value: HumanAction) {
   if (disabled) return;
-<<<<<<< HEAD
-  action.mutate(value, { onSuccess: () => { toast.success(t("actionSuccess")); setReject(false); setReason(""); setProof(""); setResolutionNote(""); }, onError: error => toast.error(t(apiErrorKey(error))) });
-||||||| parent of 13ec235 (feat(securite): écran de connexion, session frontend, e2e authentifiés et ancrage non bloquant)
-  action.mutate(value, { onSuccess: () => { toast.success(t("actionSuccess")); setReject(false); setReason(""); setProof(""); }, onError: error => toast.error(t(apiErrorKey(error))) });
-=======
-  action.mutate(value, { onSuccess: () => { toast.success(t("actionSuccess")); setReject(false); setReason(""); setProof(""); setNote(""); }, onError: error => toast.error(t(apiErrorKey(error))) });
->>>>>>> 13ec235 (feat(securite): écran de connexion, session frontend, e2e authentifiés et ancrage non bloquant)
+  action.mutate(value, { onSuccess: () => { toast.success(t("actionSuccess")); setReject(false); setReason(""); setProof(""); setNote(""); setResolutionNote(""); }, onError: error => toast.error(t(apiErrorKey(error))) });
  }
  return <div className="space-y-3">
  {!personId && <p className="text-sm text-amber-900">{t("common:identityRequired")}</p>}
@@ -85,14 +73,8 @@ export function HumanActions({ item }: { item: Case }) {
  {item.status === "awaiting_validation" && <><Button disabled={disabled} onClick={() => submit({ kind: "validate" })}>{t("validate")}</Button><Button variant="outline" disabled={disabled} onClick={() => setReject(true)}>{t("reject")}</Button></>}
  {item.status === "failed" && <Button disabled={disabled} onClick={() => submit({ kind: "manual-takeover" })}>{t("takeover")}</Button>}
  </div>
-<<<<<<< HEAD
- {item.status === "manual_takeover" && <form className="space-y-2" onSubmit={e => { e.preventDefault(); if (proof.trim()) submit({ kind: "manual-proof", person_id: personId, proof: proof.trim() }); }}><label htmlFor={"proof-" + item.id}>{t("manualProof")}</label><Textarea id={"proof-" + item.id} value={proof} onChange={e => setProof(e.target.value)} required/><Button disabled={disabled || !proof.trim()}>{t("submitProof")}</Button></form>}
- {["sent", "tracked"].includes(item.status) && <form className="space-y-2" onSubmit={e => { e.preventDefault(); if (resolutionNote.trim()) submit({ kind: "resolve", person_id: personId, note: resolutionNote.trim() }); }}><label htmlFor={"resolution-note-" + item.id}>{t("resolutionNote")}</label><Textarea id={"resolution-note-" + item.id} value={resolutionNote} onChange={e => setResolutionNote(e.target.value)} required/><Button disabled={disabled || !resolutionNote.trim()}>{t("resolveCase")}</Button></form>}
-||||||| parent of 13ec235 (feat(securite): écran de connexion, session frontend, e2e authentifiés et ancrage non bloquant)
- {item.status === "manual_takeover" && <form className="space-y-2" onSubmit={e => { e.preventDefault(); if (proof.trim()) submit({ kind: "manual-proof", person_id: personId, proof: proof.trim() }); }}><label htmlFor={"proof-" + item.id}>{t("manualProof")}</label><Textarea id={"proof-" + item.id} value={proof} onChange={e => setProof(e.target.value)} required/><Button disabled={disabled || !proof.trim()}>{t("submitProof")}</Button></form>}
-=======
  {item.status === "manual_takeover" && <form className="space-y-2" onSubmit={e => { e.preventDefault(); if (proof.trim()) submit({ kind: "manual-proof", proof_type: proofType, reference: proof.trim(), proof_date: proofDate, note: note.trim() }); }}><p className="font-medium">{t("manualProof")}</p><label className="block text-sm" htmlFor={"proof-type-" + item.id}>{t("proofType")}</label><select id={"proof-type-" + item.id} className="block rounded-md border border-slate-300 p-2" value={proofType} onChange={e => setProofType(e.target.value as ManualProof["proof_type"])}>{(["case_number", "email_message_id", "portal_screenshot", "carrier_tracking"] as const).map(value => <option key={value} value={value}>{t("proofTypes." + value)}</option>)}</select><label className="block text-sm" htmlFor={"proof-" + item.id}>{t("proofReference")}</label><input id={"proof-" + item.id} className="block w-full rounded-md border border-slate-300 p-2" value={proof} maxLength={200} onChange={e => setProof(e.target.value)} required/><label className="block text-sm" htmlFor={"proof-date-" + item.id}>{t("proofDate")}</label><input id={"proof-date-" + item.id} type="date" className="block rounded-md border border-slate-300 p-2" value={proofDate} onChange={e => setProofDate(e.target.value)} required/><label className="block text-sm" htmlFor={"proof-note-" + item.id}>{t("proofNote")}</label><Textarea id={"proof-note-" + item.id} value={note} maxLength={500} onChange={e => setNote(e.target.value)}/><Button disabled={disabled || !proof.trim()}>{t("submitProof")}</Button></form>}
->>>>>>> 13ec235 (feat(securite): écran de connexion, session frontend, e2e authentifiés et ancrage non bloquant)
+ {["sent", "tracked"].includes(item.status) && <form className="space-y-2" onSubmit={e => { e.preventDefault(); if (resolutionNote.trim()) submit({ kind: "resolve", note: resolutionNote.trim() }); }}><label htmlFor={"resolution-note-" + item.id}>{t("resolutionNote")}</label><Textarea id={"resolution-note-" + item.id} value={resolutionNote} onChange={e => setResolutionNote(e.target.value)} required/><Button disabled={disabled || !resolutionNote.trim()}>{t("resolveCase")}</Button></form>}
  {action.isError && <ErrorMessage error={action.error}/>}
  <Dialog open={reject} onOpenChange={setReject}><DialogContent><DialogTitle>{t("reject")}</DialogTitle><DialogDescription>{t("reasonRequired")}</DialogDescription><form className="space-y-4" onSubmit={e => { e.preventDefault(); if (reason.trim()) submit({ kind: "reject", reason: reason.trim() }); }}><label htmlFor={"reason-" + item.id}>{t("reason")}</label><Textarea id={"reason-" + item.id} value={reason} onChange={e => setReason(e.target.value)} required/><div className="flex gap-3"><Button disabled={disabled || !reason.trim()}>{t("confirmReject")}</Button><Button type="button" variant="outline" onClick={() => setReject(false)}>{t("common:cancel")}</Button></div></form></DialogContent></Dialog>
  </div>;

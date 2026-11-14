@@ -18,13 +18,9 @@ def app_settings(tmp_path: Path) -> AppSettings:
         anchor_file=tmp_path / "anchors" / "anchors.jsonl",
         maildir_path=tmp_path / "mail",
         email_sent_ledger_path=tmp_path / "email_sent.jsonl",
-<<<<<<< HEAD
         followup_interval_s=0,
         followup_outbox_path=tmp_path / "followup.sqlite3",
-||||||| parent of 35713b1 (test(securite): tests de régression de l'audit SEC1, pytest 9, reset authentifié)
-=======
         journal_archive_dir=tmp_path / "journal-archive",
->>>>>>> 35713b1 (test(securite): tests de régression de l'audit SEC1, pytest 9, reset authentifié)
     )
 
 

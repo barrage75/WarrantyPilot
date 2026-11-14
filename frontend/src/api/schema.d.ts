@@ -765,11 +765,8 @@ export interface components {
         };
         /** CaseResolveRequest */
         CaseResolveRequest: {
-            /**
-             * Person Id
-             * Format: uuid
-             */
-            person_id: string;
+            /** Person Id */
+            person_id?: string | null;
             /** Note */
             note: string;
         };

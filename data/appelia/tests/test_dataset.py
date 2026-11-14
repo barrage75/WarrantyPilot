@@ -7,12 +7,11 @@ from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree
 
-from pypdf import PdfReader
-
 from app.contracts.models import Document, Equipment, Person
 from app.ingestion.normalize import normalize_facts
 from appelia.generate import HIDDEN_PROMPT, generate_dataset
 from appelia.load import load_dataset
+from pypdf import PdfReader
 
 DATA_DIRECTORY = Path(__file__).resolve().parents[1]
 XML_NAMESPACES = {

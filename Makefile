@@ -1,10 +1,4 @@
-<<<<<<< HEAD
-.PHONY: setup dev smtp test p0 lint typecheck openapi login reset preflight frontend-build
-||||||| parent of 13ec235 (feat(securite): écran de connexion, session frontend, e2e authentifiés et ancrage non bloquant)
-.PHONY: setup dev smtp test lint typecheck openapi login reset preflight frontend-build
-=======
-.PHONY: setup seed dev smtp test lint typecheck openapi login reset preflight frontend-build
->>>>>>> 13ec235 (feat(securite): écran de connexion, session frontend, e2e authentifiés et ancrage non bloquant)
+.PHONY: setup seed dev smtp test p0 lint typecheck openapi login reset preflight frontend-build
 
 setup:
 	uv sync --project backend
