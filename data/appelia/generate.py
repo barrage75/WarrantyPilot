@@ -1189,6 +1189,7 @@ def _invoice_filename_for_equipment(
 
 
 def build_traps(
+    people: list[dict[str, Any]],
     equipment: list[dict[str, Any]],
     invoice_records: list[dict[str, Any]],
     file_by_invoice: dict[str, str],
@@ -1207,6 +1208,225 @@ def build_traps(
             if filename not in filenames:
                 filenames.append(filename)
         return filenames
+
+    def evaluation_case(
+        trap_id: int,
+        item: dict[str, Any],
+        description: str,
+        documents: list[str],
+    ) -> dict[str, Any]:
+        invoice = next(
+            (
+                record
+                for record in invoice_records
+                if item["id"] in record["equipment_ids"]
+            ),
+            None,
+        )
+        invoice_filename = (
+            file_by_invoice[invoice["invoice_number"]] if invoice is not None else None
+        )
+        incident_id = stable_id("appelia-trap-incident", str(trap_id))
+        facts: list[dict[str, Any]] = []
+
+        def add_fact(
+            field: str,
+            value: Any,
+            filename: str | None,
+            excerpt: str,
+            *,
+            source: str = "structured",
+            confidence: float = 0.99,
+        ) -> None:
+            index = len(facts)
+            document_id = (
+                stable_id("document", filename) if filename is not None else incident_id
+            )
+            fact_key = f"{trap_id}:{index}:{field}"
+            facts.append(
+                {
+                    "id": stable_id("appelia-trap-fact", fact_key),
+                    "equipment_id": item["id"],
+                    "document_id": document_id,
+                    "field": field,
+                    "value": value,
+                    "provenance": {
+                        "id": stable_id("appelia-trap-provenance", fact_key),
+                        "document_id": document_id,
+                        "page": 1 if filename is not None else None,
+                        "excerpt": excerpt,
+                    },
+                    "confidence": confidence,
+                    "source": source,
+                }
+            )
+
+        if invoice is not None and invoice_filename is not None:
+            line = next(
+                line for line in invoice["lines"] if line["equipment_id"] == item["id"]
+            )
+            invoice_date = iso_date(invoice["invoice_date"])
+            add_fact(
+                "purchase_date",
+                invoice_date,
+                invoice_filename,
+                f"Achat : {invoice_date}",
+            )
+            add_fact(
+                "invoice_date",
+                invoice_date,
+                invoice_filename,
+                f"Facture : {invoice_date}",
+            )
+            add_fact(
+                "buyer_name",
+                invoice["client_name"],
+                invoice_filename,
+                f"Client : {invoice['client_name']}",
+            )
+            add_fact(
+                "reseller_name",
+                invoice["supplier_name"],
+                invoice_filename,
+                f"Revendeur : {invoice['supplier_name']}",
+            )
+            add_fact(
+                "reseller_address",
+                invoice["supplier_address"],
+                invoice_filename,
+                f"Adresse du revendeur : {invoice['supplier_address']}",
+            )
+            add_fact(
+                "product_type",
+                item["category"],
+                invoice_filename,
+                f"Type de produit : {item['category']}",
+            )
+            add_fact(
+                "model_number",
+                line["model"],
+                invoice_filename,
+                f"Modèle : {line['model']}",
+            )
+            add_fact("sku", line["sku"], invoice_filename, f"SKU : {line['sku']}")
+            serial = line["serials"][0]
+            if item["scenario"] == "trap-14":
+                serial = f"{serial[:5]}...[illisible]"
+            add_fact(
+                "serial_number",
+                serial,
+                invoice_filename,
+                f"Numéro de série : {serial}",
+            )
+            if line["warranty_term_months"] is not None:
+                add_fact(
+                    "warranty_term_months",
+                    line["warranty_term_months"],
+                    invoice_filename,
+                    f"Durée de garantie : {line['warranty_term_months']} mois",
+                )
+
+        if item["condition"] == "refurbished":
+            add_fact(
+                "condition",
+                "refurbished",
+                None,
+                "Condition issue de l'inventaire : refurbished",
+                source="inventory",
+            )
+        if trap_id == 3:
+            add_fact(
+                "incident_category",
+                "accidental_damage",
+                None,
+                description,
+                source="llm",
+                confidence=0.95,
+            )
+        elif trap_id == 4:
+            add_fact(
+                "lease_contract",
+                True,
+                support_files["lease"],
+                "Contrat de location LocaPrint Test",
+            )
+        elif trap_id == 6:
+            add_fact(
+                "suspicious",
+                True,
+                documents[0],
+                HIDDEN_PROMPT,
+                confidence=0.99,
+            )
+        elif trap_id == 7:
+            delivery_date = by_scenario["trap-7"]["delivery_date"]
+            add_fact(
+                "delivery_date",
+                delivery_date,
+                support_files["delivery"],
+                f"Date de livraison : {delivery_date}",
+            )
+        elif trap_id == 9:
+            add_fact(
+                "incident_category",
+                "consumable_wear",
+                None,
+                description,
+                source="llm",
+                confidence=0.95,
+            )
+        elif trap_id == 10:
+            certificate = support_files["warranty_plus_1"]
+            add_fact(
+                "warranty_plus_certificate",
+                True,
+                certificate,
+                "Jabra Warranty+ Confirmation Notice",
+            )
+            add_fact(
+                "extension_months",
+                12,
+                certificate,
+                "extension_months : 12 mois",
+            )
+        elif trap_id == 12:
+            add_fact(
+                "equipment_ambiguous",
+                True,
+                None,
+                description,
+                source="llm",
+                confidence=0.95,
+            )
+
+        equipment_fields = (
+            "id",
+            "brand",
+            "model",
+            "serial",
+            "category",
+            "assigned_to",
+            "purchase_price",
+            "currency",
+            "in_loan_stock",
+            "purchase_date",
+            "delivery_date",
+            "ship_date",
+        )
+        reporter_id = item["assigned_to"] or people[0]["id"]
+        return {
+            "equipment": {key: item.get(key) for key in equipment_fields},
+            "incident": {
+                "id": incident_id,
+                "kind": "failure",
+                "reporter_id": reporter_id,
+                "equipment_id": item["id"],
+                "description": description,
+                "reported_via": "chat",
+                "created_at": f"{DEMO_TODAY.isoformat()}T12:00:00+00:00",
+            },
+            "facts": facts,
+        }
 
     trap_specs = [
         (
@@ -1359,6 +1579,12 @@ def build_traps(
                 "expected_verdict": verdict,
                 "expected_channel": channel,
                 "reason": reason,
+                **evaluation_case(
+                    trap_id,
+                    items[0],
+                    _trap_description(trap_id),
+                    documents,
+                ),
             }
         )
     paul_filename = invoice_for("demo-paul")[0]
@@ -1604,7 +1830,12 @@ def generate_dataset(output_directory: Path | None = None) -> None:
     file_by_invoice = dict(invoice_directory_names)
     file_by_invoice[first_invoice["invoice_number"]] = "invoices/invoice-001.pdf"
     traps = build_traps(
-        equipment, invoice_records, file_by_invoice, duplicate_filename, support_files
+        people,
+        equipment,
+        invoice_records,
+        file_by_invoice,
+        duplicate_filename,
+        support_files,
     )
 
     # All records are serialized only after invoice grouping assigned stable references.

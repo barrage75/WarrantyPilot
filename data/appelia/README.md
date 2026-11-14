@@ -27,6 +27,9 @@ CII conserve cette preuve avec le modèle et le SKU; les SKU figurent aussi dans
 `annotations.json` contient la vérité terrain et les pages des champs de chacune
 des 60 factures. `traps.json` décrit 15 pièges, deux cas nominaux et un cas
 supplémentaire dont la facture ne précise pas la durée de garantie.
+Chaque piège fournit aussi `equipment`, `incident` et `facts` selon les contrats
+Pydantic, afin que le moteur L3 puisse évaluer directement les cas. Le doublon
+du piège 5 conserve un seul ensemble de faits.
 `documents/` contient le contrat de location, deux certificats Warranty+, le
 contrat Dell ProSupport et le bon de livraison associé au piège 7.
 
