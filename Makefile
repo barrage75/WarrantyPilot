@@ -51,12 +51,12 @@ p0:
 	uv run --project backend pytest -m p0 backend/tests/p0/test_p0_gate.py
 
 lint:
-	cd backend && uv run ruff check app tests ../data/appelia
-	cd backend && uv run ruff format --check app tests
+	cd backend && uv run ruff check app tests ../data/appelia ../scripts
+	cd backend && uv run ruff format --check app tests ../scripts
 	cd frontend && npm run lint
 
 typecheck:
-	cd backend && MYPYPATH=.:../data uv run --project . mypy --strict --explicit-package-bases app/contracts app/core app/ingestion app/rules app/api ../data/appelia app/actions app/followup app/intake app/testing
+	cd backend && MYPYPATH=.:../data uv run --project . mypy --strict --explicit-package-bases app/contracts app/core app/ingestion app/rules app/api ../data/appelia app/actions app/followup app/intake app/testing ../scripts
 	cd frontend && npm run typecheck
 
 openapi:
