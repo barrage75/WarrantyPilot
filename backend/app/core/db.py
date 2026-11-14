@@ -13,7 +13,11 @@ from app.core.tables import Base
 def make_engine(database_url: str) -> Engine:
     kwargs: dict[str, Any] = {"pool_pre_ping": True}
     if database_url.startswith("sqlite"):
-        kwargs["connect_args"] = {"check_same_thread": False}
+        kwargs["connect_args"] = {
+            "check_same_thread": False,
+            "isolation_level": None,
+            "timeout": 30,
+        }
         if database_url.endswith(":memory:") or database_url.endswith("/:memory:"):
             kwargs["poolclass"] = StaticPool
         else:
@@ -28,6 +32,10 @@ def make_engine(database_url: str) -> Engine:
             cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA foreign_keys=ON")
             cursor.close()
+
+        @event.listens_for(engine, "begin")
+        def begin_immediate(connection: Any) -> None:
+            connection.exec_driver_sql("BEGIN IMMEDIATE")
 
     return engine
 

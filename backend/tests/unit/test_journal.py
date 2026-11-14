@@ -1,11 +1,14 @@
 import json
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 
 from app.contracts.enums import EventType
+from app.core.db import create_schema, make_engine, make_session_factory
 from app.core.journal import ZERO_HASH, anchor, append_event, verify
+from app.core.tables import events
 
 
 def test_hash_chain_is_valid_and_secrets_are_redacted(session_factory, app_settings) -> None:
@@ -84,3 +87,53 @@ def test_anchor_tampering_is_detected(session_factory, app_settings) -> None:
     assert result["ok"] is False
     assert result["anchors_ok"] is False
     assert result["first_bad_seq"] == saved_anchor["seq"]
+
+
+def test_missing_anchor_file_is_detected(session_factory, app_settings) -> None:
+    with session_factory.begin() as session:
+        append_event(session, EventType.DEMO_RESET)
+        anchor(session, app_settings)
+    app_settings.anchor_file.unlink()
+
+    with session_factory() as session:
+        result = verify(session, app_settings)
+
+    assert result["ok"] is False
+    assert result["anchors_ok"] is False
+
+
+def test_deleted_anchor_line_is_detected(session_factory, app_settings) -> None:
+    with session_factory.begin() as session:
+        append_event(session, EventType.DEMO_RESET)
+        anchor(session, app_settings)
+        anchor(session, app_settings)
+    lines = app_settings.anchor_file.read_text(encoding="utf-8").splitlines()
+    app_settings.anchor_file.write_text(lines[1] + "\n", encoding="utf-8")
+
+    with session_factory() as session:
+        result = verify(session, app_settings)
+
+    assert result["ok"] is False
+    assert result["anchors_ok"] is False
+
+
+def test_concurrent_appends_keep_a_contiguous_valid_chain(tmp_path, app_settings) -> None:
+    engine = make_engine(f"sqlite:///{tmp_path / 'concurrent-journal.db'}")
+    create_schema(engine)
+    factory = make_session_factory(engine)
+
+    def write_event(index: int) -> None:
+        with factory.begin() as session:
+            append_event(session, EventType.FACT_EXTRACTED, payload={"index": index})
+
+    try:
+        with ThreadPoolExecutor(max_workers=20) as pool:
+            list(pool.map(write_event, range(20)))
+        with factory() as session:
+            sequences = session.execute(select(events.c.seq).order_by(events.c.seq)).scalars().all()
+            result = verify(session, app_settings)
+        assert sequences == list(range(1, 21))
+        assert result["ok"] is True
+        assert result["checked"] == 20
+    finally:
+        engine.dispose()

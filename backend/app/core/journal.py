@@ -3,6 +3,7 @@ import hmac
 import json
 from datetime import datetime
 from pathlib import Path
+from threading import RLock
 from typing import Any
 from uuid import uuid4
 
@@ -17,6 +18,7 @@ from app.core.tables import events
 
 ZERO_HASH = "0" * 64
 _SECRET_KEY_PARTS = ("key", "token", "secret", "password")
+_APPEND_LOCK = RLock()
 
 
 def redact_secrets(value: Any) -> Any:
@@ -68,6 +70,26 @@ def append_event(
     case_id: str | None = None,
     payload: dict[str, Any] | None = None,
     at: datetime | None = None,
+) -> Event:
+    with _APPEND_LOCK:
+        return _append_event_locked(
+            session,
+            event_type,
+            actor=actor,
+            case_id=case_id,
+            payload=payload,
+            at=at,
+        )
+
+
+def _append_event_locked(
+    session: Session,
+    event_type: EventType,
+    *,
+    actor: str,
+    case_id: str | None,
+    payload: dict[str, Any] | None,
+    at: datetime | None,
 ) -> Event:
     previous = session.execute(
         select(events.c.seq, events.c.hash).order_by(events.c.seq.desc()).limit(1)
@@ -167,9 +189,15 @@ def verify(
 
     anchors_ok = True
     anchor_file = active_settings.anchor_file
-    if anchor_file.exists():
+    anchor_events = [row for row in rows if row["type"] == EventType.JOURNAL_ANCHORED.value]
+    if not anchor_file.exists() and anchor_events:
+        anchors_ok = False
+        if first_bad_seq is None:
+            first_bad_seq = int(anchor_events[0]["payload"].get("seq", anchor_events[0]["seq"]))
+    elif anchor_file.exists():
         known_hashes = {int(row["seq"]): str(row["hash"]) for row in rows}
         known_hashes[0] = ZERO_HASH
+        valid_anchor_count = 0
         try:
             for line in anchor_file.read_text(encoding="utf-8").splitlines():
                 if not line.strip():
@@ -187,8 +215,14 @@ def verify(
                     if first_bad_seq is None:
                         first_bad_seq = seq
                     break
+                valid_anchor_count += 1
         except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
             anchors_ok = False
+        if valid_anchor_count < len(anchor_events):
+            anchors_ok = False
+            if first_bad_seq is None:
+                missing = anchor_events[valid_anchor_count]
+                first_bad_seq = int(missing["payload"].get("seq", missing["seq"]))
 
     return {
         "ok": first_bad_seq is None and anchors_ok,
