@@ -30,7 +30,7 @@ function useFormat() {
 function ErrorMessage({ error }: { error: unknown }) { const { t } = useTranslation(); return <p role="alert" className="py-3 text-red-800">{t(apiErrorKey(error))}</p>; }
 function Evidence({ verdict }: { verdict?: Verdict | null }) {
  const { t } = useTranslation("caseDetail");
- return <div><h3 className="my-3 font-semibold">{t("evidence")}</h3>{!verdict?.evidence?.length ? <p className="text-sm text-slate-500">{t("none")}</p> : <ul className="space-y-3">{verdict.evidence.map((e, i) => <li key={e.id ?? i} className="border-l-2 border-teal-600 pl-3 text-sm"><p>{t("document")} <code title={e.document_id}>{short(e.document_id)}</code> · {t("page")} {e.page ?? "—"}</p><blockquote className="mt-1 text-slate-600">{e.excerpt}</blockquote></li>)}</ul>}</div>;
+ return <div><h3 className="my-3 font-semibold">{t("evidence")}</h3>{!verdict?.evidence?.length ? <p className="text-sm text-slate-500">{t("none")}</p> : <ul className="space-y-3">{verdict.evidence.map((e, i) => <li key={e.id ?? i} className="border-l-2 border-teal-600 pl-3 text-sm"><p>{t("document")} <code title={e.document_id ?? undefined}>{short(e.document_id)}</code> · {t("page")} {e.page ?? "—"}</p><blockquote className="mt-1 text-slate-600">{e.excerpt}</blockquote></li>)}</ul>}</div>;
 }
 function Reasons({ item }: { item: Case }) {
  const { t } = useTranslation("caseDetail");

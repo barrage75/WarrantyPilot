@@ -39,7 +39,9 @@ Les factures Dell indiquent la durée de garantie sur chaque ligne et
 `annotations.json` la reprend dans `warranty_term_months`. Le cas de démonstration
 `demo-dell-no-warranty-term` est l'exception sans durée probante : son verdict
 attendu est `to_verify`. Les certificats Warranty+ indiquent `extension_months`;
-les équipements reconditionnés portent `condition: "refurbished"`.
+les équipements reconditionnés portent `condition: "refurbished"`. Le Latitude
+7440 de démonstration porte le Service Tag fictif `7XK4L93`, identique à celui de
+la reproduction Dell locale.
 
 Chargement des objets des contrats Pydantic, sans accès à une base :
 
@@ -48,6 +50,9 @@ from data.appelia.load import load_dataset
 
 dataset = load_dataset()
 ```
+
+Le loader passe les dix factures Factur-X par le registre d'extracteurs et expose
+les faits et droits déduits des preuves de location, Warranty+ et ProSupport.
 
 Les PDF sont produits avec des métadonnées à date fixe pour que la génération
 soit reproductible. Les outils de génération (`reportlab` et `factur-x`) sont

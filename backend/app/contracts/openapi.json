@@ -27,6 +27,90 @@
         }
       }
     },
+    "/api/people": {
+      "get": {
+        "summary": "List People",
+        "operationId": "list_people_api_people_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Person"
+                  },
+                  "type": "array",
+                  "title": "Response List People Api People Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/equipment": {
+      "get": {
+        "summary": "List Equipment",
+        "operationId": "list_equipment_api_equipment_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Equipment"
+                  },
+                  "type": "array",
+                  "title": "Response List Equipment Api Equipment Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/equipment/{equipment_id}": {
+      "get": {
+        "summary": "Get Equipment",
+        "operationId": "get_equipment_api_equipment__equipment_id__get",
+        "parameters": [
+          {
+            "name": "equipment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Equipment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Equipment"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/cases": {
       "get": {
         "summary": "List Cases",
@@ -103,6 +187,17 @@
               "format": "uuid",
               "title": "Case Id"
             }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "After"
+            }
           }
         ],
         "responses": {
@@ -165,6 +260,50 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cases/{case_id}/actions": {
+      "get": {
+        "summary": "Get Case Actions",
+        "operationId": "get_case_actions_api_cases__case_id__actions_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CaseActionHistory"
+                  },
+                  "title": "Response Get Case Actions Api Cases  Case Id  Actions Get"
+                }
               }
             }
           },
@@ -722,6 +861,112 @@
   },
   "components": {
     "schemas": {
+      "Action": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "case_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Case Id"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/Channel"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "title": "Idempotency Key"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "badge": {
+            "$ref": "#/components/schemas/RealityBadge"
+          },
+          "requires_data_checklist": {
+            "type": "boolean",
+            "title": "Requires Data Checklist",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "case_id",
+          "channel",
+          "kind",
+          "idempotency_key",
+          "badge"
+        ],
+        "title": "Action"
+      },
+      "ActionResult": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "action_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Action Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ActionResultStatus"
+          },
+          "proof": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proof"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "badge": {
+            "$ref": "#/components/schemas/RealityBadge"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "action_id",
+          "status",
+          "badge"
+        ],
+        "title": "ActionResult"
+      },
+      "ActionResultStatus": {
+        "type": "string",
+        "enum": [
+          "success",
+          "failure"
+        ],
+        "title": "ActionResultStatus"
+      },
       "Case": {
         "properties": {
           "id": {
@@ -795,6 +1040,26 @@
           "incident_id"
         ],
         "title": "Case"
+      },
+      "CaseActionHistory": {
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/Action"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/ActionResult"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action",
+          "results"
+        ],
+        "title": "CaseActionHistory"
       },
       "CaseStatus": {
         "type": "string",
@@ -921,6 +1186,109 @@
           "case_id"
         ],
         "title": "DataChecklist"
+      },
+      "Equipment": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "brand": {
+            "type": "string",
+            "title": "Brand"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "serial": {
+            "type": "string",
+            "title": "Serial"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To"
+          },
+          "purchase_price": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purchase Price"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "EUR"
+          },
+          "in_loan_stock": {
+            "type": "boolean",
+            "title": "In Loan Stock",
+            "default": false
+          },
+          "purchase_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purchase Date"
+          },
+          "delivery_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Date"
+          },
+          "ship_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ship Date"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "brand",
+          "model",
+          "serial",
+          "category"
+        ],
+        "title": "Equipment"
       },
       "Event": {
         "properties": {
@@ -1099,6 +1467,47 @@
         ],
         "title": "ManualTakeoverRequest"
       },
+      "Person": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "Person"
+      },
       "PolicyDecision": {
         "properties": {
           "id": {
@@ -1149,8 +1558,15 @@
             "title": "Id"
           },
           "document_id": {
-            "type": "string",
-            "format": "uuid",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Document Id"
           },
           "page": {
@@ -1194,7 +1610,6 @@
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "document_id",
           "excerpt"
         ],
         "title": "Provenance"

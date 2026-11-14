@@ -7,7 +7,7 @@ from typing import Any
 
 import pdfplumber
 
-from app.contracts.enums import FactSource
+from app.contracts.enums import FactField, FactSource
 from app.contracts.models import Document, Fact, Provenance
 from app.ingestion.mistral_client import OcrPage
 
@@ -104,7 +104,7 @@ def security_fact(document: Document, report: SuspicionReport) -> list[Fact]:
     return [
         Fact(
             document_id=document.id,
-            field="security.suspicious",
+            field=FactField.SECURITY_SUSPICIOUS.value,
             value=[asdict(signal) for signal in report.signals],
             source=FactSource.STRUCTURED,
             confidence=1.0,

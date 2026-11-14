@@ -14,12 +14,12 @@ test:
 	uv run --project backend pytest backend/tests
 
 lint:
-	uv run --project backend ruff check backend/app backend/tests
+	uv run --project backend ruff check backend/app backend/tests data/appelia
 	uv run --project backend ruff format --check backend/app backend/tests
 	cd frontend && npm run lint
 
 typecheck:
-	cd backend && uv run --project . mypy --strict app/contracts app/core
+	cd backend && MYPYPATH=.:../data uv run --project . mypy --strict --explicit-package-bases app/contracts app/core app/ingestion app/rules ../data/appelia
 	cd frontend && npm run typecheck
 
 openapi:

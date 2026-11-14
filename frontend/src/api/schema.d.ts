@@ -21,6 +21,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/people": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List People */
+        get: operations["list_people_api_people_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/equipment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Equipment */
+        get: operations["list_equipment_api_equipment_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/equipment/{equipment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Equipment */
+        get: operations["get_equipment_api_equipment__equipment_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/cases": {
         parameters: {
             query?: never;
@@ -81,6 +132,23 @@ export interface paths {
         };
         /** Stream Case Events */
         get: operations["stream_case_events_api_cases__case_id__stream_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cases/{case_id}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Case Actions */
+        get: operations["get_case_actions_api_cases__case_id__actions_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -349,6 +417,58 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Action */
+        Action: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id?: string;
+            /**
+             * Case Id
+             * Format: uuid
+             */
+            case_id: string;
+            channel: components["schemas"]["Channel"];
+            /** Kind */
+            kind: string;
+            /** Idempotency Key */
+            idempotency_key: string;
+            /** Payload */
+            payload?: {
+                [key: string]: unknown;
+            };
+            badge: components["schemas"]["RealityBadge"];
+            /**
+             * Requires Data Checklist
+             * @default false
+             */
+            requires_data_checklist: boolean;
+        };
+        /** ActionResult */
+        ActionResult: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id?: string;
+            /**
+             * Action Id
+             * Format: uuid
+             */
+            action_id: string;
+            status: components["schemas"]["ActionResultStatus"];
+            /** Proof */
+            proof?: string | null;
+            /** Error */
+            error?: string | null;
+            badge: components["schemas"]["RealityBadge"];
+        };
+        /**
+         * ActionResultStatus
+         * @enum {string}
+         */
+        ActionResultStatus: "success" | "failure";
         /** Case */
         Case: {
             /**
@@ -381,6 +501,12 @@ export interface components {
              * Format: date-time
              */
             updated_at?: string;
+        };
+        /** CaseActionHistory */
+        CaseActionHistory: {
+            action: components["schemas"]["Action"];
+            /** Results */
+            results: components["schemas"]["ActionResult"][];
         };
         /**
          * CaseStatus
@@ -438,6 +564,42 @@ export interface components {
             steps?: {
                 [key: string]: components["schemas"]["ChecklistStep"];
             };
+        };
+        /** Equipment */
+        Equipment: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id?: string;
+            /** Brand */
+            brand: string;
+            /** Model */
+            model: string;
+            /** Serial */
+            serial: string;
+            /** Category */
+            category: string;
+            /** Assigned To */
+            assigned_to?: string | null;
+            /** Purchase Price */
+            purchase_price?: string | null;
+            /**
+             * Currency
+             * @default EUR
+             */
+            currency: string;
+            /**
+             * In Loan Stock
+             * @default false
+             */
+            in_loan_stock: boolean;
+            /** Purchase Date */
+            purchase_date?: string | null;
+            /** Delivery Date */
+            delivery_date?: string | null;
+            /** Ship Date */
+            ship_date?: string | null;
         };
         /** Event */
         Event: {
@@ -513,6 +675,20 @@ export interface components {
              */
             person_id: string;
         };
+        /** Person */
+        Person: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id?: string;
+            /** Name */
+            name: string;
+            /** Email */
+            email?: string | null;
+            /** Role */
+            role?: string | null;
+        };
         /** PolicyDecision */
         PolicyDecision: {
             /**
@@ -540,11 +716,8 @@ export interface components {
              * Format: uuid
              */
             id?: string;
-            /**
-             * Document Id
-             * Format: uuid
-             */
-            document_id: string;
+            /** Document Id */
+            document_id?: string | null;
             /** Page */
             page?: number | null;
             /** Excerpt */
@@ -721,6 +894,77 @@ export interface operations {
             };
         };
     };
+    list_people_api_people_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Person"][];
+                };
+            };
+        };
+    };
+    list_equipment_api_equipment_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Equipment"][];
+                };
+            };
+        };
+    };
+    get_equipment_api_equipment__equipment_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                equipment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Equipment"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_cases_api_cases_get: {
         parameters: {
             query?: never;
@@ -774,7 +1018,9 @@ export interface operations {
     };
     get_case_events_api_cases__case_id__events_get: {
         parameters: {
-            query?: never;
+            query?: {
+                after?: number;
+            };
             header?: never;
             path: {
                 case_id: string;
@@ -823,6 +1069,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_case_actions_api_cases__case_id__actions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseActionHistory"][];
                 };
             };
             /** @description Validation Error */

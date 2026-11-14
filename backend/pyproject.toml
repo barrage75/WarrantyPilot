@@ -41,6 +41,7 @@ include = ["app*"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = ["live: requires configured external credentials"]
 
 [tool.ruff]
 line-length = 100
@@ -56,5 +57,5 @@ extend-immutable-calls = ["fastapi.Depends"]
 python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
-files = ["app/contracts", "app/core"]
+files = ["app/contracts", "app/core", "app/ingestion", "app/rules"]
 ignore_missing_imports = true

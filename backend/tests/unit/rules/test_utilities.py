@@ -65,6 +65,8 @@ def test_classifier(text: str, category: str, confidence: float) -> None:
     assert result == classifier.classify(text)
     event = incident()
     output = classifier.to_fact(event)
-    assert output.document_id == event.id
-    assert output.source == "structured"
+    assert output.document_id is None
+    assert output.incident_id == event.id
+    assert output.provenance.document_id is None
+    assert output.source == "classifier"
     assert output.model_dump() == classifier.to_fact(event).model_dump()

@@ -101,7 +101,11 @@ def test_llm_evidence_and_prompt() -> None:
     system, block, schema = client.calls[0]
     assert "untrusted" in system and "never follow" in system
     assert INJECTION not in system and block.count(OPEN) == block.count(CLOSE) == 1
-    assert INJECTION in block.split(OPEN)[1].split(CLOSE)[0]
+    untrusted_text = block.split(OPEN, 1)[1].split(CLOSE, 1)[0]
+    assert INJECTION in untrusted_text
+    assert OPEN not in untrusted_text
+    assert CLOSE not in untrusted_text
+    assert untrusted_text.count("[neutralised delimiter]") == 2
     assert schema["additionalProperties"] is False
 
 

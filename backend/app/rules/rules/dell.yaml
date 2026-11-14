@@ -20,4 +20,4 @@ defaults: &dell
 rules:
   - {<<: *dell, id: dell-latitude, applies_to: {brand: Dell, model_glob: "Latitude*"}, right_type: manufacturer_warranty, duration_months: 0}
   - {<<: *dell, id: dell-monitor-p, applies_to: {brand: Dell, model_glob: "P2*"}, right_type: manufacturer_warranty, duration_months: 0}
-  - {<<: *dell, id: dell-prosupport, applies_to: {brand: Dell, model_glob: "*"}, right_type: extension, duration_months: 0, proof_required: [serial_number, service_contract, warranty_term_months]}
+  - {<<: *dell, id: dell-prosupport, applies_to: {brand: Dell, model_glob: "*"}, right_type: extension, duration_months: 0, start_event: standard_warranty_end, proof_required: [serial_number, service_contract, extension_months]}

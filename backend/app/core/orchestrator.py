@@ -6,7 +6,7 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import and_, insert, select, update
+from sqlalchemy import and_, insert, or_, select, update
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.contracts.enums import (
@@ -14,6 +14,7 @@ from app.contracts.enums import (
     CaseStatus,
     Channel,
     EventType,
+    FactField,
     PolicyOutcome,
 )
 from app.contracts.interfaces import (
@@ -27,8 +28,12 @@ from app.contracts.models import (
     ActionResult,
     Case,
     Equipment,
+    Fact,
     Incident,
     PolicyDecision,
+    Provenance,
+    Right,
+    Rule,
     Settings,
     Verdict,
 )
@@ -47,10 +52,14 @@ from app.core.tables import (
     incidents,
     people,
     policy_decisions,
+    rights,
     verdicts,
 )
 from app.core.tables import (
     equipment as equipment_table,
+)
+from app.core.tables import (
+    facts as facts_table,
 )
 from app.core.tables import (
     settings as settings_table,
@@ -66,6 +75,7 @@ class Orchestrator:
         action_adapters: Mapping[Channel, ActionAdapter],
         follow_up: FollowUpChecker,
         app_settings: AppSettings,
+        rules: list[Rule] | None = None,
     ) -> None:
         self.session_factory = session_factory
         self.extractor = extractor
@@ -73,6 +83,7 @@ class Orchestrator:
         self.action_adapters = action_adapters
         self.follow_up = follow_up
         self.app_settings = app_settings
+        self.rules = rules if rules is not None else []
 
     async def run(self, case_id: UUID) -> Case:
         with self.session_factory() as session, session.begin():
@@ -174,6 +185,8 @@ class Orchestrator:
             incident_model = self._load_incident(session, case.incident_id)
             if equipment_model is None:
                 raise ValueError("orchestration requires an identified equipment")
+            case_facts = self._load_facts(session, equipment_model.id, incident_model.id)
+            case_rights = self._load_rights(session, equipment_model.id)
             self._record_step(
                 session,
                 case.id,
@@ -188,17 +201,33 @@ class Orchestrator:
                 "find_proof",
                 2,
                 "done",
-                {"facts_found": 0, "documents_checked": 0},
+                {
+                    "facts_found": len(case_facts),
+                    "documents_checked": len(
+                        {fact.document_id for fact in case_facts if fact.document_id}
+                    ),
+                },
             )
             append_event(
                 session,
                 EventType.FACT_EXTRACTED,
                 case_id=str(case_id),
-                payload={"facts": [], "source": "L0 fake registry"},
+                payload={
+                    "facts": [
+                        {"field": fact.field, "source": fact.source.value} for fact in case_facts
+                    ],
+                    "source": "ingestion registry",
+                },
             )
 
             if case.verdict is None:
-                verdict = self.rules_engine.evaluate(equipment_model, [], incident_model, [], [])
+                verdict = self.rules_engine.evaluate(
+                    equipment_model,
+                    case_facts,
+                    incident_model,
+                    self.rules,
+                    case_rights,
+                )
                 self._record_step(
                     session,
                     case.id,
@@ -234,6 +263,11 @@ class Orchestrator:
                 _checklist_is_complete(checklist_row.steps) if checklist_row is not None else False
             )
             policy_settings = self._load_policy_settings(session)
+            suspicious_signal = any(
+                fact.field in {FactField.SECURITY_SUSPICIOUS.value, "suspicious"}
+                and bool(fact.value)
+                for fact in case_facts
+            )
             policy = decide(
                 case,
                 verdict,
@@ -242,6 +276,7 @@ class Orchestrator:
                 policy_settings,
                 checklist_complete=checklist_complete,
                 requires_data_checklist=requires_checklist,
+                suspicious_signal=suspicious_signal,
             )
             self._record_step(
                 session,
@@ -748,6 +783,58 @@ class Orchestrator:
             reported_via=row["reported_via"],
             created_at=row["created_at"],
         )
+
+    def _load_facts(
+        self,
+        session: Session,
+        equipment_id: UUID,
+        incident_id: UUID,
+    ) -> list[Fact]:
+        rows = (
+            session.execute(
+                select(facts_table).where(
+                    or_(
+                        facts_table.c.equipment_id == str(equipment_id),
+                        facts_table.c.incident_id == str(incident_id),
+                    )
+                )
+            )
+            .mappings()
+            .all()
+        )
+        return [
+            Fact(
+                id=UUID(row["id"]),
+                equipment_id=UUID(row["equipment_id"]) if row["equipment_id"] else None,
+                document_id=UUID(row["document_id"]) if row["document_id"] else None,
+                incident_id=UUID(row["incident_id"]) if row["incident_id"] else None,
+                field=row["field"],
+                value=row["value"],
+                provenance=Provenance.model_validate(row["provenance"]),
+                confidence=float(row["confidence"]),
+                source=row["source"],
+            )
+            for row in rows
+        ]
+
+    def _load_rights(self, session: Session, equipment_id: UUID) -> list[Right]:
+        rows = (
+            session.execute(select(rights).where(rights.c.equipment_id == str(equipment_id)))
+            .mappings()
+            .all()
+        )
+        return [
+            Right(
+                id=UUID(row["id"]),
+                equipment_id=UUID(row["equipment_id"]),
+                right_type=row["right_type"],
+                rule_id=row["rule_id"],
+                start_date=row["start_date"],
+                end_date=row["end_date"],
+                evidence=[Provenance.model_validate(item) for item in row["evidence"]],
+            )
+            for row in rows
+        ]
 
     def _load_policy_settings(self, session: Session) -> Settings:
         row = session.execute(select(settings_table).limit(1)).mappings().first()
