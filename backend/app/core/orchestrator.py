@@ -1,0 +1,767 @@
+from __future__ import annotations
+
+from datetime import UTC, datetime
+from decimal import Decimal
+from typing import Any
+from uuid import UUID, uuid4
+
+from sqlalchemy import and_, insert, select, update
+from sqlalchemy.orm import Session, sessionmaker
+
+from app.contracts.enums import (
+    ActionResultStatus,
+    CaseStatus,
+    EventType,
+    PolicyOutcome,
+)
+from app.contracts.interfaces import (
+    ActionAdapter,
+    DocumentExtractor,
+    FollowUpChecker,
+    RulesEngine,
+)
+from app.contracts.models import (
+    Action,
+    ActionResult,
+    Case,
+    Equipment,
+    Incident,
+    PolicyDecision,
+    Settings,
+    Verdict,
+)
+from app.core.journal import append_event
+from app.core.policy import decide
+from app.core.security import SecurityViolation, assert_email_allowed, assert_url_allowed
+from app.core.settings import AppSettings
+from app.core.status import transition
+from app.core.tables import (
+    action_results,
+    actions,
+    case_steps,
+    cases,
+    data_checklists,
+    events,
+    incidents,
+    people,
+    policy_decisions,
+    verdicts,
+)
+from app.core.tables import (
+    equipment as equipment_table,
+)
+from app.core.tables import (
+    settings as settings_table,
+)
+
+
+class Orchestrator:
+    def __init__(
+        self,
+        session_factory: sessionmaker[Session],
+        extractor: DocumentExtractor,
+        rules_engine: RulesEngine,
+        action_adapter: ActionAdapter,
+        follow_up: FollowUpChecker,
+        app_settings: AppSettings,
+    ) -> None:
+        self.session_factory = session_factory
+        self.extractor = extractor
+        self.rules_engine = rules_engine
+        self.action_adapter = action_adapter
+        self.follow_up = follow_up
+        self.app_settings = app_settings
+
+    async def run(self, case_id: UUID) -> Case:
+        with self.session_factory() as session, session.begin():
+            case_row = (
+                session.execute(select(cases).where(cases.c.id == str(case_id))).mappings().first()
+            )
+            if case_row is None:
+                raise KeyError(f"case not found: {case_id}")
+            case = self._case_from_row(session, case_row)
+            if case.status in {CaseStatus.TRACKED, CaseStatus.RESOLVED}:
+                return case
+            prior_success = (
+                session.execute(
+                    select(action_results)
+                    .join(actions, action_results.c.action_id == actions.c.id)
+                    .where(
+                        actions.c.case_id == str(case_id),
+                        action_results.c.status == ActionResultStatus.SUCCESS.value,
+                    )
+                    .limit(1)
+                )
+                .mappings()
+                .first()
+            )
+            if prior_success is not None:
+                success_result = ActionResult(
+                    id=UUID(prior_success["id"]),
+                    action_id=UUID(prior_success["action_id"]),
+                    status=prior_success["status"],
+                    proof=prior_success["proof"],
+                    error=prior_success["error"],
+                    badge=prior_success["badge"],
+                )
+                current_status = case.status
+                if current_status not in {CaseStatus.SENDING, CaseStatus.SENT}:
+                    transition(current_status, CaseStatus.SENDING, attempts=0)
+                    self._set_status(session, case, CaseStatus.SENDING)
+                    append_event(
+                        session,
+                        EventType.STATUS_CHANGED,
+                        case_id=str(case_id),
+                        payload={
+                            "from": current_status.value,
+                            "to": CaseStatus.SENDING.value,
+                            "recovered": True,
+                        },
+                    )
+                sent_status = (
+                    CaseStatus.SENT
+                    if current_status == CaseStatus.SENT
+                    else transition(
+                        CaseStatus.SENDING,
+                        CaseStatus.SENT,
+                        action_result=success_result,
+                    )
+                )
+                if current_status != CaseStatus.SENT:
+                    self._set_status(session, case, sent_status)
+                    append_event(
+                        session,
+                        EventType.ACTION_SUCCEEDED,
+                        case_id=str(case_id),
+                        payload={
+                            "action_id": str(success_result.action_id),
+                            "proof": success_result.proof,
+                            "recovered": True,
+                        },
+                    )
+                    append_event(
+                        session,
+                        EventType.STATUS_CHANGED,
+                        case_id=str(case_id),
+                        payload={"from": CaseStatus.SENDING.value, "to": sent_status.value},
+                    )
+                final_status = self._complete_tracking(session, case, sent_status)
+                return case.model_copy(update={"status": final_status})
+            if case.status == CaseStatus.SENT:
+                raise ValueError("sent cases must have a successful ActionResult")
+
+            validation_exists = (
+                session.execute(
+                    select(events.c.seq)
+                    .where(
+                        and_(
+                            events.c.case_id == str(case_id),
+                            events.c.type == EventType.VALIDATED.value,
+                        )
+                    )
+                    .limit(1)
+                ).first()
+                is not None
+            )
+
+            equipment_model = self._load_equipment(session, case.equipment_id)
+            incident_model = self._load_incident(session, case.incident_id)
+            if equipment_model is None:
+                raise ValueError("orchestration requires an identified equipment")
+            self._record_step(
+                session,
+                case.id,
+                "identify",
+                1,
+                "done",
+                {"equipment_id": str(equipment_model.id)},
+            )
+            self._record_step(
+                session,
+                case.id,
+                "find_proof",
+                2,
+                "done",
+                {"facts_found": 0, "documents_checked": 0},
+            )
+            append_event(
+                session,
+                EventType.FACT_EXTRACTED,
+                case_id=str(case_id),
+                payload={"facts": [], "source": "L0 fake registry"},
+            )
+
+            if case.verdict is None:
+                verdict = self.rules_engine.evaluate(equipment_model, [], incident_model, [], [])
+                self._record_step(
+                    session,
+                    case.id,
+                    "evaluate",
+                    3,
+                    "done",
+                    {"verdict_id": str(verdict.id)},
+                )
+                self._store_verdict(session, verdict)
+                session.execute(
+                    update(cases)
+                    .where(cases.c.id == str(case_id))
+                    .values(verdict_id=str(verdict.id))
+                )
+                append_event(
+                    session,
+                    EventType.VERDICT_COMPUTED,
+                    case_id=str(case_id),
+                    payload={"verdict": verdict.model_dump(mode="json")},
+                )
+            else:
+                verdict = case.verdict
+
+            checklist_row = session.execute(
+                select(data_checklists.c.steps).where(data_checklists.c.case_id == str(case_id))
+            ).first()
+            requires_checklist = equipment_model.category.casefold() in {
+                "computer",
+                "laptop",
+                "notebook",
+            }
+            checklist_complete = (
+                _checklist_is_complete(checklist_row.steps) if checklist_row is not None else False
+            )
+            policy_settings = self._load_policy_settings(session)
+            policy = decide(
+                case,
+                verdict,
+                equipment_model,
+                "warranty_claim_email",
+                policy_settings,
+                checklist_complete=checklist_complete,
+                requires_data_checklist=requires_checklist,
+            )
+            self._record_step(
+                session,
+                case.id,
+                "decide",
+                4,
+                "done",
+                {"outcome": policy.outcome.value},
+            )
+            self._store_policy(session, policy)
+            session.execute(
+                update(cases).where(cases.c.id == str(case_id)).values(policy_id=str(policy.id))
+            )
+            append_event(
+                session,
+                EventType.POLICY_DECIDED,
+                case_id=str(case_id),
+                payload={"policy": policy.model_dump(mode="json")},
+            )
+            case = case.model_copy(update={"verdict": verdict, "policy": policy})
+
+            if policy.outcome == PolicyOutcome.BLOCKED:
+                if requires_checklist:
+                    self._record_step(
+                        session,
+                        case.id,
+                        "data_checklist",
+                        6,
+                        "pending",
+                        {"complete": checklist_complete},
+                    )
+                return case
+            if policy.outcome == PolicyOutcome.NEEDS_VALIDATION and not validation_exists:
+                if case.status != CaseStatus.AWAITING_VALIDATION:
+                    new_status = transition(case.status, CaseStatus.AWAITING_VALIDATION)
+                    self._set_status(session, case, new_status)
+                    self._record_step(
+                        session,
+                        case.id,
+                        "await_validation",
+                        5,
+                        "pending",
+                        {"reasons": policy.reasons},
+                    )
+                    append_event(
+                        session,
+                        EventType.VALIDATION_REQUESTED,
+                        case_id=str(case_id),
+                        payload={"reasons": policy.reasons},
+                    )
+                return case.model_copy(update={"status": CaseStatus.AWAITING_VALIDATION})
+
+            if case.status == CaseStatus.AWAITING_VALIDATION and not validation_exists:
+                return case
+            if validation_exists:
+                self._record_step(
+                    session,
+                    case.id,
+                    "await_validation",
+                    5,
+                    "done",
+                    {"validated": True},
+                )
+
+            paused = self._load_policy_settings(session).agent_paused
+            if paused:
+                return case
+            action, attempt, prior_running = self._prepare_action(session, case)
+            if prior_running:
+                return case.model_copy(update={"status": CaseStatus.FAILED})
+
+            if action.requires_data_checklist:
+                checklist_row = session.execute(
+                    select(data_checklists.c.steps).where(data_checklists.c.case_id == str(case_id))
+                ).first()
+                if checklist_row is None or not _checklist_is_complete(checklist_row.steps):
+                    self._record_step(
+                        session,
+                        case.id,
+                        "data_checklist",
+                        6,
+                        "pending",
+                        {"complete": False},
+                    )
+                    return case
+                self._record_step(
+                    session,
+                    case.id,
+                    "data_checklist",
+                    6,
+                    "done",
+                    {"complete": True},
+                )
+
+            sending_status = transition(
+                case.status,
+                CaseStatus.SENDING,
+                attempts=attempt - 1,
+            )
+            self._set_status(session, case, sending_status)
+            self._record_step(
+                session,
+                case.id,
+                "execute",
+                7,
+                "running",
+                {"idempotency_key": action.idempotency_key},
+                attempt=attempt,
+            )
+            session.execute(
+                insert(actions).values(
+                    id=str(action.id),
+                    case_id=str(case_id),
+                    channel=action.channel.value,
+                    kind=action.kind,
+                    idempotency_key=action.idempotency_key,
+                    payload=action.payload,
+                    badge=action.badge.value,
+                    requires_data_checklist=action.requires_data_checklist,
+                )
+            )
+            append_event(
+                session,
+                EventType.ACTION_STARTED,
+                case_id=str(case_id),
+                payload={"action_id": str(action.id), "idempotency_key": action.idempotency_key},
+            )
+            append_event(
+                session,
+                EventType.STATUS_CHANGED,
+                case_id=str(case_id),
+                payload={"from": case.status.value, "to": CaseStatus.SENDING.value},
+            )
+
+        try:
+            self._assert_action_allowed(action)
+        except SecurityViolation as error:
+            return self._finish_action(
+                action,
+                case,
+                ActionResult(
+                    action_id=action.id,
+                    status=ActionResultStatus.FAILURE,
+                    error=str(error),
+                    badge=action.badge,
+                ),
+            )
+
+        action_result = await self.action_adapter.execute(action)
+        if action_result.action_id != action.id:
+            action_result = ActionResult(
+                action_id=action.id,
+                status=ActionResultStatus.FAILURE,
+                error="adapter returned a result for a different action",
+                badge=action.badge,
+            )
+        return self._finish_action(action, case, action_result)
+
+    def _prepare_action(self, session: Session, case: Case) -> tuple[Action, int, bool]:
+        step_rows = session.execute(
+            select(case_steps.c.status, case_steps.c.attempt, case_steps.c.output)
+            .where(
+                and_(
+                    case_steps.c.case_id == str(case.id),
+                    case_steps.c.step_name == "execute",
+                )
+            )
+            .order_by(case_steps.c.attempt.desc())
+        ).all()
+        latest_attempt = int(step_rows[0].attempt) if step_rows else 0
+        prior_running = bool(
+            step_rows
+            and (
+                step_rows[0].status == "running"
+                or (
+                    isinstance(step_rows[0].output, dict)
+                    and step_rows[0].output.get("unknown_outcome") is True
+                )
+            )
+        )
+        attempt = latest_attempt + 1
+        idempotency_key = f"case:{case.id}:execute:{attempt}"
+        incident_row = session.execute(
+            select(incidents.c.reporter_id).where(incidents.c.id == str(case.incident_id))
+        ).first()
+        recipient = None
+        if incident_row is not None:
+            person_row = session.execute(
+                select(people.c.email).where(people.c.id == incident_row.reporter_id)
+            ).first()
+            if person_row is not None:
+                recipient = person_row.email
+        equipment_row = session.execute(
+            select(equipment_table.c.category).where(equipment_table.c.id == str(case.equipment_id))
+        ).first()
+        category = str(equipment_row.category).casefold() if equipment_row is not None else ""
+        action = Action(
+            case_id=case.id,
+            channel=self.action_adapter.channel,
+            kind="warranty_claim_email",
+            idempotency_key=idempotency_key,
+            payload={
+                "case_id": str(case.id),
+                "incident_id": str(case.incident_id),
+                **({"to": recipient} if recipient else {}),
+            },
+            badge=self.action_adapter.badge,
+            requires_data_checklist=category in {"computer", "laptop", "notebook"},
+        )
+        return action, attempt, prior_running
+
+    def _assert_action_allowed(self, action: Action) -> None:
+        active_settings = self._settings_for_action()
+        if active_settings.agent_paused:
+            raise SecurityViolation("agent is paused")
+        if action.channel.value.startswith("email"):
+            recipient = action.payload.get("to")
+            if recipient is None:
+                raise SecurityViolation("email action has no recipient")
+            assert_email_allowed(str(recipient), active_settings)
+        target_url = action.payload.get("url")
+        if action.channel.value == "browser_portal" and target_url is None:
+            raise SecurityViolation("browser action has no target URL")
+        if target_url is not None:
+            assert_url_allowed(str(target_url), active_settings)
+
+    def _settings_for_action(self) -> Settings:
+        with self.session_factory() as session:
+            return self._load_policy_settings(session)
+
+    def _finish_action(self, action: Action, case: Case, result: ActionResult) -> Case:
+        with self.session_factory() as session, session.begin():
+            session.execute(
+                insert(action_results).values(
+                    id=str(result.id),
+                    action_id=str(result.action_id),
+                    status=result.status.value,
+                    proof=result.proof,
+                    error=result.error,
+                    badge=result.badge.value,
+                )
+            )
+            latest_step = session.execute(
+                select(case_steps.c.id, case_steps.c.attempt)
+                .where(
+                    and_(
+                        case_steps.c.case_id == str(case.id),
+                        case_steps.c.step_name == "execute",
+                    )
+                )
+                .order_by(case_steps.c.attempt.desc())
+                .limit(1)
+            ).first()
+            if latest_step is not None:
+                session.execute(
+                    update(case_steps)
+                    .where(case_steps.c.id == latest_step.id)
+                    .values(
+                        status="done" if result.status == ActionResultStatus.SUCCESS else "failed",
+                        output=result.model_dump(mode="json"),
+                        updated_at=datetime.now(UTC).isoformat(),
+                    )
+                )
+            if result.status == ActionResultStatus.SUCCESS:
+                current = CaseStatus.SENDING
+                sent = transition(current, CaseStatus.SENT, action_result=result)
+                self._set_status(session, case, sent)
+                append_event(
+                    session,
+                    EventType.ACTION_SUCCEEDED,
+                    case_id=str(case.id),
+                    payload={"action_id": str(action.id), "proof": result.proof},
+                )
+                append_event(
+                    session,
+                    EventType.STATUS_CHANGED,
+                    case_id=str(case.id),
+                    payload={"from": current.value, "to": sent.value},
+                )
+                final_status = self._complete_tracking(session, case, sent)
+                return case.model_copy(update={"status": final_status})
+
+            failed = transition(CaseStatus.SENDING, CaseStatus.FAILED)
+            self._set_status(session, case, failed)
+            append_event(
+                session,
+                EventType.ACTION_FAILED,
+                case_id=str(case.id),
+                payload={"action_id": str(action.id), "error": result.error},
+            )
+            append_event(
+                session,
+                EventType.STATUS_CHANGED,
+                case_id=str(case.id),
+                payload={"from": CaseStatus.SENDING.value, "to": failed.value},
+            )
+            return case.model_copy(update={"status": failed})
+
+    def _complete_tracking(
+        self,
+        session: Session,
+        case: Case,
+        sent_status: CaseStatus,
+    ) -> CaseStatus:
+        tracked_status = transition(sent_status, CaseStatus.TRACKED)
+        self._set_status(session, case, tracked_status)
+        self._record_step(
+            session,
+            case.id,
+            "track",
+            8,
+            "done",
+            {"status": tracked_status.value},
+        )
+        append_event(
+            session,
+            EventType.STATUS_CHANGED,
+            case_id=str(case.id),
+            payload={"from": sent_status.value, "to": tracked_status.value},
+        )
+        follow_up_payloads = self.follow_up.check(
+            case.model_copy(update={"status": tracked_status})
+        )
+        for payload in follow_up_payloads:
+            append_event(
+                session,
+                EventType.FOLLOWUP_RECEIVED,
+                case_id=str(case.id),
+                payload=payload,
+            )
+        if any(payload.get("status") == "resolved" for payload in follow_up_payloads):
+            resolved_status = transition(tracked_status, CaseStatus.RESOLVED)
+            self._set_status(session, case, resolved_status)
+            append_event(
+                session,
+                EventType.STATUS_CHANGED,
+                case_id=str(case.id),
+                payload={"from": tracked_status.value, "to": resolved_status.value},
+            )
+            return resolved_status
+        return tracked_status
+
+    def _record_step(
+        self,
+        session: Session,
+        case_id: UUID,
+        step_name: str,
+        order: int,
+        status: str,
+        output: dict[str, Any],
+        attempt: int = 1,
+    ) -> None:
+        existing = session.execute(
+            select(case_steps.c.id).where(
+                and_(case_steps.c.case_id == str(case_id), case_steps.c.step_name == step_name)
+            )
+        ).first()
+        values = {
+            "status": status,
+            "order": order,
+            "attempt": attempt,
+            "output": output,
+            "updated_at": datetime.now(UTC).isoformat(),
+        }
+        if existing is None:
+            session.execute(
+                insert(case_steps).values(
+                    id=str(uuid4()),
+                    case_id=str(case_id),
+                    step_name=step_name,
+                    **values,
+                )
+            )
+        else:
+            session.execute(
+                update(case_steps).where(case_steps.c.id == existing.id).values(**values)
+            )
+
+    def _case_from_row(self, session: Session, row: Any) -> Case:
+        verdict = None
+        if row["verdict_id"]:
+            verdict_row = (
+                session.execute(select(verdicts).where(verdicts.c.id == row["verdict_id"]))
+                .mappings()
+                .first()
+            )
+            if verdict_row is not None:
+                verdict = Verdict(
+                    id=UUID(verdict_row["id"]),
+                    value=verdict_row["value"],
+                    rule_id=verdict_row["rule_id"],
+                    rule_version=verdict_row["rule_version"],
+                    checks=verdict_row["checks"],
+                    evidence=verdict_row["evidence"],
+                    missing=verdict_row["missing"],
+                    possible_exclusions=verdict_row["possible_exclusions"],
+                    explanation_fr=verdict_row["explanation_fr"],
+                    explanation_en=verdict_row["explanation_en"],
+                )
+        policy = None
+        if row["policy_id"]:
+            policy_row = (
+                session.execute(
+                    select(policy_decisions).where(policy_decisions.c.id == row["policy_id"])
+                )
+                .mappings()
+                .first()
+            )
+            if policy_row is not None:
+                policy = PolicyDecision(
+                    id=UUID(policy_row["id"]),
+                    outcome=policy_row["outcome"],
+                    reasons=policy_row["reasons"],
+                    conditions=policy_row["conditions"],
+                )
+        return Case(
+            id=UUID(row["id"]),
+            incident_id=UUID(row["incident_id"]),
+            equipment_id=UUID(row["equipment_id"]) if row["equipment_id"] else None,
+            status=row["status"],
+            verdict=verdict,
+            policy=policy,
+            channel=row["channel"],
+            badge=row["badge"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+        )
+
+    def _load_equipment(self, session: Session, equipment_id: UUID | None) -> Equipment | None:
+        if equipment_id is None:
+            return None
+        row = (
+            session.execute(
+                select(equipment_table).where(equipment_table.c.id == str(equipment_id))
+            )
+            .mappings()
+            .first()
+        )
+        if row is None:
+            return None
+        return Equipment(
+            id=UUID(row["id"]),
+            brand=row["brand"],
+            model=row["model"],
+            serial=row["serial"],
+            category=row["category"],
+            assigned_to=UUID(row["assigned_to"]) if row["assigned_to"] else None,
+            purchase_price=Decimal(row["purchase_price"])
+            if row["purchase_price"] is not None
+            else None,
+            currency=row["currency"],
+            in_loan_stock=row["in_loan_stock"],
+            purchase_date=row["purchase_date"],
+            delivery_date=row["delivery_date"],
+            ship_date=row["ship_date"],
+        )
+
+    def _load_incident(self, session: Session, incident_id: UUID) -> Incident:
+        row = (
+            session.execute(select(incidents).where(incidents.c.id == str(incident_id)))
+            .mappings()
+            .one()
+        )
+        return Incident(
+            id=UUID(row["id"]),
+            kind=row["kind"],
+            reporter_id=UUID(row["reporter_id"]),
+            equipment_id=UUID(row["equipment_id"]) if row["equipment_id"] else None,
+            description=row["description"],
+            reported_via=row["reported_via"],
+            created_at=row["created_at"],
+        )
+
+    def _load_policy_settings(self, session: Session) -> Settings:
+        row = session.execute(select(settings_table).limit(1)).mappings().first()
+        if row is None:
+            return Settings(auto_send_threshold_eur=Decimal("0"))
+        return Settings(
+            id=UUID(row["id"]),
+            auto_send_threshold_eur=Decimal(row["auto_send_threshold_eur"]),
+            agent_paused=row["agent_paused"],
+            feature_flags=row["feature_flags"],
+            email_allowlist=row["email_allowlist"],
+            browser_allowed_origins=row["browser_allowed_origins"],
+        )
+
+    def _store_verdict(self, session: Session, verdict: Verdict) -> None:
+        session.execute(
+            insert(verdicts).values(
+                id=str(verdict.id),
+                value=verdict.value.value,
+                rule_id=verdict.rule_id,
+                rule_version=verdict.rule_version,
+                checks=[check.model_dump(mode="json") for check in verdict.checks],
+                evidence=[item.model_dump(mode="json") for item in verdict.evidence],
+                missing=verdict.missing,
+                possible_exclusions=verdict.possible_exclusions,
+                explanation_fr=verdict.explanation_fr,
+                explanation_en=verdict.explanation_en,
+            )
+        )
+
+    def _store_policy(self, session: Session, policy: PolicyDecision) -> None:
+        session.execute(
+            insert(policy_decisions).values(
+                id=str(policy.id),
+                outcome=policy.outcome.value,
+                reasons=policy.reasons,
+                conditions=policy.conditions,
+            )
+        )
+
+    def _set_status(self, session: Session, case: Case, status: CaseStatus) -> None:
+        session.execute(
+            update(cases)
+            .where(cases.c.id == str(case.id))
+            .values(status=status.value, updated_at=datetime.now(UTC).isoformat())
+        )
+
+
+def _checklist_is_complete(value: Any) -> bool:
+    try:
+        from app.contracts.models import DataChecklist
+
+        return DataChecklist.model_validate(
+            {"case_id": "00000000-0000-0000-0000-000000000000", "steps": value}
+        ).complete()
+    except (TypeError, ValueError):
+        return False
