@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block content %}
+  <section class="banner service-banner">
+    <div class="breadcrumbs">
+      <a href="{{ home }}" aria-label="Accueil">{{ icon('home') }}</a>
+      <span>/</span>
+      <a href="{{ home }}">Accueil du support</a>
+      <span>/</span>
+      <span>Contacter le support technique</span>
+    </div>
+    <h1>Contactez le support<br>technique</h1>
+  </section>
+  <section class="container surface request-panel">
+    <p class="support-notice">Avant de contacter le support technique pour des problèmes liés à votre PC, exécutez SupportAssist.</p>
+    <ol class="stepper">
+      <li>Identifiez votre appareil</li>
+      <li class="current" aria-current="step">Décrivez votre problème</li>
+      <li>Consultez vos options de support</li>
+    </ol>
+    <h2>Demander un service / une réparation</h2>
+    <p class="device-summary">{{ item.model }} — {{ item.tag }} — {{ item.service }}</p>
+    <form action="{{ service }}?servicetag={{ item.tag }}" method="post"
+          enctype="multipart/form-data" novalidate>
+      <input type="hidden" name="requestToken" value="{{ token }}">
+      <input type="hidden" name="__fail" value="{{ fail }}">
+      {% if errors.get('requestToken') %}
+        <p class="error" id="error-requestToken" role="alert">{{ errors.requestToken }}</p>
+      {% endif %}
+      {% set groups = [
+        ('Problème', ['problemCategory', 'problemDescription']),
+        ('Coordonnées', ['contactFirstName', 'contactLastName', 'contactEmail', 'contactPhone', 'companyName']),
+        ('Adresse d’expédition', ['addressLine1', 'addressLine2', 'postalCode', 'city', 'country']),
+        ('Disponibilité', ['availabilityDate', 'availabilitySlot'])
+      ] %}
+      {% for title, keys in groups %}
+        <fieldset>
+          <legend>{{ title }}</legend>
+          <div class="form-grid">
+            {% for key in keys %}
+              <div class="field {% if key == 'problemDescription' %}wide{% endif %}">
+                <label for="{{ key }}">{{ fields[key] }}</label>
+                {% if key == 'problemCategory' or key == 'availabilitySlot' %}
+                  <select id="{{ key }}" name="{{ key }}" required
+                          {% if errors.get(key) %}aria-invalid="true" aria-describedby="error-{{ key }}"{% endif %}>
+                    <option value="">Sélectionner</option>
+                    {% for option in (categories if key == 'problemCategory' else slots) %}
+                      <option {% if values.get(key) == option %}selected{% endif %}>{{ option }}</option>
+                    {% endfor %}
+                  </select>
+                {% elif key == 'problemDescription' %}
+                  <textarea id="{{ key }}" name="{{ key }}" minlength="20" maxlength="2000" required
+                            {% if errors.get(key) %}aria-invalid="true" aria-describedby="error-{{ key }}"{% endif %}>{{ values.get(key, '') }}</textarea>
+                {% else %}
+                  <input id="{{ key }}" name="{{ key }}" value="{{ values.get(key, '') }}"
+                         type="{{ 'date' if key == 'availabilityDate' else 'email' if key == 'contactEmail' else 'tel' if key == 'contactPhone' else 'text' }}"
+                         {% if key == 'availabilityDate' %}min="{{ tomorrow }}"{% endif %}
+                         {% if key == 'country' %}readonly{% endif %}
+                         {% if key not in ['companyName', 'addressLine2'] %}required{% endif %}
+                         {% if errors.get(key) %}aria-invalid="true" aria-describedby="error-{{ key }}"{% endif %}>
+                {% endif %}
+                {% if errors.get(key) %}
+                  <p class="error" id="error-{{ key }}" role="alert">{{ errors[key] }}</p>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </fieldset>
+      {% endfor %}
+      <fieldset>
+        <legend>Pièce jointe</legend>
+        <label for="attachment">Pièce jointe (PDF uniquement, 5 Mo maximum, facultatif)</label>
+        <input id="attachment" name="attachment" type="file" accept="application/pdf">
+        {% if errors.get('attachment') %}
+          <p id="error-attachment" class="error" role="alert">{{ errors.attachment }}</p>
+        {% endif %}
+      </fieldset>
+      <fieldset>
+        <legend>Consentement</legend>
+        <label class="consent" for="consent">
+          <input id="consent" name="consent" type="checkbox" {% if consent %}checked{% endif %} required>
+          J’accepte le traitement local de ces données fictives pour cette démonstration de demande de réparation.
+        </label>
+        {% if errors.get('consent') %}
+          <p id="error-consent" class="error" role="alert">{{ errors.consent }}</p>
+        {% endif %}
+      </fieldset>
+      <div class="submit-row">
+        <button id="btnSubmitRequest">Envoyer la demande</button>
+      </div>
+    </form>
+  </section>
+{% endblock %}

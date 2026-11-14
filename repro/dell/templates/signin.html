@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block body_class %}signin-page{% endblock %}
+{% block header %}
+  <header class="signin-header">
+    <a class="brand" href="{{ home }}">
+      <img class="logo" src="/static/img/dell-technologies-logo.svg" alt="Dell Technologies">
+    </a>
+  </header>
+{% endblock %}
+{% block content %}
+  <div class="signin-layout">
+    <section class="signin-form-panel">
+      <h1>Se connecter</h1>
+      <aside class="demo-warning">
+        Reproduction locale : utilisez uniquement les identifiants de démo. N'entrez jamais vos vrais identifiants Dell.
+      </aside>
+      <button class="google" disabled>Connexion Google</button>
+      <form method="post" action="{{ signin }}">
+        <input type="hidden" name="next" value="{{ next }}">
+        {% if stage == 'email' %}
+          <div class="floating-field">
+            <label for="SignInModel_EmailAddress">Adresse e-mail ou numéro de téléphone portable</label>
+            <input id="SignInModel_EmailAddress" name="SignInModel.EmailAddress" required autocomplete="off">
+          </div>
+          <button id="btnSSoContinue">Continuer</button>
+        {% else %}
+          <div class="floating-field">
+            <label for="userPwd_UserInputSecret">Mot de passe</label>
+            <input id="userPwd_UserInputSecret" name="userPwd_UserInputSecret" type="password"
+                   required autocomplete="off">
+          </div>
+          <button id="btnSignIn">Se connecter</button>
+        {% endif %}
+      </form>
+      {% if error %}
+        <p class="error" id="signin-error" role="alert">{{ error }}</p>
+      {% endif %}
+      <p class="signin-register">Vous n'avez pas de compte Dell ? <span class="link">Créer un compte</span></p>
+      <hr>
+      <p>Besoin d'aide pour vous connecter ? <span class="link">Consulter les questions fréquentes</span></p>
+      <aside class="demo-credentials">Démo : demo.appelia@reproduction.local / demo-only</aside>
+    </section>
+    <aside class="signin-promo">
+      <h2>
+        <span>D'autres raisons</span>
+        <span>de se</span>
+        <span>connecter.</span>
+      </h2>
+      <p>Dell Rewards est un programme de fidélité qui permet aux membres de gagner jusqu’à 9 % de récompenses sur leurs achats futurs.</p>
+    </aside>
+  </div>
+{% endblock %}

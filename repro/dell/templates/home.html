@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block content %}
+  <section class="home-hero">
+    <div class="hero-title">
+      <h1>Bienvenue sur le site de support Dell</h1>
+      <div class="hero-actions">
+        <a class="button light" href="{{ signin }}">Se connecter</a>
+        <a class="button outline" href="{{ home }}">Passer au support professionnel</a>
+      </div>
+    </div>
+  </section>
+  <section class="identify">
+    <div class="tabs">
+      <span class="selected">Rechercher des produits</span>
+      <span>Mes produits</span>
+    </div>
+    <div class="cards">
+      <article>
+        <h2>{{ icon('product') }} Identifier un produit</h2>
+        <p>Saisir l'ID du produit</p>
+        <form method="get" action="{{ home }}" class="identify-form">
+          <label class="sr-only" for="homemfe-dropdown-input">Étiquette de service</label>
+          <div class="search-field">
+            <input id="homemfe-dropdown-input" name="servicetag" placeholder="Étiquette de service"
+                   aria-label="Étiquette de service" value="{{ tag }}">
+            {{ icon('search') }}
+          </div>
+          <button id="btnSubmit">Rechercher</button>
+        </form>
+        {% if error %}
+          <p class="error" id="servicetag-error" role="alert">{{ error }}</p>
+        {% endif %}
+        <div class="field-help">
+          <small>7 à 12 caractères alphanumériques.</small>
+          <a href="#demo-tags">Comment puis-je trouver mon ID de produit ?</a>
+        </div>
+      </article>
+      <article>
+        <h2>{{ icon('eye') }} Cliquez sur « Parcourir tous les produits ».</h2>
+        <p>Effectuez une recherche parmi les produits Dell ou explorez-les par catégorie pour trouver ce dont vous avez besoin.</p>
+        <div class="browse-row">
+          <div class="search-field">
+            <input placeholder="Trouver votre produit" aria-label="Trouver votre produit" disabled>
+            {{ icon('search') }}
+          </div>
+          <span>ou</span>
+          <a class="button browse" href="#demo-tags">Parcourir</a>
+        </div>
+        <small>Essayez un nom de produit, une série ou un numéro de modèle (par exemple, « Latitude 3480 »)</small>
+      </article>
+    </div>
+    <p id="demo-tags" class="demo-tags">Service Tags fictifs : 7XK4L93 · 4HB2QM2 · 9QF7R12 · 2MJ8C54</p>
+  </section>
+{% endblock %}

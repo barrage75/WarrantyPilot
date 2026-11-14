@@ -1,0 +1,40 @@
+{% macro icon(name) -%}
+  <svg class="icon icon-{{ name }}" viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" stroke-width="1.35" stroke-linecap="round"
+       stroke-linejoin="round" aria-hidden="true" focusable="false">
+    {% if name == 'person' %}
+      <circle cx="12" cy="7" r="4" />
+      <path d="M4 21v-3a8 8 0 0 1 16 0v3z" />
+    {% elif name == 'headset' %}
+      <path d="M4 14V10a8 8 0 0 1 16 0v7a4 4 0 0 1-4 4h-3" />
+      <rect x="2" y="10" width="4" height="8" rx="2" />
+      <rect x="18" y="10" width="4" height="8" rx="2" />
+    {% elif name == 'globe' %}
+      <circle cx="12" cy="12" r="10" />
+      <ellipse cx="12" cy="12" rx="4" ry="10" />
+      <path d="M2 12h20M4 6h16M4 18h16" />
+    {% elif name == 'cart' %}
+      <path d="M2 3h3l3 13h11l3-10H6M8 19h11" />
+      <circle cx="9" cy="22" r="1" />
+      <circle cx="18" cy="22" r="1" />
+    {% elif name == 'search' %}
+      <circle cx="10" cy="10" r="7" />
+      <path d="m15 15 7 7" />
+    {% elif name == 'info' %}
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 10v7M12 6v.5" />
+    {% elif name == 'chevron' %}
+      <path d="m5 9 7 7 7-7" />
+    {% elif name == 'close' %}
+      <path d="m4 4 16 16M20 4 4 20" />
+    {% elif name == 'home' %}
+      <path d="m2 11 10-9 10 9M5 9v13h5v-8h4v8h5V9" />
+    {% elif name == 'product' %}
+      <rect x="2" y="4" width="20" height="16" />
+      <path d="M6 8h5v8H6zM14 8h5M14 12h5M14 16h5" />
+    {% elif name == 'eye' %}
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+      <circle cx="12" cy="12" r="4" />
+    {% endif %}
+  </svg>
+{%- endmacro %}

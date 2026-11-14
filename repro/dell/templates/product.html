@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block content %}
+  <section class="banner product-banner">
+    <div class="breadcrumbs">
+      <a href="{{ home }}" aria-label="Accueil">{{ icon('home') }}</a>
+      <span>/</span>
+      <a href="{{ home }}">Accueil du support</a>
+      <span>/</span>
+      <span>Support produit</span>
+    </div>
+    <h1>{{ item.model }}</h1>
+    <p>Service Tag : <strong>{{ item.tag }}</strong></p>
+  </section>
+  <section class="container surface warranty-card">
+    <h2>Services de support et garantie</h2>
+    <p id="warranty-status" data-status="{{ item.status }}" class="status {{ item.status }}">{{ item.label }}</p>
+    <dl class="warranty-details">
+      <dt>Type de service</dt>
+      <dd>{{ item.service }}</dd>
+      <dt>Date d’expiration</dt>
+      <dd>{{ item.expiry_fr }}</dd>
+      <dt>Date d’expédition</dt>
+      <dd>{{ item.shipped }}</dd>
+    </dl>
+    {% for feature in item.features %}
+      <p>{{ feature }}</p>
+    {% endfor %}
+    {% if item.status != 'expired' %}
+      <a class="button" id="btnRequestService" href="{{ service }}?servicetag={{ item.tag }}">Demander un service / une réparation</a>
+    {% else %}
+      <p>Cet appareil n’est plus couvert par la garantie. La demande de réparation sous garantie n’est pas disponible.</p>
+    {% endif %}
+  </section>
+{% endblock %}

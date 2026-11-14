@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block content %}
+  <section class="container surface error-page">
+    <h1>Erreur {{ code }}</h1>
+    <p role="alert">{{ message }}</p>
+    <a class="button" href="{{ home }}">Accueil du support</a>
+  </section>
+{% endblock %}
