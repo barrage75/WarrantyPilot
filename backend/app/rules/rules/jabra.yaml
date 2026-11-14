@@ -1,0 +1,59 @@
+# Règles Jabra (GN Audio) — garantie business standard + Jabra Warranty+.
+# Source standard : https://www.jabra.com/supportpages/warranty-terms-business (consultée le 2026-11-14)
+# Source Warranty+ : conditions du 16/06/2025, https://www.jabra.com/footerpages/business-services-terms
+# Faits vérifiés :
+# - Durées depuis la date d'achat : 1 an (sans fil, Engage 55/65/75, BIZ 1100, PanaCast Control),
+#   2 ans (filaires, Engage 45/55/65/75 SE, Evolve/Evolve2/Evolve3, Speak/Speak2, PanaCast, Control IP,
+#   Reach, Scheduler, Perform), 3 ans (BIZ 2400/II, Engage 40/50/50 II/LINK, BYOD Kit, PanaCast Room Kit/Multi),
+#   180 jours pour les produits reconditionnés par le fabricant.
+# - « contact the GN partner from which the product was purchased inside 30 days » : point de départ NON précisé
+#   -> contact_delay_start: unspecified ; ce délai n'est JAMAIS bloquant (avertissement seulement).
+# - Fin immédiate si réparé par un tiers non autorisé ou utilisé avec des accessoires non certifiés.
+# - Consommables (cordons, coussinets, serre-têtes...) exclus sauf défaut dans les 14 jours.
+# - Preuve d'achat : nom et adresse du partenaire GN, date d'achat, type et numéro de modèle.
+# - Warranty+ : achetée uniquement avec le produit ; prolonge seulement la DURÉE à partir de la fin de la
+#   garantie standard ; demande au SUPPORT Jabra (pas au revendeur) ; certificat (Confirmation Notice) requis.
+defaults: &jabra_std
+  version: "1"
+  source_url: https://www.jabra.com/supportpages/warranty-terms-business
+  consulted_on: 2026-11-14
+  right_type: manufacturer_warranty
+  start_event: purchase_date
+  proof_required: [reseller_name, reseller_address, purchase_date, product_type, model_number]
+  exclusions: [accidental_damage, liquid_damage, third_party_repair, non_certified_accessory, consumable_wear, loss, theft, misuse]
+  contact_delay_days: 30
+  contact_delay_start: unspecified
+  channel: email_reseller
+  requires_certificate: false
+rules:
+  # 1 an
+  - {<<: *jabra_std, id: jabra-engage-55, applies_to: {brand: Jabra, model_glob: "Engage 55"}, duration_months: 12}
+  - {<<: *jabra_std, id: jabra-engage-65, applies_to: {brand: Jabra, model_glob: "Engage 65"}, duration_months: 12}
+  - {<<: *jabra_std, id: jabra-engage-75, applies_to: {brand: Jabra, model_glob: "Engage 75"}, duration_months: 12}
+  - {<<: *jabra_std, id: jabra-biz-1100, applies_to: {brand: Jabra, model_glob: "BIZ 1100*"}, duration_months: 12}
+  # 2 ans
+  - {<<: *jabra_std, id: jabra-evolve, applies_to: {brand: Jabra, model_glob: "Evolve*"}, duration_months: 24}
+  - {<<: *jabra_std, id: jabra-engage-se, applies_to: {brand: Jabra, model_glob: "Engage ?5 SE"}, duration_months: 24}
+  - {<<: *jabra_std, id: jabra-speak, applies_to: {brand: Jabra, model_glob: "Speak*"}, duration_months: 24}
+  # 3 ans
+  - {<<: *jabra_std, id: jabra-engage-40, applies_to: {brand: Jabra, model_glob: "Engage 40"}, duration_months: 36}
+  - {<<: *jabra_std, id: jabra-engage-50, applies_to: {brand: Jabra, model_glob: "Engage 50*"}, duration_months: 36}
+  - {<<: *jabra_std, id: jabra-engage-link, applies_to: {brand: Jabra, model_glob: "Engage LINK"}, duration_months: 36}
+  - {<<: *jabra_std, id: jabra-biz-2400, applies_to: {brand: Jabra, model_glob: "BIZ 2400*"}, duration_months: 36}
+  # Reconditionné par le fabricant : 180 jours, tous modèles
+  - {<<: *jabra_std, id: jabra-refurbished, applies_to: {brand: Jabra, model_glob: "*", condition: refurbished}, duration_months: 0, duration_days: 180}
+  # Extension Jabra Warranty+ (durée lue sur le certificat, démarre à la fin de la garantie standard)
+  - id: jabra-warranty-plus
+    version: "1"
+    source_url: https://www.jabra.com/footerpages/business-services-terms
+    consulted_on: 2026-11-14
+    applies_to: {brand: Jabra, model_glob: "*"}
+    right_type: extension
+    duration_months: 0
+    start_event: standard_warranty_end
+    proof_required: [warranty_plus_certificate, model_number, sku, serial_number, purchase_date]
+    exclusions: [accidental_damage, liquid_damage, third_party_repair, non_certified_accessory, consumable_wear, loss, theft, misuse]
+    contact_delay_days: null
+    contact_delay_start: unspecified
+    channel: email_manufacturer_support
+    requires_certificate: true

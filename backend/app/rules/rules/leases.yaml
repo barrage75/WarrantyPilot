@@ -1,0 +1,17 @@
+# Matériel loué : ce n'est pas une garantie fabricant, c'est le loueur qui répare.
+# Source : le contrat de location du client (document interne), pas un site fabricant.
+rules:
+  - id: lease-hp-laserjet
+    version: "1"
+    source_url: "document:contrat-de-location"
+    consulted_on: 2026-11-14
+    applies_to: {brand: HP, model_glob: "LaserJet*"}
+    right_type: lease_contract
+    duration_months: 0
+    start_event: delivery_date
+    proof_required: [lease_contract, serial_number]
+    exclusions: []
+    contact_delay_days: null
+    contact_delay_start: unspecified
+    channel: email_lessor
+    requires_certificate: false
