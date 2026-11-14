@@ -5,7 +5,7 @@ Hors périmètre : `frontend/`, `docs/demo/`.
 
 Aucune forme du contrat HTTP (`backend/app/contracts/openapi.json`) n'a changé : `make openapi` ne produit aucun diff.
 
-État après corrections : `make lint typecheck test` vert (523 tests passés, 4 ignorés), `make p0` 10/10.
+État après corrections : `make lint typecheck test` vert (552 tests passés, 4 ignorés), `make p0` 10/10.
 
 ## Critique
 
@@ -30,7 +30,7 @@ Aucun défaut critique trouvé : pas de contournement d'authentification, pas d'
 | M1 | `schedule_auto_anchor` : si `ThreadPoolExecutor.submit` levait une exception (exécuteur arrêté), le verrou `_anchor_pending` n'était jamais libéré, et l'ancrage automatique restait désactivé jusqu'au redémarrage. Les exceptions autres que `OperationalError` disparaissaient aussi sans trace dans un `Future`. | **Corrigé** : `api/security.py:66,78`. Tests : `test_submit_failure_releases_pending_and_logs`, `test_worker_releases_pending_and_logs_errors`, `test_in_memory_and_pending_work_are_not_submitted` |
 | M2 | Les sessions expirées de `auth_sessions` n'étaient jamais supprimées : la table grossissait sans fin. | **Corrigé** : `core/auth.py:71`, purge à l'ouverture d'une session, dans la même transaction. Tests : `test_open_session_purges_expired_rows_transactionally`, `test_open_session_with_no_expired_rows` |
 | M3 | `make test` n'exécutait pas `data/appelia/tests`, contrairement à la CI. | **Corrigé** : `Makefile:25` |
-| M4 | Le typage strict ne couvrait que `contracts`, `core`, `ingestion`, `rules` et `appelia`. Il restait 10 erreurs `mypy --strict` dans `app/api` et `app/testing`. | **Corrigé** : erreurs supprimées (annotations seulement). `app/actions`, `app/followup`, `app/intake` et `app/testing` sont ajoutés à la vérification de types dans `Makefile` et `ci.yml`. `app/api` passe en strict mais **n'est pas ajouté** à la CI, pour ne pas bloquer le lot qui ajoute les routeurs overview/reports/notifications. À ajouter une fois ce lot fusionné. |
+| M4 | Le typage strict ne couvrait que `contracts`, `core`, `ingestion`, `rules` et `appelia`. Il restait 10 erreurs `mypy --strict` dans `app/api` et `app/testing`. | **Corrigé** : erreurs supprimées (annotations seulement). `app/api` (avec les nouveaux routeurs), `app/actions`, `app/followup`, `app/intake` et `app/testing` sont ajoutés à la vérification de types stricte dans `Makefile` et `ci.yml`. |
 | M5 | Sans `playwright install chromium`, 13 tests navigateur échouaient au lieu d'être ignorés. | **Corrigé** : `tests/unit/actions/browser/conftest.py:58`, ignorés avec un message explicite. La CI installe Chromium, donc ces tests y tournent toujours. |
 | M6 | Avertissement pytest-asyncio sur `asyncio_default_fixture_loop_scope`. | **Corrigé** : `backend/pyproject.toml` |
 | M7 | Une requête modifiante sans en-tête `Origin` ni `Referer` passe le contrôle d'origine (`api/security.py`). Le risque est faible, car le cookie est `SameSite=Strict` et `HttpOnly`, et le jeton Bearer n'est pas envoyé automatiquement par le navigateur. | **Reporté** : refuser ces requêtes casserait `curl` et `make reset`. On pourrait exiger `Sec-Fetch-Site` quand il est présent. |
@@ -38,3 +38,15 @@ Aucun défaut critique trouvé : pas de contournement d'authentification, pas d'
 | M9 | `app.state.scans` et `app.state.chat_conversations` grossissent sans limite. Une conversation n'est pas rattachée à la session qui l'a créée : tout opérateur connecté peut la lire s'il connaît son identifiant. | **Reporté** : demande une politique d'expiration ou un rattachement à la session ; impact faible en démo. |
 | M10 | `scan.py` modifie `sys.path` à l'exécution pour importer `data.appelia`. | **Reporté** : fonctionne, mais l'emballage (`packaging`) serait plus propre. |
 | M11 | Tests les plus lents : les tests navigateur sur la reproduction Dell (`test_browser_repro_integration.py`, environ 5,8 s pour le plus long, environ 25 s au total). | **Laissés tels quels** : ils mesurent de vrais délais d'attente (timeouts) ; la suite complète prend environ 55 s. |
+
+## Nouveaux routeurs (#44) : overview, reports, notifications, `core/warranty.py`
+
+| # | Constat | Statut |
+|---|---------|--------|
+| N1 | Export `GET /reports/savings.csv` : les cellules commençant par `=`, `+`, `-` ou `@` étaient écrites telles quelles. Un tableur pouvait les exécuter comme des formules (injection CSV). | **Corrigé** : `reports.py:120`, ces cellules sont préfixées par `'`. Test : `test_savings_csv_escapes_formulas_and_uses_french_labels` |
+| N2 | Le même CSV écrivait les codes internes bruts pour les colonnes Canal et Statut. | **Corrigé** : il réutilise `enum_label` (libellés français existants). Même test. |
+| N3 | `warranty.py` comparait les états d'achat à des chaînes en dur (`"saving_realized"`, `"purchase_kept"`). | **Corrigé** : `warranty.py:74` utilise `PurchaseGuardState`. Test : `test_savings_totals_purchase_states` |
+| N4 | Le scan appelait `savings_totals` (SQL synchrone) dans la boucle asyncio. | **Corrigé** : `scan.py:125`, l'appel passe par `asyncio.to_thread`. Test : `test_scan_purchase_read_runs_off_loop` (adapté) |
+| N5 | `overview.py:51-68`, `reports.py:53-84`, `warranty.py:64-72` relisent les tables entières à chaque appel, et `notifications.py:54-78` lance une requête par dossier. | **Reporté** : volume faible en démo. La pagination ou l'agrégation change la sémantique des vues et demande une décision. |
+
+Les trois routeurs sont synchrones (FastAPI les exécute hors de la boucle) et protégés par `require_session` au niveau de `main.py`.
