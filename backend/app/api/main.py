@@ -27,6 +27,7 @@ from app.api.routers import (
     chat,
     demo,
     health,
+    intake,
     journal,
     purchase_guard,
     scan,
@@ -190,6 +191,7 @@ def create_app(
     application.state.chat_conversations = {}
     application.state.scans = {}
     for api_router in (
+        intake.router,
         health.router,
         cases.router,
         chat.router,
