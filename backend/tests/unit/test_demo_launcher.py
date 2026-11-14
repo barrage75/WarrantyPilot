@@ -16,6 +16,28 @@ def test_port_busy_detects_bound_socket_and_free_port():
     assert not demo.port_busy(port)
 
 
+@pytest.mark.skipif(demo.os.name == "nt", reason="POSIX address reuse semantics")
+def test_port_busy_allows_restart_after_server_closes_connection():
+    with socket.socket() as listener:
+        listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        listener.bind(("127.0.0.1", 0))
+        listener.listen()
+        listener.settimeout(2)
+        port = listener.getsockname()[1]
+        assert demo.port_busy(port)
+        with socket.create_connection(("127.0.0.1", port), timeout=2) as client:
+            connection, _ = listener.accept()
+            with connection:
+                connection.settimeout(2)
+                connection.shutdown(socket.SHUT_WR)
+                assert client.recv(1) == b""
+                client.shutdown(socket.SHUT_WR)
+                assert connection.recv(1) == b""
+    with socket.socket() as probe, pytest.raises(OSError):
+        probe.bind(("127.0.0.1", port))
+    assert not demo.port_busy(port)
+
+
 @pytest.mark.parametrize("name", ["uv", "node", "npm"])
 def test_missing_command_has_french_hint(monkeypatch, name):
     monkeypatch.setattr(demo.shutil, "which", lambda command: None)
