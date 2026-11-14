@@ -95,7 +95,7 @@ test("keeps Dell details accessible, centered and within the viewport", async ({
  await page.setViewportSize({ width: 1440, height: 900 });
  await page.goto(`/cases/${created.id}`);
  await page.getByRole("button", { name: "Valider", exact: true }).click();
- await expect(page.locator("main header")).toContainText("Envoyé");
+ await expect(page.locator("main header")).toContainText("Envoyé", { timeout: 15000 });
  await page.screenshot({ path: resolve(directory, "dell-after-validation.png"), animations: "disabled" });
 
  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));

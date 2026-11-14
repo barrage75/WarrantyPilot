@@ -127,5 +127,13 @@
     "email_message_id": "Message-ID d’e-mail",
     "portal_screenshot": "Capture du portail",
     "carrier_tracking": "Suivi transporteur"
+  },
+  "journey": {
+    "title": "Parcours de l’agent",
+    "invoice": "Facture",
+    "rules": "Règles",
+    "approval": "Votre accord",
+    "manufacturer": "Fabricant",
+    "tracking": "Suivi"
   }
 }

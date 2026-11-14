@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { ArrowDownWideNarrow, ArrowUpWideNarrow, ChevronRight, Search, SlidersHorizontal } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQueries } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -18,7 +19,14 @@ import { RealityBadge, StatusBadge, VerdictBadge } from "@/components/Badges";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Table } from "@/components/ui/table";
+import { Tile } from "@/components/bento/Tile";
+import { Pill } from "@/components/bento/Pill";
+import { NumberTicker } from "@/components/bento/NumberTicker";
+import { EmptyState } from "@/components/bento/EmptyState";
+import { EquipmentIcon } from "@/components/bento/EquipmentIcon";
+import { CaseStatus } from "@/components/case/CaseStatus";
+import { CaseEquipment } from "@/components/case/CaseEquipment";
+import { AgentJourney } from "@/components/case/AgentJourney";
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { isTechnicalField, isTechnicalValue, technicalLabel } from "@/i18n/technical";
 type Case = MethodResponse<typeof client, "get", "/api/cases/{case_id}">;
@@ -100,13 +108,31 @@ export function Decisions() {
 export function CasesPage() {
  const navigate = useNavigate();
  const { t } = useTranslation("cases"), date = useFormat();
- const query = useCases();
- const [search, setSearch] = useState(""), [filters, setFilters] = useState<Record<string, string>>({}), [descending, setDescending] = useState(true);
- const rows = (query.data ?? []).filter(item => (item.id ?? "").toLowerCase().includes(search.toLowerCase()) && (!filters.status || item.status === filters.status) && (!filters.verdict || item.verdict?.value === filters.verdict) && (!filters.channel || item.channel === filters.channel) && (!filters.badge || item.badge === filters.badge)).sort((a, b) => ((Date.parse(b.updated_at ?? "") || 0) - (Date.parse(a.updated_at ?? "") || 0)) * (descending ? 1 : -1));
- const fields = { status: "CaseStatus", verdict: "VerdictValue", channel: "Channel", badge: "RealityBadge" };
- return <div className="space-y-5"><h1 className="text-3xl font-semibold">{t("title")}</h1><Card><div className="mb-5 grid gap-3 md:grid-cols-3"><label>{t("search")}<Input value={search} onChange={e => setSearch(e.target.value)}/></label>{Object.entries(fields).map(([key, ns]) => <label key={key}>{t(key)}<select className="block w-full rounded-md border border-slate-300 p-2" value={filters[key] ?? ""} onChange={e => setFilters({ ...filters, [key]: e.target.value })}><option value="">{t("all")}</option>{Array.from(new Set((query.data ?? []).map(item => key === "verdict" ? item.verdict?.value : item[key as "status" | "channel" | "badge"]))).filter((v): v is NonNullable<typeof v> => !!v).map(value => <option key={value} value={value}>{t("enums:" + ns + "." + value)}</option>)}</select></label>)}</div>
- {query.isPending && <p>{t("common:loading")}</p>}{query.isError && <ErrorMessage error={query.error}/>}
- <Table><thead><tr><th>{t("id")}</th><th>{t("status")}</th><th>{t("verdict")}</th><th>{t("channel")}</th><th>{t("badge")}</th><th aria-sort={descending ? "descending" : "ascending"}><button className="underline" onClick={() => setDescending(!descending)}>{t("updated")} {descending ? "↓" : "↑"}</button></th></tr></thead><tbody>{rows.map(item => <tr key={item.id} tabIndex={0} aria-label={item.id} className="cursor-pointer hover:bg-slate-50 focus-visible:outline-teal-700" onClick={() => navigate("/cases/" + item.id)} onKeyDown={event => { if (event.key === "Enter") navigate("/cases/" + item.id); }}><td><Link className="font-semibold text-teal-800 underline" to={"/cases/" + item.id}>{short(item.id)}</Link></td><td><StatusBadge value={item.status}/></td><td>{item.verdict ? <VerdictBadge value={item.verdict.value}/> : "—"}</td><td>{t("enums:Channel." + item.channel)}</td><td><RealityBadge value={item.badge}/></td><td>{date(item.updated_at)}</td></tr>)}</tbody></Table>{!query.isPending && !query.isError && !rows.length && <p className="p-5 text-slate-600">{t("empty")}</p>}</Card></div>;
+ const query = useCases(), equipment = useEquipment();
+ const [search, setSearch] = useState(""), [filters, setFilters] = useState<Record<string, string>>({}), [descending, setDescending] = useState(true), [filtersOpen, setFiltersOpen] = useState(false);
+ const byId = new Map(equipment.data?.map(item => [item.id, item]));
+ const rows = (query.data ?? []).filter(item => [item.id, equipmentLabel(byId.get(item.equipment_id ?? ""))].some(value => value?.toLowerCase().includes(search.toLowerCase())) && (!filters.status || item.status === filters.status) && (!filters.verdict || item.verdict?.value === filters.verdict) && (!filters.channel || item.channel === filters.channel) && (!filters.badge || item.badge === filters.badge)).sort((a, b) => ((Date.parse(b.updated_at ?? "") || 0) - (Date.parse(a.updated_at ?? "") || 0)) * (descending ? 1 : -1));
+ const fields = { verdict: "VerdictValue", channel: "Channel", badge: "RealityBadge" };
+ const statuses = Array.from(new Set(query.data?.map(item => item.status)));
+ const filterCount = Object.values(filters).filter(Boolean).length;
+ return <div className="min-w-0 space-y-6">
+  <header className="flex flex-wrap items-end justify-between gap-4"><div><h1 className="text-4xl font-bold tracking-tight">{t("title")}</h1><p className="mt-2 text-muted">{t("subtitle")}</p></div><Pill><NumberTicker value={rows.length}/>{" "}{t("caseCount", { count: rows.length })}</Pill></header>
+  <section aria-label={t("filters")} className="space-y-4">
+   <div className="flex flex-wrap items-center gap-3"><label className="relative min-w-0 flex-1"><span className="sr-only">{t("search")}</span><Search aria-hidden="true" size={18} className="pointer-events-none absolute left-4 top-3 text-muted"/><Input className="h-11 border-0 bg-surface pl-11" placeholder={t("searchPlaceholder")} value={search} onChange={e => setSearch(e.target.value)}/></label><Button variant="outline" className="sm:hidden" aria-expanded={filtersOpen} aria-controls="case-filters" onClick={() => setFiltersOpen(!filtersOpen)}><SlidersHorizontal size={16} aria-hidden="true"/>{t("filters")}{filterCount ? ` (${filterCount})` : ""}</Button><Button variant="outline" aria-label={t("updated")} aria-pressed={!descending} onClick={() => setDescending(!descending)}>{descending ? <ArrowDownWideNarrow size={18} aria-hidden="true"/> : <ArrowUpWideNarrow size={18} aria-hidden="true"/>}<span className="hidden sm:inline">{t("updated")}</span></Button></div>
+   <div id="case-filters" className={`${filtersOpen ? "flex" : "hidden"} flex-col gap-4 sm:flex`}>
+    <div role="group" aria-label={t("status")} className="flex flex-wrap gap-2">{["", ...statuses].map(value => <button key={value} type="button" aria-pressed={(filters.status ?? "") === value} className={`min-h-10 rounded-full px-4 py-2 text-sm font-medium ${(filters.status ?? "") === value ? "bg-ink text-white" : "bg-surface text-ink hover:bg-line"}`} onClick={() => setFilters(old => ({ ...old, status: value }))}>{value ? t("enums:CaseStatus." + value) : t("all")}</button>)}</div>
+    <div className="flex flex-wrap items-center gap-3">{Object.entries(fields).map(([key, ns]) => <label className="flex max-w-full items-center gap-2 text-sm text-muted" key={key}>{t(key)}<select className="min-h-10 min-w-0 max-w-48 rounded-full border border-line bg-surface px-3 text-ink" value={filters[key] ?? ""} onChange={e => setFilters(old => ({ ...old, [key]: e.target.value }))}><option value="">{t("all")}</option>{Array.from(new Set((query.data ?? []).map(item => key === "verdict" ? item.verdict?.value : item[key as "channel" | "badge"]))).filter((v): v is NonNullable<typeof v> => !!v).map(value => <option key={value} value={value}>{t("enums:" + ns + "." + value)}</option>)}</select></label>)}{filterCount > 0 && <button className="min-h-10 px-2 text-sm font-medium text-indigo-700 underline" onClick={() => setFilters({})}>{t("clearFilters")}</button>}</div>
+   </div>
+  </section>
+  {query.isPending && <p role="status">{t("common:loading")}</p>}{query.isError && <ErrorMessage error={query.error}/>}
+  <div className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3">{rows.map(item => { const device = byId.get(item.equipment_id ?? ""); return <Tile key={item.id} tabIndex={0} aria-label={item.id} highlight={item.status === "awaiting_validation"} className="min-w-0 cursor-pointer space-y-5" onClick={event => { if (!(event.target as HTMLElement).closest("a")) navigate("/cases/" + item.id); }} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); navigate("/cases/" + item.id); } }}>
+   <div className="flex items-start justify-between gap-3"><EquipmentIcon category={device?.category ?? "package"} size={44}/><RealityBadge value={item.badge}/></div>
+   <div><h2 className="text-xl font-semibold tracking-tight [overflow-wrap:anywhere]">{device ? `${device.brand} ${device.model}` : t("equipmentUnknown")}</h2><p className="mt-1 text-sm text-muted [overflow-wrap:anywhere]">{device?.serial ?? "—"}</p></div>
+   <div className="flex flex-wrap items-center gap-3"><CaseStatus status={item.status}/>{item.verdict && <Pill className={`px-3 py-1 ${item.verdict.value === "covered" ? "bg-ok/10 text-emerald-800" : ["not_covered", "out_of_manufacturer"].includes(item.verdict.value) ? "bg-bad/10 text-red-800" : "bg-warn/15 text-amber-900"}`}>{t("enums:VerdictValue." + item.verdict.value)}</Pill>}</div>
+   <div className="border-t border-line pt-4 text-sm"><p className="text-muted">{t("enums:Channel." + item.channel)}</p><div className="mt-2 flex flex-wrap items-center justify-between gap-2"><Link className="inline-flex min-h-10 items-center gap-1 font-semibold text-indigo-700" to={"/cases/" + item.id} aria-label={short(item.id)}>{t("id")} #{short(item.id)}<ChevronRight size={16} aria-hidden="true"/></Link><time className="text-xs text-muted" dateTime={item.updated_at}>{date(item.updated_at)}</time></div></div>
+  </Tile>; })}</div>
+  {!query.isPending && !query.isError && !rows.length && <Tile><EmptyState title={t("empty")} description={t("emptyHelp")} action={<Button variant="outline" onClick={() => { setFilters({}); setSearch(""); }}>{t("clearFilters")}</Button>}/></Tile>}
+ </div>;
 }
 function Checklist({ id }: { id: string }) {
  const { t } = useTranslation("caseDetail"), date = useFormat();
@@ -145,7 +171,12 @@ export function CaseDetail() {
  if (query.isPending) return <p>{t("common:loading")}</p>;
  if (query.isError) return <ErrorMessage error={query.error}/>;
  if (!item) return null;
- return <div className="space-y-6"><Link className="text-teal-800 underline" to="/cases">{t("back")}</Link><header className="space-y-3"><h1 className="text-3xl font-semibold">{t("title")} #{short(item.id)}</h1><div className="flex flex-wrap gap-3"><StatusBadge value={item.status}/><RealityBadge value={item.badge}/><span>{t("enums:Channel." + (verdict?.channel ?? item.channel))}</span><span>{t("equipmentLabel")} : {equipmentName(item.equipment_id)}</span></div><p className="text-sm text-slate-600">{t("created")}: {date(item.created_at)} · {t("updated")}: {date(item.updated_at)}</p><HumanActions item={item}/></header>
+ return <div className="min-w-0 space-y-6"><Link className="inline-flex min-h-10 items-center text-sm font-medium text-indigo-700 underline" to="/cases">{t("back")}</Link><header className={`min-w-0 space-y-5 rounded-[28px] bg-surface p-6 sm:p-8 ${item.status === "awaiting_validation" ? "ring-2 ring-accent" : ""}`}>
+ <CaseEquipment equipmentId={item.equipment_id}/>
+ <div><h1 className="text-3xl font-bold tracking-tight sm:text-4xl"><span className="mb-2 block text-sm font-medium text-muted">{t("title")} #{short(item.id)}</span><span className="[overflow-wrap:anywhere]">{equipmentName(item.equipment_id)}</span></h1></div>
+ <div className="flex flex-wrap items-center gap-3"><CaseStatus status={item.status}/><RealityBadge value={item.badge}/><Pill className="bg-canvas">{t("enums:Channel." + (verdict?.channel ?? item.channel))}</Pill></div>
+ <p className="text-sm text-muted">{t("created")}: {date(item.created_at)} · {t("updated")}: {date(item.updated_at)}</p><HumanActions item={item}/></header>
+ <AgentJourney item={item} events={stream.data ?? []}/>
  <div className="grid items-start gap-6 xl:grid-cols-2">
   <Card>
    <h2 className="mb-4 text-xl font-semibold">{t("verdict")}</h2>

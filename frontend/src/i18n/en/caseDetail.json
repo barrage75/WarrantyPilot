@@ -127,5 +127,13 @@
     "email_message_id": "E-mail Message-ID",
     "portal_screenshot": "Portal screenshot",
     "carrier_tracking": "Carrier tracking"
+  },
+  "journey": {
+    "title": "Agent journey",
+    "invoice": "Invoice",
+    "rules": "Rules",
+    "approval": "Your approval",
+    "manufacturer": "Manufacturer",
+    "tracking": "Follow-up"
   }
 }

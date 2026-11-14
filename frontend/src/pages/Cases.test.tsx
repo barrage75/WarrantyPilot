@@ -120,7 +120,7 @@ it("updates the PC return banner as checklist steps are completed", async () => 
 it("filters cases by status and ID", async () => {
  data.push({ ...item, id: "30000000-0000-4000-8000-000000000003", status: "failed" });
  show("cases"); await screen.findByRole("link", { name: "20000000" });
- await userEvent.selectOptions(screen.getByLabelText("Statut"), "failed");
+ await userEvent.click(within(screen.getByRole("group", { name: "Statut" })).getByRole("button", { name: "Échec" }));
  expect(screen.queryByRole("link", { name: "20000000" })).not.toBeInTheDocument();
  expect(screen.getByRole("link", { name: "30000000" })).toBeInTheDocument();
  await userEvent.type(screen.getByLabelText("Rechercher un ID"), "nothing");
