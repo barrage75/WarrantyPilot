@@ -39,6 +39,22 @@ L'opérateur informatique de démonstration est Karim Benali
 (`responsable informatique`, `karim.benali.002@appelia.example`), dont l'identifiant
 stable est `97225c38-d686-5d99-a6cf-53e18aa92e8d`.
 
+### Rôles d'accès (lot SEC1)
+
+La colonne `people.access_role` porte le rôle de connexion à l'interface, dérivé du
+poste au reset (`app.core.auth.access_role_for_job`) :
+
+| Personne | Poste (`role`) | Rôle d'accès (`access_role`) |
+| --- | --- | --- |
+| Karim Benali | `responsable informatique` | `admin` (réglages, reset, étiquette transporteur) |
+| Paul (technicien) | `technicien plateau` | `operator` |
+| Claire (DAF) | `DAF` | `operator` |
+| Autres collaborateurs | `collaborateur` | aucun (pas de connexion) |
+
+Connexion : `POST /api/auth/login` avec `{person_id, password}`. Le mot de passe de
+démonstration vient de `WP_DEMO_PASSWORD` ; il est obligatoire hors `WP_ENV=dev`.
+En développement uniquement, le défaut documenté est `appelia-demo`.
+
 Le reset de démonstration règle `auto_send_threshold_eur` à 300 € pour montrer
 l'envoi automatique du cas Paul. Le modèle `Settings` conserve son défaut prudent
 de 0 €.

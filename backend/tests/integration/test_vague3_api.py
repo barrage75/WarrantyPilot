@@ -167,7 +167,6 @@ def test_purchase_guard_requires_reason_and_realizes_savings_after_both_conditio
         case_id = suspended.json()["caseId"]
         assert suspended.json()["state"] == "purchase_suspended"
 
-        paul_id = _paul_id(session_factory)
         cancelled = client.post(
             f"/api/purchase-requests/{purchase['id']}/confirm-cancellation",
             json={},

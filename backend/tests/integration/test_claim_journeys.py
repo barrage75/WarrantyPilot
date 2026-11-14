@@ -50,6 +50,7 @@ async def test_paul_case_auto_sends_after_demo_reset_with_message_id_proof(
             smtp_port=smtp.port,
             maildir_path=maildir_path,
             email_sent_ledger_path=tmp_path / "email_sent.jsonl",
+            journal_archive_dir=tmp_path / "journal-archive",
         )
 
         def settings_provider() -> Settings:
