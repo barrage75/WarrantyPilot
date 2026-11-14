@@ -62,6 +62,7 @@ class FacturXExtractor:
             value: Any = " ".join(" ".join(node.itertext()).split())
             if not value:
                 return
+            excerpt = value
             if mode == "decimal":
                 value = str(Decimal(value))
             elif mode == "date":
@@ -72,9 +73,9 @@ class FacturXExtractor:
                     .date()
                     .isoformat()
                 )
-            add(field, value, root.getroottree().getpath(node))
+            add(field, value, excerpt)
 
-        def add(field: str, value: Any, path: str) -> None:
+        def add(field: str, value: Any, excerpt: str) -> None:
             facts.append(
                 Fact(
                     document_id=document.id,
@@ -82,7 +83,7 @@ class FacturXExtractor:
                     value=value,
                     confidence=1.0,
                     source=FactSource.STRUCTURED,
-                    provenance=Provenance(document_id=document.id, excerpt=f"{path} = {value}"),
+                    provenance=Provenance(document_id=document.id, excerpt=excerpt),
                 )
             )
 
@@ -122,7 +123,6 @@ class FacturXExtractor:
                 if descriptions:
                     description_node = descriptions[0]
                     description = " ".join(" ".join(description_node.itertext()).split())
-                    description_path = root.getroottree().getpath(description_node)
                     serial = re.search(
                         r"(?:numéros?\s+de\s+série|serial(?:\s+numbers?)?|S/N)\s*:\s*([\w-]+)",
                         description,
@@ -132,7 +132,7 @@ class FacturXExtractor:
                         add(
                             f.line_field(i, f.SERIAL),
                             serial[1],
-                            description_path,
+                            description,
                         )
                     duration = re.search(
                         r"(\d+)\s*(mois|months?|ans?|years?)\b",
@@ -148,7 +148,7 @@ class FacturXExtractor:
                         add(
                             f.line_field(i, f.WARRANTY_DURATION_MONTHS),
                             months,
-                            description_path,
+                            description,
                         )
                 for characteristic in nodes(
                     line, "SpecifiedTradeProduct/ApplicableProductCharacteristic"
@@ -161,7 +161,7 @@ class FacturXExtractor:
                 for note in line.xpath(".//*[local-name()='IncludedNote']"):
                     match = re.search(r"S/N:\s*([\w-]+)", " ".join(note.itertext()), re.I)
                     if match:
-                        add(f.line_field(i, f.SERIAL), match[1], root.getroottree().getpath(note))
+                        add(f.line_field(i, f.SERIAL), match[1], " ".join(note.itertext()))
         else:
             for field, path in {
                 f.INVOICE_NUMBER: "ID",
@@ -197,13 +197,12 @@ class FacturXExtractor:
                     )
         for note in root.xpath(".//*[local-name()='IncludedNote' or local-name()='Note']"):
             text = " ".join(note.itertext())
-            path = root.getroottree().getpath(note)
             if re.search(r"Warranty\+|extension de garantie", text, re.I):
-                add(f.WARRANTY_EXTENSION_MENTIONED, True, path)
+                add(f.WARRANTY_EXTENSION_MENTIONED, True, text)
             duration = re.search(r"(\d+)\s*(mois|months?|ans?|years?)\b", text, re.I)
             if duration and re.search(r"garantie|warranty", text, re.I):
                 months = int(duration[1])
                 if duration[2].casefold() in {"an", "ans", "year", "years"}:
                     months *= 12
-                add(f.WARRANTY_DURATION_MONTHS, months, path)
+                add(f.WARRANTY_DURATION_MONTHS, months, text)
         return facts

@@ -493,7 +493,7 @@
     "kind": "warranty_certificate",
     "mime": "application/pdf",
     "source": "upload",
-    "sha256": "ea9484f87aaa890b5260dc52730a7002eac036a1bd7f93f5e373c95618cd9926",
+    "sha256": "9953e75c32fb227beb7944dd34fb92b597f2cbea4a6226ab33cd719ba6ad23eb",
     "extension_months": 12
   },
   {
@@ -502,7 +502,7 @@
     "kind": "warranty_certificate",
     "mime": "application/pdf",
     "source": "upload",
-    "sha256": "c5c3ef8bde0deb03e03cb8d0d7842de53b6481c9f3d3d36e1c40801be049ca99",
+    "sha256": "7d49b27c0b25d9a13c31cf725ebdff344bb7fa9cd3826a27745be1e70c97a846",
     "extension_months": 12
   },
   {
@@ -511,7 +511,7 @@
     "kind": "contract",
     "mime": "application/pdf",
     "source": "upload",
-    "sha256": "4fc563a0df0d269d207d742b613c61bbc45d267d8404139844fefd7f86b2c405",
+    "sha256": "850ae3ca45906949ad03f9220c63eca1d7baed2bf6ff42252bef24978eae7bae",
     "extension_months": 36
   },
   {

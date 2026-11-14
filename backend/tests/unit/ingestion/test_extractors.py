@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
+from lxml import etree
 from pypdf import PdfReader
 
 from app.contracts.enums import FactSource
@@ -41,13 +42,21 @@ def test_cii_all_fields(pdf: bool) -> None:
         "lines[0].quantity": "1",
         "lines[0].unit_price_ht": "1000.00",
     }
+    xml_text = " ".join(" ".join(etree.fromstring(cii()).itertext()).split())
     assert all(
         fact.source == FactSource.STRUCTURED
         and fact.confidence == 1
         and fact.provenance.page is None
-        and " = " in fact.provenance.excerpt
+        and fact.provenance.excerpt.strip() in xml_text
+        and " = " not in fact.provenance.excerpt
         and fact.provenance.document_id == doc.id
         for fact in facts
+    )
+    assert (
+        next(
+            fact.provenance.excerpt for fact in facts if fact.field == f.WARRANTY_DURATION_MONTHS
+        ).strip()
+        == "Warranty+ extension de garantie 36 mois"
     )
 
 

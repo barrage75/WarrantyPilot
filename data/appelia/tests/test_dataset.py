@@ -280,10 +280,14 @@ def test_loader_validates_contract_models() -> None:
         item for item in dataset.demo_cases if item["id"] == "demo-paul-martin"
     )
     paul_equipment = next(
-        item for item in dataset.equipment_records if item["id"] == paul_case["equipment_id"]
+        item
+        for item in dataset.equipment_records
+        if item["id"] == paul_case["equipment_id"]
     )
     paul_invoice = next(
-        item for item in dataset.annotations if item["filename"] == paul_case["documents"][0]
+        item
+        for item in dataset.annotations
+        if item["filename"] == paul_case["documents"][0]
     )
     assert paul_invoice["format"] == "facturx"
     assert paul_invoice["invoice_date"] == "2025-03-20"
@@ -297,9 +301,13 @@ def test_loader_validates_contract_models() -> None:
         and fact.field == "invoice_date"
     ]
     assert paul_invoice_dates and set(paul_invoice_dates) == {"2025-03-20"}
-    dell_equipment = next(item for item in dataset.equipment if item.serial == "7XK4L93")
+    dell_equipment = next(
+        item for item in dataset.equipment if item.serial == "7XK4L93"
+    )
     dell_invoice = next(
-        item for item in dataset.annotations if item["filename"] == "invoices/invoice-041.pdf"
+        item
+        for item in dataset.annotations
+        if item["filename"] == "invoices/invoice-041.pdf"
     )
     assert dell_invoice["format"] == "facturx"
     dell_facts = normalize_facts(list(dataset.facts), dell_equipment)
@@ -348,7 +356,7 @@ def test_loader_validates_contract_models() -> None:
         certificate_text = (
             PdfReader(str(DATA_DIRECTORY / filename)).pages[0].extract_text() or ""
         )
-        assert "extension_months : 12 mois" in certificate_text
+        assert "Extension de garantie : 12 mois (Warranty+)." in certificate_text
     assert (
         docs_by_filename["documents/contrat-dell-prosupport.pdf"]["extension_months"]
         == 36
@@ -359,7 +367,7 @@ def test_loader_validates_contract_models() -> None:
         .extract_text()
         or ""
     )
-    assert "extension_months : 36 mois" in prosupport_text
+    assert "Extension de garantie : 36 mois (Dell ProSupport)." in prosupport_text
     no_term_equipment = next(
         item for item in equipment_records if item["scenario"] == "demo-dell-no-term"
     )
@@ -371,9 +379,48 @@ def test_loader_validates_contract_models() -> None:
     people_by_name = {person.name: person for person in dataset.people}
     assert people_by_name["Paul Martin"].role == "technicien plateau"
     assert people_by_name["Karim Benali"].role == "responsable informatique"
-    assert str(people_by_name["Karim Benali"].id) == "97225c38-d686-5d99-a6cf-53e18aa92e8d"
+    assert (
+        str(people_by_name["Karim Benali"].id) == "97225c38-d686-5d99-a6cf-53e18aa92e8d"
+    )
     assert people_by_name["Karim Benali"].email == "karim.benali.002@appelia.example"
     assert people_by_name["Claire Dubois"].role == "DAF"
+
+
+def test_support_evidence_quotes_documents_and_manifest_checksums_match() -> None:
+    dataset = load_dataset()
+    support_text = {
+        document.id: "\n".join(
+            page.extract_text() or ""
+            for page in PdfReader(str(DATA_DIRECTORY / document.filename)).pages
+        )
+        for document in dataset.documents
+        if document.filename.startswith("documents/")
+    }
+    for document in dataset.documents:
+        assert (
+            hashlib.sha256(
+                (DATA_DIRECTORY / document.filename).read_bytes()
+            ).hexdigest()
+            == document.sha256
+        )
+    for fact in dataset.facts:
+        if fact.document_id in support_text:
+            assert fact.provenance.excerpt in support_text[fact.document_id]
+    for right in dataset.rights:
+        for evidence in right.evidence:
+            assert evidence.document_id is not None
+            assert evidence.excerpt in support_text[evidence.document_id]
+    for trap in dataset.traps:
+        for fact in trap["facts"]:
+            if fact["field"] in {
+                "extension_months",
+                "warranty_plus_certificate",
+                "lease_contract",
+            }:
+                document_id = next(
+                    key for key in support_text if str(key) == fact["document_id"]
+                )
+                assert fact["provenance"]["excerpt"] in support_text[document_id]
 
 
 def test_jabra_invoice_pdfs_show_required_purchase_proof() -> None:

@@ -14,6 +14,7 @@ from app.rules import (
     KeywordIncidentClassifier,
     load_rules,
 )
+from app.rules import engine as engine_module
 from app.rules.engine import CHECK_NAMES
 
 TODAY = DEMO_REFERENCE_DATE
@@ -337,6 +338,12 @@ def test_reference_cases(
         assert result.target_url is None
     assert tuple(c.name for c in result.checks) == CHECK_NAMES
     assert all(c.detail for c in result.checks)
+    if case_id == "dell-no-term":
+        assert next(c.detail for c in result.checks if c.name == "purchase_proof") == (
+            "Preuve d'achat présente ; avertissement : champs absents "
+            "Numéro de série, Durée de garantie"
+        )
+        assert result.missing == ["warranty_term_months"]
     assert result.value != "covered" or any(
         f.field in {"purchase_date", "invoice_date"} for f in facts
     )
@@ -368,6 +375,9 @@ def test_uncertainty_conflicts_determinism_and_rights() -> None:
     result = engine.evaluate(item, [proof, uncertain], event, RULES, [])
     assert result.value == "likely_covered"
     assert result.possible_exclusions == ["accidental_damage"]
+    assert next(c.detail for c in result.checks if c.name == "exclusions") == (
+        "Aucune exclusion certaine ; possibles : dommage accidentel"
+    )
     again = engine.evaluate(item, [proof, uncertain], event, RULES, [])
     exclude = {"id": True, "checks": {"__all__": {"id"}}}
     assert result.model_dump(exclude=exclude) == again.model_dump(exclude=exclude)
@@ -375,6 +385,9 @@ def test_uncertainty_conflicts_determinism_and_rights() -> None:
     conflict = engine.evaluate(item, [proof, second], event, RULES, [])
     assert conflict.value == "to_verify"
     assert proof.provenance in conflict.evidence and second.provenance in conflict.evidence
+    assert next(c.detail for c in conflict.checks if c.name == "document_conflict").startswith(
+        "Conflit — Date d'achat : "
+    )
     assert engine.evaluate(item, [proof], event, [], []).value == "to_verify"
     item = equipment("HP", "LaserJet")
     right = Right(
@@ -390,6 +403,22 @@ def test_uncertainty_conflicts_determinism_and_rights() -> None:
     item = equipment("Dell", "Latitude")
     result = engine.evaluate(item, [proof, fact("warranty_term_months", 36)], event, RULES, [])
     assert result.target_url == "http://localhost/custom"
+
+
+def test_conflict_on_unlisted_field_uses_humanized_label(monkeypatch: pytest.MonkeyPatch) -> None:
+    field = "support_start_date"
+    assert field not in engine_module.FACT_LABELS
+    monkeypatch.setattr(engine_module, "DATE_FIELDS", engine_module.DATE_FIELDS | {field})
+    conflicting = [fact(field, "2025-03-12"), fact(field, "2025-04-01")]
+
+    result = DeterministicRulesEngine(TODAY).evaluate(
+        equipment(), conflicting, incident(), RULES, []
+    )
+
+    assert result.value == "to_verify"
+    detail = next(c.detail for c in result.checks if c.name == "document_conflict")
+    assert detail.startswith("Conflit — support start date : ")
+    assert all(proof.provenance in result.evidence for proof in conflicting)
 
 
 def test_fact_filtering_and_proof_confidence() -> None:
@@ -505,7 +534,21 @@ def test_warranty_cannot_cover_before_resolved_start(start_source: str, offset: 
     )
 
     assert result.value == ("to_verify" if offset < 0 else "covered")
-    assert next(c for c in result.checks if c.name == "start_date").passed is (offset >= 0)
+    start_check = next(c for c in result.checks if c.name == "start_date")
+    assert start_check.passed is (offset >= 0)
+    origin = {
+        "purchase_date": "Date d'achat",
+        "invoice_date": "Date de facture",
+        "ship_date": "Date d'expédition",
+        "ship_inventory": "Date d'expédition (inventaire)",
+        "ship_fallback": "Date d'achat",
+    }[start_source]
+    estimated = (
+        " (date estimée)"
+        if start_source in {"invoice_date", "ship_inventory", "ship_fallback"}
+        else ""
+    )
+    assert start_check.detail == f"{origin} : 21/11/2026{estimated}"
     if offset < 0:
         assert "non commencée" in result.explanation_fr
         assert "not started" in result.explanation_en
