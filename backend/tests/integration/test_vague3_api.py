@@ -10,7 +10,16 @@ from app.api.main import create_app
 from app.contracts.enums import CaseStatus, Channel, EventType, VerdictValue
 from app.contracts.models import Verdict
 from app.core.settings_store import read_settings, write_settings
-from app.core.tables import actions, cases, equipment, events, people, verdicts
+from app.core.tables import (
+    actions,
+    cases,
+    data_checklists,
+    equipment,
+    events,
+    incidents,
+    people,
+    verdicts,
+)
 from app.testing.fakes import FakeRulesEngine
 from tests.auth_helpers import KARIM_ID, login
 
@@ -102,6 +111,98 @@ def test_chat_asks_when_reporter_has_multiple_matching_assets(
         )
 
     assert result.status_code == 200
+    assert result.json()["case_id"] is None
+    assert result.json()["clarifying_questions"]
+
+
+def test_chat_selects_foreign_equipment_by_exact_service_tag(
+    db_engine, session_factory, app_settings
+) -> None:
+    application = create_app(app_settings=app_settings, app_engine=db_engine)
+    with TestClient(application) as client:
+        login(client, person_id=KARIM_ID)
+        _reset(client)
+        conversation = client.post("/api/chat/conversations").json()
+        result = client.post(
+            f"/api/chat/conversations/{conversation['id']}/messages",
+            json={
+                "text": "Le PC 7XK4L93 de Clément ne démarre plus",
+                "reporter_id": KARIM_ID,
+            },
+        )
+        assert result.status_code == 200, result.text
+        body = result.json()
+        assert body["case_id"]
+        assert body["equipment"] == "Dell Latitude 7440"
+
+    with session_factory() as session:
+        dell = (
+            session.execute(select(equipment).where(equipment.c.serial == "7XK4L93"))
+            .mappings()
+            .one()
+        )
+        case = session.execute(select(cases).where(cases.c.id == body["case_id"])).mappings().one()
+        incident = (
+            session.execute(select(incidents).where(incidents.c.id == case["incident_id"]))
+            .mappings()
+            .one()
+        )
+        verdict = (
+            session.execute(select(verdicts).where(verdicts.c.id == case["verdict_id"]))
+            .mappings()
+            .one()
+        )
+        checklist = session.execute(
+            select(data_checklists.c.steps).where(data_checklists.c.case_id == body["case_id"])
+        ).scalar_one()
+        event = (
+            session.execute(
+                select(events).where(
+                    events.c.case_id == body["case_id"],
+                    events.c.type == EventType.CASE_CREATED.value,
+                )
+            )
+            .mappings()
+            .one()
+        )
+
+    assert incident["reporter_id"] == KARIM_ID
+    assert case["equipment_id"] == dell["id"]
+    assert dell["assigned_to"] != KARIM_ID
+    assert case["status"] == CaseStatus.AWAITING_VALIDATION.value
+    assert verdict["value"] in {"covered", "likely_covered"}
+    assert verdict["channel"] == "browser_portal"
+    assert len(checklist) == 7
+    assert all(not step["done"] for step in checklist.values())
+    assert event["payload"]["assigned_to"] == dell["assigned_to"]
+
+
+def test_unknown_service_tag_produces_clarifying_question(
+    db_engine, session_factory, app_settings
+) -> None:
+    application = create_app(app_settings=app_settings, app_engine=db_engine)
+    reporter_id = str(uuid4())
+    with TestClient(application) as client:
+        login(client, person_id=KARIM_ID)
+        _reset(client)
+        with session_factory.begin() as session:
+            session.execute(
+                insert(people).values(
+                    id=reporter_id,
+                    name="Personne sans équipement",
+                    email="sans-equipement@appelia.example",
+                )
+            )
+        conversation = client.post("/api/chat/conversations").json()
+        result = client.post(
+            f"/api/chat/conversations/{conversation['id']}/messages",
+            json={
+                "text": "Le PC ZZZ9999 de Clément ne démarre plus",
+                "reporter_id": reporter_id,
+            },
+        )
+
+    assert result.status_code == 200, result.text
     assert result.json()["case_id"] is None
     assert result.json()["clarifying_questions"]
 

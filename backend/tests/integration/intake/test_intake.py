@@ -31,7 +31,7 @@ from app.core.tables import (
 )
 from app.intake.classifier import Classifier
 from app.intake.documents import MAX_DOCUMENT_BYTES, DocumentIntake
-from app.intake.reporting import report_failure
+from app.intake.reporting import _equipment_category, report_failure
 from app.intake.service import IntakeService
 from app.intake.transports import READONLY_SCOPE, GmailTransport, MaildirInbox
 from tests.auth_helpers import login
@@ -118,7 +118,9 @@ def test_poll_idempotent_across_restart(
     app_settings: AppSettings,
     intake: IntakeService,
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    monkeypatch.setenv("WP_BROWSER_RUNTIME_DIR", str(tmp_path / "browser-runtime"))
     seed(session_factory)
     assert isinstance(intake.inbox, MaildirInbox)
     add(intake.inbox, mail())
@@ -717,6 +719,29 @@ def test_seeded_document_state_from_facts(
 def test_reporting_rejects_other_channels(session_factory: sessionmaker[Session]) -> None:
     with session_factory() as session, pytest.raises(ValueError, match="Unsupported"):
         report_failure(session, uuid4(), "panne", reported_via=IncidentReportedVia.VOICE)
+
+
+def test_equipment_category_uses_whole_words() -> None:
+    assert _equipment_category("Capacité de stockage") is None
+    assert _equipment_category("Le composant NPC est en panne") is None
+    assert _equipment_category("Le PC ne démarre plus") == "laptop"
+
+
+def test_partial_service_tag_does_not_identify_equipment(
+    session_factory: sessionmaker[Session],
+) -> None:
+    seed(session_factory)
+    with session_factory() as session:
+        reporter_id = UUID(session.scalar(select(people.c.id)))
+        report = report_failure(
+            session,
+            reporter_id,
+            "Mon ordinateur TEST-0XYZ ne démarre plus.",
+            reported_via=IncidentReportedVia.CHAT,
+        )
+
+    assert report.case_id is None
+    assert report.questions
 
 
 @pytest.mark.parametrize("via", [IncidentReportedVia.CHAT, IncidentReportedVia.EMAIL])

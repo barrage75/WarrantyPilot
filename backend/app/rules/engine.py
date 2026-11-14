@@ -59,6 +59,10 @@ def truthy(fact: Fact | None) -> bool:
     return fact is not None and fact_value(fact) in (True, "true")
 
 
+def _page_reference(page: int | None) -> str:
+    return f" p. {page}" if page is not None else ""
+
+
 def specificity(rule: Rule) -> tuple[bool, int, str]:
     pattern = rule.applies_to.model_glob
     prefix = next((i for i, c in enumerate(pattern) if c in "*?["), len(pattern))
@@ -219,7 +223,7 @@ class DeterministicRulesEngine:
             if len({str(fact_value(f)).replace(" ", "") for f in values}) > 1:
                 for fact in values:
                     use(fact)
-                detail = "; ".join(f"{f.value} p. {f.provenance.page}" for f in values)
+                detail = "; ".join(f"{f.value}{_page_reference(f.provenance.page)}" for f in values)
                 check("document_conflict", False, f"Conflit {name} : {detail}")
                 return verify(
                     f"documents contradictoires : {detail}", f"conflicting documents: {detail}"
@@ -392,10 +396,11 @@ class DeterministicRulesEngine:
         )
         label = "Probablement couvert" if value == VerdictValue.LIKELY_COVERED else "Couvert"
         english = "Likely covered" if value == VerdictValue.LIKELY_COVERED else "Covered"
+        page_reference = _page_reference(proof.provenance.page)
         return finish(
             value,
             f"{label} : {equipment.model}, {duration_label}, acheté le {purchase:%d/%m/%Y}, "
-            f"facture p. {proof.provenance.page} (jusqu'au {end:%d/%m/%Y}).",
+            f"facture{page_reference} (jusqu'au {end:%d/%m/%Y}).",
             f"{english}: {equipment.model}, {duration_english}, bought {purchase:%d/%m/%Y}, "
-            f"invoice p. {proof.provenance.page} (until {end:%d/%m/%Y}).",
+            f"invoice{page_reference} (until {end:%d/%m/%Y}).",
         )

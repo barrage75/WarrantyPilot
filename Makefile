@@ -25,6 +25,7 @@ test:
 	uv run --project backend pytest -m "not p0" backend/tests
 
 p0:
+	uv run --project backend python -m app.core.port_check
 	uv sync --project repro/dell --locked
 	uv run --project backend playwright install chromium
 	@set -eu; \
