@@ -55,6 +55,11 @@ class ReproServer:
 def dell_repro(tmp_path_factory: pytest.TempPathFactory) -> Iterator[ReproServer]:
     if importlib.util.find_spec("playwright") is None:
         pytest.skip("playwright is not installed in the backend environment")
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as playwright:
+        if not Path(playwright.chromium.executable_path).is_file():
+            pytest.skip("Playwright Chromium is not installed; run playwright install chromium")
     uv = shutil.which("uv")
     if uv is None or not (REPRO_DIR / "pyproject.toml").exists():
         pytest.skip("uv or repro/dell is unavailable")

@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from typing import cast
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, Request
@@ -27,8 +28,7 @@ def get_session(request: Request) -> Generator[Session, None, None]:
 
 
 def get_app_settings(request: Request) -> AppSettings:
-    settings: AppSettings = request.app.state.app_settings
-    return settings
+    return cast(AppSettings, request.app.state.app_settings)
 
 
 def get_orchestrator(request: Request) -> Orchestrator:

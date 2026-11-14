@@ -122,8 +122,11 @@ async def _run_scan(application: Any, scan_id: str) -> None:
                         )
                     )
 
-        with application.state.session_factory() as session:
-            totals = savings_totals(session, engine, rules)
+        def load_totals() -> dict[str, float]:
+            with application.state.session_factory() as session:
+                return savings_totals(session, engine, rules)
+
+        totals = await asyncio.to_thread(load_totals)
 
         state.update(
             {
@@ -159,7 +162,9 @@ async def start_scan(request: Request) -> ScanStartResponse:
         "badge": RealityBadge.REPRODUCTION,
         "error": None,
     }
-    asyncio.create_task(_run_scan(request.app, scan_id))
+    task = asyncio.create_task(_run_scan(request.app, scan_id))
+    request.app.state.scan_tasks.add(task)
+    task.add_done_callback(request.app.state.scan_tasks.discard)
     return ScanStartResponse(scan_id=scan_id)
 
 

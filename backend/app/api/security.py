@@ -63,7 +63,11 @@ def schedule_auto_anchor(engine: Engine, session_factory: Any, settings: Any) ->
         return
     if not _anchor_pending.acquire(blocking=False):
         return
-    _ANCHOR_EXECUTOR.submit(_safe_auto_anchor, session_factory, settings)
+    try:
+        _ANCHOR_EXECUTOR.submit(_safe_auto_anchor, session_factory, settings)
+    except Exception:
+        _anchor_pending.release()
+        logger.exception("journal auto-anchor submission failed")
 
 
 def _safe_auto_anchor(session_factory: Any, settings: Any) -> None:
@@ -71,5 +75,7 @@ def _safe_auto_anchor(session_factory: Any, settings: Any) -> None:
         auto_anchor(session_factory, settings)
     except OperationalError:
         logger.warning("journal auto-anchor deferred: database busy")
+    except Exception:
+        logger.exception("journal auto-anchor failed")
     finally:
         _anchor_pending.release()

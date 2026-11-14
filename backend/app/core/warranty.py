@@ -4,7 +4,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.contracts.enums import IncidentKind, IncidentReportedVia
+from app.contracts.enums import IncidentKind, IncidentReportedVia, PurchaseGuardState
 from app.contracts.interfaces import RulesEngine
 from app.contracts.models import Equipment, Fact, Incident, Right, Rule, Verdict
 from app.core import tables
@@ -71,9 +71,9 @@ def savings_totals(session: Session, engine: RulesEngine, rules: list[Rule]) -> 
     possible = realized = 0.0
     for purchase in session.execute(select(tables.purchase_requests)).mappings():
         amount = float(purchase["amount"])
-        if purchase["state"] == "saving_realized":
+        if purchase["state"] == PurchaseGuardState.SAVING_REALIZED.value:
             realized += amount
-        elif purchase["state"] != "purchase_kept":
+        elif purchase["state"] != PurchaseGuardState.PURCHASE_KEPT.value:
             possible += amount
     return {
         "covered_equipment_eur": round(covered, 2),
