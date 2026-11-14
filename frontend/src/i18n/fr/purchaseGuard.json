@@ -1,4 +1,10 @@
 {
+  "advice": {
+    "covered": "Encore sous garantie : privilégiez la réparation avant d’acheter.",
+    "notCovered": "Couverture non confirmée : examinez les autres recours avant d’acheter.",
+    "verify": "Vérifiez la couverture avant de décider d’un nouvel achat."
+  },
+  "updating": "Enregistrement de votre décision…",
   "neverBlock": "Aucun achat n’est bloqué automatiquement. Vous gardez la décision.",
   "level1": "1 · Recommandation",
   "level2": "2 · Votre décision",

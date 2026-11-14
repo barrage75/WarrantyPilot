@@ -1,4 +1,18 @@
 {
+  "duplicateBadge": "Doublon — déjà importé",
+  "viewExisting": "Voir le document existant",
+  "suspiciousBadge": "Contenu suspect — {{reason}}",
+  "extractedInfo_one": "{{count}} information extraite",
+  "extractedInfo_other": "{{count}} informations extraites",
+  "stepsTitle": "Étapes du dépôt",
+  "completed": "Terminé",
+  "steps": {
+    "sent": "Envoi",
+    "verified": "Vérification",
+    "read": "Lecture"
+  },
+  "awaitingReading": "La lecture attend le traitement du serveur.",
+  "documentUnavailable": "Ce document est introuvable ou indisponible.",
   "title": "Documents",
   "uploadTitle": "Déposer une facture ou un document",
   "drop": "Déposez un PDF ou XML ici, ou appuyez pour choisir un fichier",

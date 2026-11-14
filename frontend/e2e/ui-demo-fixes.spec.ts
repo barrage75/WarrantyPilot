@@ -1,5 +1,4 @@
-import { mkdirSync } from "node:fs";
-import { resolve } from "node:path";
+import { screenshotPath } from "./screenshot-path";
 import { expect, test, type Page } from "@playwright/test";
 import { demoIdentities, fakeCase, loginUi, openUserMenu, resetFromUi } from "./helpers";
 
@@ -77,9 +76,7 @@ test("keeps Dell details accessible, centered and within the viewport", async ({
  await expect(page.getByRole("heading", { name: "Détail du dossier" })).toBeVisible();
  await expect(page.locator("main header")).toContainText("Portail web");
 
- const directory = "/home/ubuntu/screenshots/ui-fix";
- mkdirSync(directory, { recursive: true });
- await page.screenshot({ path: resolve(directory, "dell-before-validation.png"), animations: "disabled" });
+ await page.screenshot({ path: screenshotPath("ui-fix", "dell-before-validation.png"), animations: "disabled" });
 
  for (const width of [1280, 1440]) {
   await page.setViewportSize({ width, height: 900 });
@@ -99,7 +96,7 @@ test("keeps Dell details accessible, centered and within the viewport", async ({
  await page.goto(`/cases/${created.id}`);
  await page.getByRole("button", { name: "Valider", exact: true }).click();
  await expect(page.locator("main header")).toContainText("Envoyé", { timeout: 15000 });
- await page.screenshot({ path: resolve(directory, "dell-after-validation.png"), animations: "disabled" });
+ await page.screenshot({ path: screenshotPath("ui-fix", "dell-after-validation.png"), animations: "disabled" });
 
  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
  const expand = page.getByRole("button", { name: "Agrandir la capture", exact: true });
@@ -124,7 +121,7 @@ test("keeps Dell details accessible, centered and within the viewport", async ({
  const scrollBefore = await page.evaluate(() => window.scrollY);
  await page.mouse.wheel(0, -500);
  expect(await page.evaluate(() => window.scrollY)).toBe(scrollBefore);
- await page.screenshot({ path: resolve(directory, "screenshot-modal-after-scroll.png"), animations: "disabled" });
+ await page.screenshot({ path: screenshotPath("ui-fix", "screenshot-modal-after-scroll.png"), animations: "disabled" });
  await page.keyboard.press("Escape");
  await expect(dialog).toBeHidden();
  await expand.click();
@@ -137,7 +134,7 @@ test("keeps Dell details accessible, centered and within the viewport", async ({
  const checklistTitle = page.getByRole("heading", { name: "Données du PC — 7 étapes", exact: true });
  await checklistTitle.scrollIntoViewIfNeeded();
  await expect(page.getByText(/Renvoi du PC bloqué : terminez la protection des données \(0\/7\)/)).toBeVisible();
- await page.screenshot({ path: resolve(directory, "checklist-incomplete.png"), animations: "disabled" });
+ await page.screenshot({ path: screenshotPath("ui-fix", "checklist-incomplete.png"), animations: "disabled" });
  for (let completed = 1; completed <= 7; completed += 1) {
   await page.getByRole("button", { name: "Compléter", exact: true }).first().click();
   if (completed < 7) {
@@ -145,7 +142,7 @@ test("keeps Dell details accessible, centered and within the viewport", async ({
   }
  }
  await expect(page.getByText("Protection des données terminée : le PC peut être renvoyé.")).toBeVisible();
- await page.screenshot({ path: resolve(directory, "checklist-complete.png"), animations: "disabled" });
+ await page.screenshot({ path: screenshotPath("ui-fix", "checklist-complete.png"), animations: "disabled" });
 });
 
 async function expectNoHorizontalOverflow(page: Page) {

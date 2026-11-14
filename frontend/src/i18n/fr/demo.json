@@ -1,4 +1,12 @@
 {
+  "intro": "Préparez et réinitialisez l’environnement de démonstration.",
+  "preflightHint": "Vérifiez les services indispensables avant de commencer la démonstration.",
+  "resetHint": "Repartez des données de démonstration après confirmation.",
+  "ready": "Prêt pour la démonstration",
+  "notReady": "Des vérifications nécessitent votre attention",
+  "checkPassed": "Réussi",
+  "checkFailed": "Échec",
+  "resetting": "Réinitialisation de la démo…",
   "serverDetails": "Détails techniques du serveur (message original)",
   "checkNames": {
     "database": "Base de données",

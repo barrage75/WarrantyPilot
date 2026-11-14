@@ -1,4 +1,12 @@
 {
+  "intro": "Prepare and reset the demonstration environment.",
+  "preflightHint": "Check essential services before starting the demonstration.",
+  "resetHint": "Start again with demo data after confirmation.",
+  "ready": "Ready for the demonstration",
+  "notReady": "Some checks need your attention",
+  "checkPassed": "Passed",
+  "checkFailed": "Failed",
+  "resetting": "Resetting the demo…",
   "serverDetails": "Technical server details (original message)",
   "checkNames": {
     "database": "Database",

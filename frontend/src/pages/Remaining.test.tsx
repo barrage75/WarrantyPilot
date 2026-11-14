@@ -65,7 +65,7 @@ it("stores SSE locally without sending it to the backend and reports settings er
  expect(await screen.findByRole("alert")).toHaveTextContent("API indisponible");
 });
 it("renders journal integrity and anchors on demand", async () => {
- show(<Journal/>); await screen.findByText("Journal intègre ✓");
+ show(<Journal/>); await screen.findByText("Journal intègre", { exact: true });
  expect(screen.getByText("7 événements vérifiés")).toBeInTheDocument(); expect(screen.getByText("Ancrages OK")).toBeInTheDocument();
  await userEvent.click(screen.getByRole("button", { name: "Ancrer maintenant" }));
  await waitFor(() => expect(requests).toContainEqual({ path: "/api/journal/anchor", method: "POST" }));
