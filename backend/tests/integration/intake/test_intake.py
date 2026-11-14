@@ -714,3 +714,48 @@ def test_seeded_document_state_from_facts(
 def test_reporting_rejects_other_channels(session_factory: sessionmaker[Session]) -> None:
     with session_factory() as session, pytest.raises(ValueError, match="Unsupported"):
         report_failure(session, uuid4(), "panne", reported_via=IncidentReportedVia.VOICE)
+
+
+@pytest.mark.parametrize("via", [IncidentReportedVia.CHAT, IncidentReportedVia.EMAIL])
+@pytest.mark.parametrize("category", ["laptop", "headset"])
+@pytest.mark.parametrize("identification", ["identified", "ambiguous", "none"])
+def test_reporting_checklist_transaction(
+    session_factory: sessionmaker[Session],
+    via: IncidentReportedVia,
+    category: str,
+    identification: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seed(session_factory, ambiguous=identification == "ambiguous")
+    with session_factory.begin() as session:
+        session.execute(equipment.update().values(category=category))
+    with session_factory() as session:
+        reporter = UUID(session.scalar(select(people.c.id)))
+
+        def forbidden_commit() -> None:
+            raise AssertionError("service must not commit")
+
+        monkeypatch.setattr(session, "commit", forbidden_commit)
+        text = {
+            "identified": "TEST-0 en panne",
+            "ambiguous": "En panne",
+            "none": "Mon imprimante est en panne",
+        }[identification]
+        report = report_failure(
+            session,
+            reporter,
+            text,
+            reported_via=via,
+            create_unidentified=via == IncidentReportedVia.EMAIL,
+        )
+        steps = session.scalar(
+            select(data_checklists.c.steps).where(data_checklists.c.case_id == report.case_id)
+        )
+        if category == "laptop" and identification == "identified":
+            assert steps is not None and len(steps) == 7
+            assert all(not step["done"] for step in steps.values())
+        else:
+            assert steps is None
+        session.rollback()
+    with session_factory() as session:
+        assert session.scalar(select(func.count()).select_from(data_checklists)) == 0
