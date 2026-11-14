@@ -618,6 +618,306 @@
         }
       }
     },
+    "/api/chat/conversations": {
+      "post": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Start Conversation",
+        "operationId": "start_conversation_api_chat_conversations_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatConversation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/chat/conversations/{conversation_id}/messages": {
+      "post": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Send Message",
+        "operationId": "send_message_api_chat_conversations__conversation_id__messages_post",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatMessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatReply"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scan": {
+      "post": {
+        "tags": [
+          "scan"
+        ],
+        "summary": "Start Scan",
+        "operationId": "start_scan_api_scan_post",
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanStartResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scan/{scan_id}": {
+      "get": {
+        "tags": [
+          "scan"
+        ],
+        "summary": "Get Scan",
+        "operationId": "get_scan_api_scan__scan_id__get",
+        "parameters": [
+          {
+            "name": "scan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scan Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/purchase-requests": {
+      "get": {
+        "tags": [
+          "purchase guard"
+        ],
+        "summary": "List Recommendations",
+        "operationId": "list_recommendations_api_purchase_requests_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PurchaseRecommendation"
+                  },
+                  "type": "array",
+                  "title": "Response List Recommendations Api Purchase Requests Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/purchase-requests/{purchase_id}/decision": {
+      "post": {
+        "tags": [
+          "purchase guard"
+        ],
+        "summary": "Decide",
+        "operationId": "decide_api_purchase_requests__purchase_id__decision_post",
+        "parameters": [
+          {
+            "name": "purchase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Purchase Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PurchaseDecision"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRecommendation"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/purchase-requests/{purchase_id}/confirm-cancellation": {
+      "post": {
+        "tags": [
+          "purchase guard"
+        ],
+        "summary": "Confirm Cancellation",
+        "operationId": "confirm_cancellation_api_purchase_requests__purchase_id__confirm_cancellation_post",
+        "parameters": [
+          {
+            "name": "purchase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Purchase Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRecommendation"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/purchase-requests/{purchase_id}/resolve-case": {
+      "post": {
+        "tags": [
+          "purchase guard"
+        ],
+        "summary": "Resolve Case",
+        "operationId": "resolve_case_api_purchase_requests__purchase_id__resolve_case_post",
+        "parameters": [
+          {
+            "name": "purchase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Purchase Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseRecommendation"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/journal/verify": {
       "get": {
         "summary": "Verify Journal",
@@ -1088,6 +1388,173 @@
         ],
         "title": "Channel"
       },
+      "ChatConversation": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "conversation_id": {
+            "type": "string",
+            "title": "Conversation Id"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            },
+            "type": "array",
+            "title": "Messages"
+          },
+          "disclosure_text": {
+            "type": "string",
+            "title": "Disclosure Text"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "conversation_id",
+          "messages",
+          "disclosure_text"
+        ],
+        "title": "ChatConversation"
+      },
+      "ChatMessage": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "human",
+              "assistant"
+            ],
+            "title": "Role"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          },
+          "textKey": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Textkey"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "role"
+        ],
+        "title": "ChatMessage"
+      },
+      "ChatMessageRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Text"
+          },
+          "reporter_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Reporter Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "text",
+          "reporter_id"
+        ],
+        "title": "ChatMessageRequest"
+      },
+      "ChatReply": {
+        "properties": {
+          "message": {
+            "$ref": "#/components/schemas/ChatMessage"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            },
+            "type": "array",
+            "title": "Messages"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "equipment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equipment"
+          },
+          "identified_equipment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Identified Equipment"
+          },
+          "questions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Questions"
+          },
+          "clarifying_questions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Clarifying Questions"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "message",
+          "messages"
+        ],
+        "title": "ChatReply"
+      },
       "ChecklistStep": {
         "properties": {
           "id": {
@@ -1255,6 +1722,17 @@
             ],
             "title": "Purchase Date"
           },
+          "invoice_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Number"
+          },
           "delivery_date": {
             "anyOf": [
               {
@@ -1363,6 +1841,7 @@
           "validated",
           "rejected",
           "action_started",
+          "action_step",
           "action_succeeded",
           "action_failed",
           "status_changed",
@@ -1378,9 +1857,32 @@
           "journal_anchored",
           "demo_reset",
           "followup_received",
-          "reminder_drafted"
+          "reminder_drafted",
+          "chat_disclosure"
         ],
         "title": "EventType"
+      },
+      "ExpiringRight": {
+        "properties": {
+          "equipment": {
+            "type": "string",
+            "title": "Equipment"
+          },
+          "right": {
+            "$ref": "#/components/schemas/RightType"
+          },
+          "endsAt": {
+            "type": "string",
+            "title": "Endsat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "equipment",
+          "right",
+          "endsAt"
+        ],
+        "title": "ExpiringRight"
       },
       "FakeCaseRequest": {
         "properties": {
@@ -1614,6 +2116,139 @@
         ],
         "title": "Provenance"
       },
+      "PurchaseDecision": {
+        "properties": {
+          "choice": {
+            "type": "string",
+            "enum": [
+              "suspend",
+              "keep"
+            ],
+            "title": "Choice"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "choice"
+        ],
+        "title": "PurchaseDecision"
+      },
+      "PurchaseGuardState": {
+        "type": "string",
+        "enum": [
+          "recommendation",
+          "awaiting_decision",
+          "purchase_suspended",
+          "purchase_kept",
+          "saving_realized",
+          "cancelled"
+        ],
+        "title": "PurchaseGuardState"
+      },
+      "PurchaseRecommendation": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "company": {
+            "type": "string",
+            "title": "Company"
+          },
+          "equipment": {
+            "type": "string",
+            "title": "Equipment"
+          },
+          "amountEur": {
+            "type": "number",
+            "title": "Amounteur"
+          },
+          "state": {
+            "$ref": "#/components/schemas/PurchaseGuardState"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "cancelledAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelledat"
+          },
+          "resolvedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolvedat"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/VerdictValue"
+          },
+          "explanationFr": {
+            "type": "string",
+            "title": "Explanationfr"
+          },
+          "explanationEn": {
+            "type": "string",
+            "title": "Explanationen"
+          },
+          "caseId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Caseid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "company",
+          "equipment",
+          "amountEur",
+          "state",
+          "verdict",
+          "explanationFr",
+          "explanationEn"
+        ],
+        "title": "PurchaseRecommendation"
+      },
       "RealityBadge": {
         "type": "string",
         "enum": [
@@ -1642,6 +2277,17 @@
           "reason"
         ],
         "title": "RejectionRequest"
+      },
+      "RightType": {
+        "type": "string",
+        "enum": [
+          "manufacturer_warranty",
+          "extension",
+          "lease_contract",
+          "maintenance_contract",
+          "seller_recourse"
+        ],
+        "title": "RightType"
       },
       "RuleCheck": {
         "properties": {
@@ -1678,6 +2324,100 @@
           "detail"
         ],
         "title": "RuleCheck"
+      },
+      "ScanStartResponse": {
+        "properties": {
+          "scan_id": {
+            "type": "string",
+            "title": "Scan Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scan_id"
+        ],
+        "title": "ScanStartResponse"
+      },
+      "ScanSummary": {
+        "properties": {
+          "scanId": {
+            "type": "string",
+            "title": "Scanid"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "company": {
+            "type": "string",
+            "title": "Company"
+          },
+          "invoices": {
+            "type": "integer",
+            "title": "Invoices"
+          },
+          "coveredEquipmentEur": {
+            "type": "number",
+            "title": "Coveredequipmenteur"
+          },
+          "possibleSavingsEur": {
+            "type": "number",
+            "title": "Possiblesavingseur"
+          },
+          "realizedSavingsEur": {
+            "type": "number",
+            "title": "Realizedsavingseur"
+          },
+          "expiring": {
+            "items": {
+              "$ref": "#/components/schemas/ExpiringRight"
+            },
+            "type": "array",
+            "title": "Expiring"
+          },
+          "progress": {
+            "type": "integer",
+            "title": "Progress"
+          },
+          "documentsTotal": {
+            "type": "integer",
+            "title": "Documentstotal"
+          },
+          "documentsDone": {
+            "type": "integer",
+            "title": "Documentsdone"
+          },
+          "badge": {
+            "$ref": "#/components/schemas/RealityBadge",
+            "default": "reproduction"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scanId",
+          "status",
+          "company",
+          "invoices",
+          "coveredEquipmentEur",
+          "possibleSavingsEur",
+          "realizedSavingsEur",
+          "expiring",
+          "progress",
+          "documentsTotal",
+          "documentsDone"
+        ],
+        "title": "ScanSummary"
       },
       "Settings-Input": {
         "properties": {

@@ -16,6 +16,8 @@ def app_settings(tmp_path: Path) -> AppSettings:
         database_url="sqlite:///:memory:",
         journal_anchor_key="unit-test-key",
         anchor_file=tmp_path / "anchors" / "anchors.jsonl",
+        maildir_path=tmp_path / "mail",
+        email_sent_ledger_path=tmp_path / "email_sent.jsonl",
     )
 
 

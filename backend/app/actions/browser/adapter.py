@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import Mapping
+from contextvars import ContextVar
 from urllib.parse import urlsplit
 
 from app.actions.browser.allowlist import UrlAllowlist, origin_of
@@ -29,6 +30,13 @@ from app.contracts.models import Action, ActionResult
 logger = logging.getLogger(__name__)
 
 DEMO_EMAIL_SUFFIX = "@reproduction.local"
+_CURRENT_BROWSER_ACTION: ContextVar[Action | None] = ContextVar(
+    "current_browser_action", default=None
+)
+
+
+def current_browser_action() -> Action | None:
+    return _CURRENT_BROWSER_ACTION.get()
 
 
 def default_drivers() -> dict[BrowserEngine, BrowserDriver]:
@@ -84,6 +92,13 @@ class BrowserPortalAdapter:
     async def execute(self, action: Action) -> ActionResult:
         if action.channel != Channel.BROWSER_PORTAL:
             return self._failure(action, "unsupported_channel")
+        token = _CURRENT_BROWSER_ACTION.set(action)
+        try:
+            return await self._execute(action)
+        finally:
+            _CURRENT_BROWSER_ACTION.reset(token)
+
+    async def _execute(self, action: Action) -> ActionResult:
         reporter = StepReporter(self.on_step, self.settings.browser_engine.value)
         try:
             origin = self._portal_origin(action)

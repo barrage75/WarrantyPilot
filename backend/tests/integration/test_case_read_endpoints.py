@@ -18,8 +18,8 @@ def test_people_equipment_actions_and_event_resume(
         case_id=case.id,
         channel=Channel.EMAIL_RESELLER,
         kind="warranty_claim_email",
-        idempotency_key=f"case:{case.id}:execute:1",
-        payload={"to": "person@example.test"},
+        idempotency_key=f"case:{case.id}:email_reseller:warranty@revendeur-test.example",
+        payload={"to": "warranty@revendeur-test.example"},
         badge=RealityBadge.REAL,
     )
     result = ActionResult(

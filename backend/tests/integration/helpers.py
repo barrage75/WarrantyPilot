@@ -30,7 +30,7 @@ def create_case(
     device = Equipment(
         brand="Jabra",
         model="Evolve2 65" if category == "headset" else "Latitude",
-        serial=f"TEST-{uuid4().hex[:8]}",
+        serial=uuid4().hex[:7].upper(),
         category=category,
         assigned_to=person.id,
         purchase_price="199.00",
@@ -103,7 +103,9 @@ def create_case(
                 id=SETTINGS_ID,
                 auto_send_threshold_eur="0",
                 agent_paused=paused,
-                email_allowlist=allowlist or [],
+                email_allowlist=(
+                    allowlist if allowlist is not None else ["warranty@revendeur-test.example"]
+                ),
             ),
         )
         append_event(

@@ -80,7 +80,11 @@ async def test_repeated_action_never_creates_a_second_case(repro, tmp_path) -> N
     first = await adapter_for(repro, tmp_path).execute(action)
     again = await adapter_for(repro, tmp_path).execute(action)
     retry = await adapter_for(repro, tmp_path / "other-runtime").execute(
-        make_action(url=repro.url, case_id=action.case_id, key="case:retry:2")
+        make_action(
+            url=repro.url,
+            case_id=action.case_id,
+            key=f"case:{action.case_id}:browser_portal:7XK4L93",
+        )
     )
 
     numbers = {json.loads(r.proof or "")["case_number"] for r in (first, again, retry)}
@@ -117,7 +121,11 @@ async def test_slow_portal_beyond_timeout_fails_then_retry_reuses_the_case(repro
     await asyncio.sleep(SLOW_SECONDS + 0.5)
     late_cases = repro.cases()
     retry = await adapter_for(repro, tmp_path).execute(
-        make_action(url=repro.url, case_id=case_id, key=f"case:{case_id}:execute:2")
+        make_action(
+            url=repro.url,
+            case_id=case_id,
+            key=f"case:{case_id}:browser_portal:7XK4L93",
+        )
     )
 
     assert retry.status == ActionResultStatus.SUCCESS

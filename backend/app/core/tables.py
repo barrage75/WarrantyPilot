@@ -34,6 +34,19 @@ people = Table(
     Column("role", Text),
 )
 
+suppliers = Table(
+    "suppliers",
+    Base.metadata,
+    Column("id", String(64), primary_key=True),
+    Column("name", Text, nullable=False),
+    Column("address", Text, nullable=False),
+    Column("postal_code", String(5), nullable=False),
+    Column("city", Text, nullable=False),
+    Column("country", String(64), nullable=False),
+    Column("siret", String(14), nullable=False),
+    Column("email", Text, nullable=False),
+)
+
 equipment = Table(
     "equipment",
     Base.metadata,
@@ -47,8 +60,16 @@ equipment = Table(
     Column("currency", String(3), nullable=False),
     Column("in_loan_stock", Boolean, nullable=False),
     Column("purchase_date", Date),
+    Column("invoice_number", Text),
     Column("delivery_date", Date),
     Column("ship_date", Date),
+)
+
+equipment_suppliers = Table(
+    "equipment_suppliers",
+    Base.metadata,
+    Column("equipment_id", String(36), ForeignKey("equipment.id"), primary_key=True),
+    Column("supplier_id", String(64), ForeignKey("suppliers.id"), nullable=False),
 )
 
 documents = Table(
@@ -62,6 +83,13 @@ documents = Table(
     Column("source", String(64), nullable=False),
     Column("untrusted", Boolean, nullable=False, default=True),
     CheckConstraint("untrusted = 1", name="ck_documents_untrusted"),
+)
+
+equipment_documents = Table(
+    "equipment_documents",
+    Base.metadata,
+    Column("equipment_id", String(36), ForeignKey("equipment.id"), primary_key=True),
+    Column("document_id", String(36), ForeignKey("documents.id"), primary_key=True),
 )
 
 facts = Table(
@@ -207,10 +235,17 @@ purchase_requests = Table(
     Column("id", String(36), primary_key=True),
     Column("requester_id", String(36), ForeignKey("people.id"), nullable=False),
     Column("equipment_id", String(36), ForeignKey("equipment.id"), nullable=False),
+    Column(
+        "case_id",
+        String(36),
+        ForeignKey("cases.id", name="fk_purchase_requests_case_id_cases"),
+    ),
     Column("item_description", Text, nullable=False),
     Column("amount", Numeric(12, 2), nullable=False),
     Column("state", String(64), nullable=False),
     Column("decision_reason", Text),
+    Column("cancelled_at", String(40)),
+    Column("resolved_at", String(40)),
 )
 
 settings = Table(

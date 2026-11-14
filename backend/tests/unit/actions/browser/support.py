@@ -55,7 +55,7 @@ def make_action(
         case_id=case,
         channel=Channel.BROWSER_PORTAL,
         kind="portal_claim",
-        idempotency_key=key or f"case:{case}:execute:1",
+        idempotency_key=key or f"case:{case}:browser_portal:7XK4L93",
         payload={"url": url, "portal_claim": claim if claim is not None else claim_payload()},
         badge=RealityBadge.REPRODUCTION,
     )

@@ -157,6 +157,7 @@ class EventType(StrEnum):
     VALIDATED = "validated"
     REJECTED = "rejected"
     ACTION_STARTED = "action_started"
+    ACTION_STEP = "action_step"
     ACTION_SUCCEEDED = "action_succeeded"
     ACTION_FAILED = "action_failed"
     STATUS_CHANGED = "status_changed"
@@ -173,6 +174,7 @@ class EventType(StrEnum):
     DEMO_RESET = "demo_reset"
     FOLLOWUP_RECEIVED = "followup_received"
     REMINDER_DRAFTED = "reminder_drafted"
+    CHAT_DISCLOSURE = "chat_disclosure"
 
 
 _LABELS: dict[type[StrEnum], dict[str, tuple[str, str]]] = {
@@ -298,6 +300,7 @@ _LABELS: dict[type[StrEnum], dict[str, tuple[str, str]]] = {
         "validated": ("Validé", "Validated"),
         "rejected": ("Rejeté", "Rejected"),
         "action_started": ("Action démarrée", "Action started"),
+        "action_step": ("Étape de l'action", "Action step"),
         "action_succeeded": ("Action réussie", "Action succeeded"),
         "action_failed": ("Échec de l'action", "Action failed"),
         "status_changed": ("Statut modifié", "Status changed"),
@@ -314,6 +317,7 @@ _LABELS: dict[type[StrEnum], dict[str, tuple[str, str]]] = {
         "demo_reset": ("Démo réinitialisée", "Demo reset"),
         "followup_received": ("Suivi reçu", "Follow-up received"),
         "reminder_drafted": ("Rappel préparé", "Reminder drafted"),
+        "chat_disclosure": ("Information IA affichée", "AI disclosure shown"),
     },
 }
 

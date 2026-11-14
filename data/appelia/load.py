@@ -68,6 +68,7 @@ def load_dataset(directory: Path | None = None) -> AppeliaDataset:
             currency=record["currency"],
             in_loan_stock=record["in_loan_stock"],
             purchase_date=record["purchase_date"],
+            invoice_number=record["invoice_number"],
             delivery_date=record["delivery_date"],
         )
         for record in equipment_records

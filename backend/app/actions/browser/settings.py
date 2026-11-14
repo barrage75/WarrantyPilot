@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from pathlib import Path
+from typing import Self
 
 from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -63,6 +64,10 @@ class BrowserSettings(BaseSettings):
     )
     browser_use_model: str = "bu-fast"
     browser_use_openai_base_url: str | None = None
+
+    @classmethod
+    def from_env(cls) -> Self:
+        return cls()
 
     @property
     def screenshot_dir(self) -> Path:

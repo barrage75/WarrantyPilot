@@ -1,4 +1,4 @@
-.PHONY: setup dev test lint typecheck openapi reset preflight frontend-build
+.PHONY: setup dev smtp test lint typecheck openapi reset preflight frontend-build
 
 setup:
 	uv sync --project backend
@@ -7,8 +7,15 @@ setup:
 	$(MAKE) openapi
 
 dev:
-	uv run --project backend uvicorn --app-dir backend app.api.main:app --host 127.0.0.1 --port 8001 --reload &
-	backend_pid=$$!; cd frontend && npm run dev; kill $$backend_pid
+	uv run --project backend python -m app.actions.email.local_smtp_server --port "$${WP_SMTP_PORT:-2525}" --maildir runtime/mail & \
+	smtp_pid=$$!; \
+	uv run --project backend uvicorn --app-dir backend app.api.main:app --host 127.0.0.1 --port 8001 --reload & \
+	backend_pid=$$!; \
+	trap 'kill $$backend_pid $$smtp_pid 2>/dev/null || true' EXIT; \
+	cd frontend && npm run dev
+
+smtp:
+	uv run --project backend python -m app.actions.email.local_smtp_server --port "$${WP_SMTP_PORT:-2525}" --maildir runtime/mail
 
 test:
 	uv run --project backend pytest backend/tests

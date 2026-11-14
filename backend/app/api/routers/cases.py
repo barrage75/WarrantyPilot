@@ -97,6 +97,7 @@ def _equipment_from_row(row: Any) -> Equipment:
         currency=row["currency"],
         in_loan_stock=row["in_loan_stock"],
         purchase_date=row["purchase_date"],
+        invoice_number=row["invoice_number"],
         delivery_date=row["delivery_date"],
         ship_date=row["ship_date"],
     )
