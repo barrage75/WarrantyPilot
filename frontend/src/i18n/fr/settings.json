@@ -1,4 +1,10 @@
 {
+  "thresholdTitle": "Envoi automatique",
+  "thresholdHint": "Définissez le montant maximal autorisé pour l’envoi automatique.",
+  "emailsHint": "Gérez les adresses e-mail autorisées pour les échanges de l’agent.",
+  "originsHint": "Limitez les sites auxquels le navigateur de l’agent peut accéder.",
+  "flagsHint": "Activez les fonctionnalités disponibles, regroupées par priorité.",
+  "saving": "Enregistrement des paramètres…",
   "apiSettings": "Réglages de l’agent",
   "threshold": "Seuil d’envoi automatique (€)",
   "emails": "Liste blanche d’e-mails",
@@ -8,6 +14,7 @@
   "remove": "Supprimer {{value}}",
   "removeShort": "Supprimer",
   "invalid": {
+    "threshold": "Saisissez un montant positif ou nul avec deux décimales au maximum (point décimal).",
     "emails": "Saisissez une adresse e-mail valide.",
     "origins": "Saisissez une origine HTTP(S) sans chemin, par exemple https://exemple.test."
   },

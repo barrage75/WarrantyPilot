@@ -75,7 +75,7 @@ it("translates nested policy details and reasons without exposing codes", async 
  await waitFor(() => expect(screen.getAllByRole("listitem")).toHaveLength(2));
  const row = screen.getAllByRole("listitem")[1];
  await userEvent.click(within(row).getByText("Voir les détails"));
- expect(within(row).getByText("Le montant dépasse le seuil ou aucun seuil n’est défini")).toBeVisible();
+ await waitFor(() => expect(within(row).getByText("Le montant dépasse le seuil ou aucun seuil n’est défini")).toBeVisible());
  expect(within(row).getByText("Montant sous le seuil : Non")).toBeVisible();
  expect(within(row).getByText("Validation requise")).toBeVisible();
 });

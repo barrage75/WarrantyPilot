@@ -1,4 +1,10 @@
 {
+  "thresholdTitle": "Automatic sending",
+  "thresholdHint": "Set the maximum amount permitted for automatic sending.",
+  "emailsHint": "Manage the email addresses allowed for agent correspondence.",
+  "originsHint": "Limit the sites the agent’s browser can access.",
+  "flagsHint": "Enable available features, grouped by priority.",
+  "saving": "Saving settings…",
   "apiSettings": "Agent settings",
   "threshold": "Automatic send threshold (€)",
   "emails": "Email allowlist",
@@ -8,6 +14,7 @@
   "remove": "Remove {{value}}",
   "removeShort": "Remove",
   "invalid": {
+    "threshold": "Enter a non-negative amount with up to two decimal places (decimal point).",
     "emails": "Enter a valid email address.",
     "origins": "Enter an HTTP(S) origin without a path, for example https://example.test."
   },
