@@ -1,12 +1,14 @@
 import logging
 from collections.abc import Awaitable, Callable
+from concurrent.futures import ThreadPoolExecutor
+from threading import Lock
 from typing import Any
 from urllib.parse import urlsplit
 
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
+from sqlalchemy import Engine
 from sqlalchemy.exc import OperationalError
-from starlette.background import BackgroundTask, BackgroundTasks
 
 from app.core.journal import auto_anchor
 
@@ -46,11 +48,22 @@ async def origin_guard_and_anchor(
         return JSONResponse(status_code=403, content={"detail": "Cross-origin request refused"})
     response = await call_next(request)
     if response.status_code < 400:
-        response.background = _chain(
-            response.background,
-            BackgroundTask(_safe_auto_anchor, request.app.state.session_factory, settings),
-        )
+        schedule_auto_anchor(request.app.state.engine, request.app.state.session_factory, settings)
     return response
+
+
+# The request's own database session is closed only after the response is sent, so the
+# anchor runs outside the request lifecycle on a single worker instead of blocking on it.
+_ANCHOR_EXECUTOR = ThreadPoolExecutor(max_workers=1, thread_name_prefix="journal-anchor")
+_anchor_pending = Lock()
+
+
+def schedule_auto_anchor(engine: Engine, session_factory: Any, settings: Any) -> None:
+    if engine.url.database in (None, "", ":memory:"):
+        return
+    if not _anchor_pending.acquire(blocking=False):
+        return
+    _ANCHOR_EXECUTOR.submit(_safe_auto_anchor, session_factory, settings)
 
 
 def _safe_auto_anchor(session_factory: Any, settings: Any) -> None:
@@ -58,14 +71,5 @@ def _safe_auto_anchor(session_factory: Any, settings: Any) -> None:
         auto_anchor(session_factory, settings)
     except OperationalError:
         logger.warning("journal auto-anchor deferred: database busy")
-
-
-def _chain(
-    existing: BackgroundTask | None, task: BackgroundTask
-) -> BackgroundTask | BackgroundTasks:
-    if existing is None:
-        return task
-    tasks = BackgroundTasks()
-    tasks.add_task(existing)
-    tasks.add_task(task)
-    return tasks
+    finally:
+        _anchor_pending.release()
