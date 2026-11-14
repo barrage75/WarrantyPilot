@@ -27,6 +27,7 @@ def reproduction(tmp_path_factory):
     uv = shutil.which("uv")
     assert uv, "uv est requis pour lancer la reproduction Dell"
     with socket.socket() as probe:
+        probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         probe.bind(
             ("127.0.0.1", 8100)
         )  # Ne jamais réutiliser ni réinitialiser un serveur existant.
