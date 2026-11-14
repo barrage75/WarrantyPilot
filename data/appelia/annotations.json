@@ -1,12 +1,12 @@
 [
   {
     "filename": "invoices/invoice-001.pdf",
-    "format": "pdf",
-    "invoice_number": "APP-2024-0001",
+    "format": "facturx",
+    "invoice_number": "APP-2025-0001",
     "supplier_id": "SUP-AUDIO",
     "supplier_name": "AudioPro Démonstration",
     "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
-    "invoice_date": "2024-12-20",
+    "invoice_date": "2025-03-20",
     "client_name": "Appelia SAS",
     "lines": [
       {
@@ -4798,12 +4798,12 @@
   },
   {
     "filename": "invoices/invoice-050.pdf",
-    "format": "pdf",
-    "invoice_number": "APP-2024-0001",
+    "format": "facturx",
+    "invoice_number": "APP-2025-0001",
     "supplier_id": "SUP-AUDIO",
     "supplier_name": "AudioPro Démonstration",
     "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
-    "invoice_date": "2024-12-20",
+    "invoice_date": "2025-03-20",
     "client_name": "Appelia SAS",
     "lines": [
       {

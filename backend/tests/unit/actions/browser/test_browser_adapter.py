@@ -317,7 +317,10 @@ async def test_async_step_callback_is_awaited(tmp_path) -> None:
     )
     await adapter.execute(make_action())
 
-    assert seen == ["[scripted] scripted started"]
+    assert seen == [
+        "[scripted] scripted started",
+        "[scripted] Dossier créé (FAKE0001)",
+    ]
 
 
 def test_browser_engine_setting_reads_environment(monkeypatch) -> None:

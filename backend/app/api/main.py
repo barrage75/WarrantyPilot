@@ -1,11 +1,17 @@
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
+from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import FastAPI
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.actions.browser.adapter import BrowserPortalAdapter, current_browser_action
+from app.actions.browser.adapter import (
+    BrowserPortalAdapter,
+    current_browser_action,
+    current_browser_case_number,
+)
 from app.actions.browser.settings import BrowserSettings
 from app.actions.email.adapter import build_email_adapters
 from app.actions.email.ledger import ActionResultsLedger, JsonlSentLedger
@@ -49,13 +55,37 @@ def _browser_step_recorder(
         action = current_browser_action()
         if action is None:
             return
+        screenshot_name = Path(screenshot_path).name if screenshot_path is not None else None
+        screenshot_action_id = str(action.id)
+        if screenshot_path is not None:
+            screenshot_parent = Path(screenshot_path).parent.resolve()
+            screenshot_root = BrowserSettings.from_env().screenshot_dir.resolve()
+            if screenshot_parent.parent == screenshot_root:
+                screenshot_action_id = screenshot_parent.name
+        screenshot_url = (
+            f"/api/cases/{action.case_id}/screenshots/"
+            f"{quote(screenshot_name, safe='._-')}?action_id={screenshot_action_id}"
+            if screenshot_name is not None
+            else None
+        )
+        payload: dict[str, str | None] = {
+            "action_id": str(action.id),
+            "text": text,
+            "screenshot_path": screenshot_path,
+            "screenshot_name": screenshot_name,
+            "screenshot_action_id": screenshot_action_id if screenshot_name else None,
+            "screenshot_url": screenshot_url,
+        }
+        case_number = current_browser_case_number()
+        if case_number is not None:
+            payload["case_number"] = case_number
         with session_factory.begin() as session:
             append_event(
                 session,
                 EventType.ACTION_STEP,
                 actor="agent",
                 case_id=str(action.case_id),
-                payload={"text": text, "screenshot_path": screenshot_path},
+                payload=payload,
             )
 
     return record

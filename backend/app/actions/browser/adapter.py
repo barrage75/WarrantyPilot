@@ -33,10 +33,17 @@ DEMO_EMAIL_SUFFIX = "@reproduction.local"
 _CURRENT_BROWSER_ACTION: ContextVar[Action | None] = ContextVar(
     "current_browser_action", default=None
 )
+_CURRENT_BROWSER_CASE_NUMBER: ContextVar[str | None] = ContextVar(
+    "current_browser_case_number", default=None
+)
 
 
 def current_browser_action() -> Action | None:
     return _CURRENT_BROWSER_ACTION.get()
+
+
+def current_browser_case_number() -> str | None:
+    return _CURRENT_BROWSER_CASE_NUMBER.get()
 
 
 def default_drivers() -> dict[BrowserEngine, BrowserDriver]:
@@ -117,10 +124,14 @@ class BrowserPortalAdapter:
                 replay = PortalProof.model_validate_json(prior.proof).model_copy(
                     update={"replayed": True}
                 )
-                await reporter.step(
-                    f"Dossier déjà créé ({replay.case_number}) : aucune nouvelle soumission",
-                    replay.screenshot_path,
-                )
+                case_number_token = _CURRENT_BROWSER_CASE_NUMBER.set(replay.case_number)
+                try:
+                    await reporter.step(
+                        f"Dossier déjà créé ({replay.case_number}) : aucune nouvelle soumission",
+                        replay.screenshot_path,
+                    )
+                finally:
+                    _CURRENT_BROWSER_CASE_NUMBER.reset(case_number_token)
                 return ActionResult(
                     action_id=action.id,
                     status=ActionResultStatus.SUCCESS,
@@ -159,6 +170,14 @@ class BrowserPortalAdapter:
                 request_token=token,
             )
             self.store.complete(action.idempotency_key, proof.to_json())
+            case_number_token = _CURRENT_BROWSER_CASE_NUMBER.set(submission.case_number)
+            try:
+                await reporter.step(
+                    f"Dossier créé ({submission.case_number})",
+                    submission.screenshot_path,
+                )
+            finally:
+                _CURRENT_BROWSER_CASE_NUMBER.reset(case_number_token)
             return ActionResult(
                 action_id=action.id,
                 status=ActionResultStatus.SUCCESS,

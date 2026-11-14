@@ -1,5 +1,6 @@
 import asyncio
 import json
+import re
 from collections.abc import AsyncIterator
 from datetime import datetime
 from decimal import Decimal
@@ -7,11 +8,13 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import insert, select, update
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
 
+from app.actions.browser.settings import BrowserSettings
 from app.api.dependencies import _require_person, get_orchestrator, get_session
 from app.contracts.enums import (
     ActionResultStatus,
@@ -49,6 +52,7 @@ from app.core.tables import (
 )
 
 router = APIRouter()
+_SCREENSHOT_NAME = re.compile(r"^[A-Za-z0-9_.-]+\.png$")
 
 
 class ValidationRequest(BaseModel):
@@ -342,6 +346,65 @@ def get_case_actions(
         )
         for row in action_rows
     ]
+
+
+@router.get(
+    "/cases/{case_id}/screenshots/{name}",
+    response_class=FileResponse,
+    responses={200: {"content": {"image/png": {}}}},
+)
+def get_case_screenshot(
+    case_id: UUID,
+    name: str,
+    action_id: UUID,
+    session: Session = Depends(get_session),
+) -> FileResponse:
+    _load_case(session, case_id)
+    if _SCREENSHOT_NAME.fullmatch(name) is None:
+        raise HTTPException(status_code=404, detail="Screenshot not found")
+    action_row = (
+        session.execute(
+            select(actions.c.id).where(
+                actions.c.id == str(action_id),
+                actions.c.case_id == str(case_id),
+            )
+        )
+        .mappings()
+        .first()
+    )
+    if action_row is None:
+        raise HTTPException(status_code=404, detail="Screenshot not found")
+    step_payloads = (
+        session.execute(
+            select(events.c.payload).where(
+                events.c.case_id == str(case_id),
+                events.c.type == EventType.ACTION_STEP.value,
+            )
+        )
+        .scalars()
+        .all()
+    )
+    if not any(
+        isinstance(payload, dict)
+        and payload.get("screenshot_action_id", payload.get("action_id")) == str(action_id)
+        and payload.get("screenshot_name") == name
+        for payload in step_payloads
+    ):
+        raise HTTPException(status_code=404, detail="Screenshot not found")
+
+    screenshot_root = BrowserSettings.from_env().screenshot_dir.resolve()
+    action_screenshot_dir = (screenshot_root / str(action_id)).resolve()
+    try:
+        screenshot_path = (action_screenshot_dir / name).resolve(strict=True)
+    except OSError as error:
+        raise HTTPException(status_code=404, detail="Screenshot not found") from error
+    if (
+        not action_screenshot_dir.is_relative_to(screenshot_root)
+        or not screenshot_path.is_relative_to(action_screenshot_dir)
+        or not screenshot_path.is_file()
+    ):
+        raise HTTPException(status_code=404, detail="Screenshot not found")
+    return FileResponse(screenshot_path, media_type="image/png")
 
 
 @router.post("/cases/{case_id}/validate", response_model=Case)
