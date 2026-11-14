@@ -4,6 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "test": "vitest run",
+    "test:e2e": "playwright test",
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "lint": "eslint .",
@@ -11,11 +13,30 @@
     "openapi": "openapi-typescript ../backend/app/contracts/openapi.json -o src/api/schema.d.ts"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.3.1",
+    "@radix-ui/react-slot": "^1.5.0",
+    "@tailwindcss/vite": "^4.3.5",
+    "@tanstack/react-query": "^5.107.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "i18next": "^27.1.1",
+    "lucide-react": "^1.72.0",
+    "openapi-fetch": "^0.17.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-i18next": "^18.0.1",
+    "react-router-dom": "^7.18.5",
+    "sonner": "^2.0.8",
+    "tailwind-merge": "^3.7.0",
+    "tailwindcss": "^4.3.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
+    "@playwright/test": "^1.65.1",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.10",
+    "@types/node": "^26.6.6",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^4.3.4",
@@ -23,10 +44,12 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.18",
     "globals": "^15.14.0",
+    "jsdom": "^31.0.1",
     "openapi-typescript": "^7.6.1",
     "typescript": "~5.7.3",
     "typescript-eslint": "^8.22.0",
-    "vite": "^6.1.0"
+    "vite": "^6.1.0",
+    "vitest": "^5.1.0"
   },
   "overrides": {
     "@typescript-eslint/typescript-estree": {

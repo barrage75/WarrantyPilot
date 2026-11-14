@@ -1,0 +1,11 @@
+{
+  "intact": "Journal intègre ✓",
+  "modified": "Modification détectée à l'événement n° {{seq}}",
+  "invalid": "Intégrité du journal non vérifiée",
+  "checked": "{{count}} événements vérifiés",
+  "anchorsOk": "Ancrages OK",
+  "anchorsKo": "Ancrages KO",
+  "anchor": "Ancrer maintenant",
+  "anchored": "Journal ancré.",
+  "title": "Journal"
+}

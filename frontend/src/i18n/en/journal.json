@@ -1,0 +1,11 @@
+{
+  "intact": "Journal intact ✓",
+  "modified": "Tampering detected at event no. {{seq}}",
+  "invalid": "Journal integrity could not be verified",
+  "checked": "{{count}} events verified",
+  "anchorsOk": "Anchors OK",
+  "anchorsKo": "Anchors FAILED",
+  "anchor": "Anchor now",
+  "anchored": "Journal anchored.",
+  "title": "Journal"
+}

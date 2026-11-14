@@ -1,0 +1,16 @@
+{
+  "aiNotice": "Vous échangez avec l'assistant IA de WarrantyPilot",
+  "conversation": "Conversation avec l’assistant IA",
+  "human": "Vous",
+  "assistant": "Assistant IA",
+  "greeting": "Bonjour ! Décrivez la panne de votre équipement Appelia (démonstration fictive).",
+  "mockReply": "Votre signalement fictif est prêt. Aucun dossier réel n’a été créé.",
+  "equipment": "Équipement identifié : {{equipment}}",
+  "clarification": "Depuis quand le casque ne fonctionne-t-il plus ?",
+  "viewCase": "Voir le dossier",
+  "simulatedCase": "Dossier simulé uniquement — aucun dossier backend ni aucune demande de garantie n’ont été créés.",
+  "message": "Décrivez votre panne",
+  "sending": "Envoi…",
+  "send": "Envoyer",
+  "title": "Signalement"
+}

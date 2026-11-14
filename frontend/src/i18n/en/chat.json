@@ -1,0 +1,16 @@
+{
+  "aiNotice": "You are chatting with WarrantyPilot's AI assistant",
+  "conversation": "Conversation with the AI assistant",
+  "human": "You",
+  "assistant": "AI assistant",
+  "greeting": "Hello! Describe the fault with your Appelia equipment (fictional demo).",
+  "mockReply": "Your fictional report is ready. No real case has been created.",
+  "equipment": "Equipment identified: {{equipment}}",
+  "clarification": "When did the headset stop working?",
+  "viewCase": "View case",
+  "simulatedCase": "Simulated case only — no backend case or warranty claim has been created.",
+  "message": "Describe the fault",
+  "sending": "Sending…",
+  "send": "Send",
+  "title": "Report an issue"
+}

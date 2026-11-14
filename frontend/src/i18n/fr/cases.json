@@ -1,0 +1,13 @@
+{
+  "title": "Dossiers"
+,
+  "search": "Rechercher un ID",
+  "status": "Statut",
+  "verdict": "Verdict",
+  "channel": "Canal",
+  "badge": "Réalité",
+  "all": "Tous",
+  "id": "Dossier",
+  "updated": "Mise à jour",
+  "empty": "Aucun dossier ne correspond aux filtres."
+}

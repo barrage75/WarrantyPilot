@@ -1,0 +1,25 @@
+{
+  "apiSettings": "Réglages de l’agent",
+  "threshold": "Seuil d’envoi automatique (€)",
+  "emails": "Liste blanche d’e-mails",
+  "origins": "Origines navigateur autorisées",
+  "addValue": "Valeur à ajouter",
+  "add": "Ajouter",
+  "remove": "Supprimer {{value}}",
+  "removeShort": "Supprimer",
+  "invalid": {
+    "emails": "Saisissez une adresse e-mail valide.",
+    "origins": "Saisissez une origine HTTP(S) sans chemin, par exemple https://exemple.test."
+  },
+  "flags": "Fonctionnalités",
+  "other": "Autres fonctionnalités",
+  "priority": "Priorité {{priority}}",
+  "noFlags": "Aucun drapeau de fonctionnalité renvoyé par l’API.",
+  "saved": "Paramètres enregistrés.",
+  "agent": "Pause et reprise",
+  "agentHint": "Le bouton de pause/reprise reste toujours disponible dans l’en-tête. La pause est indépendante de l’enregistrement des paramètres.",
+  "local": "Réglage local de ce navigateur",
+  "sse": "Flux temps réel SSE",
+  "sseHint": "Désactivé par défaut tant que le correctif backend n'est pas livré. Sinon, les événements sont interrogés toutes les 2 secondes.",
+  "title": "Paramètres"
+}

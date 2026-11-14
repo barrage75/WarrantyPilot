@@ -1,0 +1,16 @@
+{
+  "coveredEquipmentEur": "Valeur du matériel couvert",
+  "possibleSavingsEur": "Économies possibles",
+  "realizedSavingsEur": "Économies réelles",
+  "scan": "Lancer le scan",
+  "fictional": "Scan local simulé de données Appelia fictives.",
+  "progress": "Progression : {{percent}} %",
+  "complete": "Scan terminé : {{count}} factures fictives.",
+  "expiring": "Expire bientôt",
+  "equipment": "Équipement",
+  "right": "Droit",
+  "end": "Date de fin",
+  "days": "Jours restants",
+  "empty": "Lancez le scan pour afficher les droits de démonstration.",
+  "title": "Tableau de bord"
+}

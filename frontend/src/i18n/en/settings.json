@@ -1,0 +1,25 @@
+{
+  "apiSettings": "Agent settings",
+  "threshold": "Automatic send threshold (€)",
+  "emails": "Email allowlist",
+  "origins": "Allowed browser origins",
+  "addValue": "Value to add",
+  "add": "Add",
+  "remove": "Remove {{value}}",
+  "removeShort": "Remove",
+  "invalid": {
+    "emails": "Enter a valid email address.",
+    "origins": "Enter an HTTP(S) origin without a path, for example https://example.test."
+  },
+  "flags": "Features",
+  "other": "Other features",
+  "priority": "Priority {{priority}}",
+  "noFlags": "No feature flags returned by the API.",
+  "saved": "Settings saved.",
+  "agent": "Pause and resume",
+  "agentHint": "The pause/resume button is always available in the header. Pausing is independent from saving settings.",
+  "local": "Local setting for this browser",
+  "sse": "Real-time SSE stream",
+  "sseHint": "Disabled by default until the backend fix is released. Otherwise events are polled every 2 seconds.",
+  "title": "Settings"
+}

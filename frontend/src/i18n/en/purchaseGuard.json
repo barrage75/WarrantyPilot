@@ -1,0 +1,22 @@
+{
+  "neverBlock": "Purchases are never blocked automatically. The decision is yours.",
+  "level1": "1 · Recommendation",
+  "recommendation": "Your equipment is probably still under warranty: we recommend not buying a replacement.",
+  "review": "Review recommendation",
+  "level2": "2 · Your decision",
+  "suspend": "Start warranty claim and suspend purchase",
+  "keep": "Buy anyway",
+  "reason": "Reason required to keep the purchase",
+  "level3": "3 · Proven realized savings",
+  "proofRequirement": "Savings count only when the purchase is confirmed cancelled AND the case is resolved. These confirmations are simulated.",
+  "confirmCancellation": "Confirm purchase cancellation (simulation)",
+  "resolve": "Confirm replacement received and case resolved (simulation)",
+  "possible": "Possible savings: {{amount}}",
+  "realized": "{{amount}} saved: purchase cancelled on {{cancelled}}, replacement received on {{resolved}}.",
+  "realizedZero": "Realized savings: {{amount}}",
+  "cancellation": "Purchase cancelled on: {{date}}",
+  "resolution": "Replacement received on: {{date}}",
+  "pending": "not confirmed",
+  "empty": "No purchase recommendations.",
+  "title": "Purchase guard"
+}

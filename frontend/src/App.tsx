@@ -1,140 +1,46 @@
-import { useCallback, useEffect, useState } from "react";
-import en from "./i18n/en/l0.json";
-import fr from "./i18n/fr/l0.json";
-import type { components } from "./api/schema";
-import "./style.css";
-
-type CaseSummary = Pick<components["schemas"]["Case"], "id" | "status" | "badge">;
-
-type Checks = {
-  ok: boolean;
-  checks: { name: string; ok: boolean; detail: string; fix_hint?: string }[];
-};
-
-type Translations = typeof fr;
-
-function App() {
-  const [language, setLanguage] = useState<"fr" | "en">("fr");
-  const [cases, setCases] = useState<CaseSummary[]>([]);
-  const [preflight, setPreflight] = useState<Checks | null>(null);
-  const [journalOk, setJournalOk] = useState<boolean | null>(null);
-  const [paused, setPaused] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const t: Translations = language === "fr" ? fr : en;
-
-  const refresh = useCallback(async () => {
-    try {
-      const [casesResponse, preflightResponse, journalResponse, agentResponse] =
-        await Promise.all([
-          fetch("/api/cases"),
-          fetch("/api/demo/preflight"),
-          fetch("/api/journal/verify"),
-          fetch("/api/agent/status"),
-        ]);
-      if (![casesResponse, preflightResponse, journalResponse, agentResponse].every((r) => r.ok)) {
-        throw new Error("API request failed");
-      }
-      const [caseData, preflightData, journalData, agentData] = await Promise.all([
-        casesResponse.json(),
-        preflightResponse.json(),
-        journalResponse.json(),
-        agentResponse.json(),
-      ]);
-      setCases(caseData as CaseSummary[]);
-      setPreflight(preflightData as Checks);
-      setJournalOk(Boolean(journalData.ok));
-      setPaused(Boolean(agentData.paused));
-      setError(null);
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : String(reason));
-    }
-  }, []);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  async function togglePause() {
-    const response = await fetch(paused ? "/api/agent/resume" : "/api/agent/pause", {
-      method: "POST",
-    });
-    if (!response.ok) {
-      setError(t.actionFailed);
-      return;
-    }
-    await refresh();
-  }
-
-  return (
-    <main className="shell">
-      <header className="topbar">
-        <div>
-          <p className="eyebrow">WARRANTYPILOT · L0</p>
-          <h1>{t.title}</h1>
-        </div>
-        <div className="controls">
-          <button className="language" onClick={() => setLanguage(language === "fr" ? "en" : "fr")}>
-            {language === "fr" ? "EN" : "FR"}
-          </button>
-          <button className={paused ? "button resume" : "button pause"} onClick={togglePause}>
-            {paused ? t.resume : t.pause}
-          </button>
-        </div>
-      </header>
-      {error && <p className="error">{t.apiUnavailable}: {error}</p>}
-      <section className="status-grid">
-        <article className="panel">
-          <div className="panel-heading">
-            <h2>{t.journal}</h2>
-            <span className={journalOk ? "pill good" : "pill bad"}>
-              {journalOk === null ? t.loading : journalOk ? t.integrityOk : t.integrityFailed}
-            </span>
-          </div>
-          <p>{t.journalDescription}</p>
-        </article>
-        <article className="panel">
-          <div className="panel-heading">
-            <h2>{t.preflight}</h2>
-            <span className={preflight?.ok ? "pill good" : "pill bad"}>
-              {preflight ? (preflight.ok ? t.ready : t.actionRequired) : t.loading}
-            </span>
-          </div>
-          <ul className="check-list">
-            {(preflight?.checks ?? []).map((check) => (
-              <li key={check.name}>
-                <span className={check.ok ? "check-mark" : "check-mark missing"}>
-                  {check.ok ? "✓" : "!"}
-                </span>
-                <span>{check.detail}</span>
-              </li>
-            ))}
-          </ul>
-        </article>
-      </section>
-      <section className="panel cases-panel">
-        <div className="panel-heading">
-          <div>
-            <p className="eyebrow">{t.workboard}</p>
-            <h2>{t.cases}</h2>
-          </div>
-          <button className="button secondary" onClick={() => void refresh()}>{t.refresh}</button>
-        </div>
-        {cases.length === 0 ? (
-          <p className="empty">{t.noCases}</p>
-        ) : (
-          <div className="case-list">
-            {cases.map((item, index) => (
-              <article className="case-row" key={item.id ?? `case-${index}`}>
-                <code>{item.id?.slice(0, 8) ?? "—"}</code>
-                <span>{t.statuses[item.status as keyof typeof t.statuses] ?? item.status}</span>
-                <span className={`badge ${item.badge}`}>{t.badges[item.badge as keyof typeof t.badges] ?? item.badge}</span>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
-    </main>
-  );
+import { lazy, Suspense } from "react";
+import { BrowserRouter, NavLink, Route, Routes } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { Pause, Play, ShieldCheck } from "lucide-react";
+import { Toaster, toast } from "sonner";
+import { useAgentStatus, useToggleAgent, useJournal } from "@/api/hooks";
+import { Button } from "@/components/ui/button";
+import "./i18n";
+import { OperatorProvider, OperatorSelector } from "./operator";
+const Decisions = lazy(() => import("./pages/Cases").then(module => ({ default: module.Decisions })));
+const CasesPage = lazy(() => import("./pages/Cases").then(module => ({ default: module.CasesPage })));
+const CaseDetail = lazy(() => import("./pages/Cases").then(module => ({ default: module.CaseDetail })));
+const Chat = lazy(() => import("./pages/Chat"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const PurchaseGuard = lazy(() => import("./pages/PurchaseGuard"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Demo = lazy(() => import("./pages/Demo"));
+const Journal = lazy(() => import("./pages/Journal"));
+const pages = [["decisions", "/"], ["cases", "/cases"], ["chat", "/chat"], ["dashboard", "/dashboard"], ["purchaseGuard", "/purchase-guard"], ["settings", "/settings"], ["demo", "/demo"], ["journal", "/journal"]] as const;
+function Header() {
+ const { t, i18n } = useTranslation();
+ const agent = useAgentStatus(), toggle = useToggleAgent(), journal = useJournal();
+ const known = !!agent.data && !agent.isError;
+ const paused = agent.data?.paused;
+ return <header className="grid items-center gap-4 border-b border-slate-200 bg-white px-6 py-4 xl:grid-cols-[minmax(0,1fr)_auto]">
+  <p className="text-sm font-medium text-slate-600 xl:col-span-2">{t("workspace")}</p><OperatorSelector/>
+  <div className="flex flex-wrap items-center gap-4">
+   <span className="flex items-center gap-2 text-sm" role="status"><ShieldCheck size={18}/>{t("journal")} · {journal.isError ? t("unknown") : journal.data ? t(journal.data.ok ? "intact" : "broken") : t("loading")}</span>
+   <label className="text-sm">{t("language")} <select className="rounded-md border border-slate-300 p-2" value={i18n.language} onChange={event => void i18n.changeLanguage(event.target.value)}><option value="fr">{t("fr")}</option><option value="en">{t("en")}</option></select></label>
+   <div className="flex flex-col items-start gap-1">
+    <span className={known ? paused ? "text-xs font-semibold text-red-800" : "text-xs font-semibold text-green-800" : "text-xs text-slate-600"}>{!known ? t("unknown") : t(paused ? "paused" : "running")}</span>
+    <Button variant={paused ? "default" : "destructive"} disabled={!known || toggle.isPending} onClick={() => toggle.mutate(!!paused, { onError: () => toast.error(t("error")) })}>{paused ? <Play size={16}/> : <Pause size={16}/>}{t(paused ? "resume" : "pause")}</Button>
+   </div>
+  </div>
+ </header>;
 }
-
-export default App;
+export default function App() {
+ const { t } = useTranslation();
+ return <OperatorProvider><BrowserRouter><div className="min-h-screen lg:grid lg:grid-cols-[240px_1fr]">
+ <aside className="bg-slate-950 p-5 text-slate-100"><div className="mb-8 flex items-center gap-3 text-lg font-bold"><ShieldCheck className="text-teal-300"/>{t("product")}</div><nav aria-label={t("navigation")} className="flex flex-wrap gap-1 lg:flex-col">{pages.map(([ns, path]) => <NavLink key={path} to={path} end={path === "/"} className={({ isActive }) => "rounded-lg px-4 py-3 text-sm font-medium " + (isActive ? "bg-teal-800 text-white" : "text-slate-300 hover:bg-slate-800")}>{t(ns + ":title")}</NavLink>)}</nav></aside>
+ <div className="min-w-0"><Header/><main className="mx-auto max-w-7xl p-6 lg:p-10"><Suspense fallback={<p role="status">{t("loading")}</p>}><Routes>
+ <Route path="/" element={<Decisions/>}/><Route path="/cases" element={<CasesPage/>}/><Route path="/cases/:id" element={<CaseDetail/>}/>
+ <Route path="/chat" element={<Chat/>}/><Route path="/dashboard" element={<Dashboard/>}/><Route path="/purchase-guard" element={<PurchaseGuard/>}/>
+ <Route path="/settings" element={<Settings/>}/><Route path="/demo" element={<Demo/>}/><Route path="/journal" element={<Journal/>}/>
+ <Route path="*" element={<h1>{t("notFound")}</h1>}/></Routes></Suspense></main></div></div><Toaster richColors/></BrowserRouter></OperatorProvider>;
+}
