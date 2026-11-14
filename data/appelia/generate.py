@@ -14,15 +14,15 @@ from typing import Any
 from uuid import uuid5
 from xml.sax.saxutils import escape
 
-from reportlab.lib import colors  # type: ignore[import-untyped]
-from reportlab.lib.pagesizes import A4  # type: ignore[import-untyped]
-from reportlab.pdfbase.pdfmetrics import stringWidth  # type: ignore[import-untyped]
-from reportlab.pdfgen.canvas import Canvas  # type: ignore[import-untyped]
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase.pdfmetrics import stringWidth
+from reportlab.pdfgen.canvas import Canvas
 
 if __package__:
     from .constants import DEMO_TODAY, RANDOM_SEED, UUID_NAMESPACE
 else:
-    from constants import (  # type: ignore[import-not-found, no-redef]
+    from constants import (  # type: ignore[no-redef]
         DEMO_TODAY,
         RANDOM_SEED,
         UUID_NAMESPACE,
@@ -331,9 +331,14 @@ def build_equipment(people: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "delivery_date": iso_date(actual_delivery),  # type: ignore[arg-type]
             "invoice_number": None,
             "supplier_id": supplier_id,
-            "warranty_months": warranty_months or default_warranty,
+            "warranty_months": (
+                None
+                if scenario == "demo-dell-no-term"
+                else warranty_months or default_warranty
+            ),
             "warranty_plus_months": warranty_plus_months,
             "refurbished": refurbished,
+            "condition": "refurbished" if refurbished else "new",
             "acquisition_mode": "lease" if leased else "purchase",
             "scenario": scenario,
             "no_invoice": no_invoice,
@@ -556,7 +561,7 @@ def build_equipment(people: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
     trap7_purchase = DEMO_TODAY.replace(year=2023, month=12, day=10)
     trap13_purchase = add_months(DEMO_TODAY, -36) + timedelta(days=10)
-    dell_specials = [
+    dell_specials: list[tuple[str, str, date, int | None, Decimal, date | None]] = [
         (
             "Latitude 5440",
             "trap-7",
@@ -574,8 +579,16 @@ def build_equipment(people: list[dict[str, Any]]) -> list[dict[str, Any]]:
             Decimal("1249.00"),
             DEMO_TODAY - timedelta(days=365) + timedelta(days=4),
         ),
+        (
+            "Latitude 5440",
+            "demo-dell-no-term",
+            DEMO_TODAY - timedelta(days=100),
+            None,
+            Decimal("990.00"),
+            DEMO_TODAY - timedelta(days=97),
+        ),
     ]
-    for index, (model, scenario, purchase, warranty, price, delivery) in enumerate(
+    for index, (model, scenario, purchase, warranty_term, price, delivery) in enumerate(
         dell_specials
     ):
         if scenario == "trap-7":
@@ -590,9 +603,9 @@ def build_equipment(people: list[dict[str, Any]]) -> list[dict[str, Any]]:
             purchase_date=purchase,
             delivery_date=delivery,
             price=price,
-            warranty_months=warranty,
+            warranty_months=warranty_term,
         )
-    for index in range(47):
+    for index in range(46):
         model = "Latitude 5440" if index % 2 == 0 else "Latitude 7440"
         add("Dell", model, "laptop", "SUP-TECH")
 
@@ -670,9 +683,10 @@ def build_invoice_groups(equipment: list[dict[str, Any]]) -> list[list[dict[str,
             ]
         for special in special_items:
             group = [special]
-            for item in generic[:3]:
-                generic.remove(item)
-                group.append(item)
+            if special["scenario"] != "demo-dell-no-term":
+                for item in generic[:3]:
+                    generic.remove(item)
+                    group.append(item)
             supplier_groups.append(group)
 
         while generic:
@@ -732,8 +746,16 @@ def assign_invoices(
                     "qty": 1,
                     "unit_price_ht": money(unit_price_ht),
                     "equipment_id": item["id"],
+                    "warranty_term_months": (
+                        item["warranty_months"] if item["brand"] == "Dell" else None
+                    ),
                 }
             )
+        invoice_warranty_terms = {
+            line["warranty_term_months"]
+            for line in lines
+            if line["warranty_term_months"] is not None
+        }
         total_ht = sum((Decimal(line["unit_price_ht"]) for line in lines), Decimal(0))
         total_ttc = (total_ht * (Decimal(1) + VAT_RATE)).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP
@@ -754,6 +776,11 @@ def assign_invoices(
                 "total_ttc": money(total_ttc),
                 "has_warranty_plus": any(
                     item["warranty_plus_months"] > 0 for item in group
+                ),
+                "warranty_term_months": (
+                    next(iter(invoice_warranty_terms))
+                    if len(invoice_warranty_terms) == 1
+                    else None
                 ),
                 "equipment_ids": [item["id"] for item in group],
             }
@@ -847,6 +874,11 @@ def draw_invoice_pdf(
             if truncate_serial and serial.startswith("JBR")
             else serial
         )
+        warranty_text = (
+            f" — Garantie : {line['warranty_term_months'] // 12} ans Dell Basic Onsite"
+            if line["warranty_term_months"] is not None
+            else ""
+        )
         pdf.drawString(335, y, serial_text)
         pdf.drawRightString(
             width - left, y, f"{line['qty']} / {line['unit_price_ht']} EUR"
@@ -854,7 +886,8 @@ def draw_invoice_pdf(
         y -= 15
         y = _draw_wrapped(
             pdf,
-            f"Article : {line['model']} — SKU {line['sku']} — numéro de série {serial_text}",
+            f"Article : {line['model']} — SKU {line['sku']} — "
+            f"numéro de série {serial_text}{warranty_text}",
             left + 8,
             y,
             width - 2 * left - 16,
@@ -895,6 +928,8 @@ def build_facturx_xml(invoice: dict[str, Any]) -> str:
     for index, line in enumerate(invoice["lines"], start=1):
         serials = ", ".join(line["serials"])
         description = f"SKU {line['sku']} ; numéros de série : {serials}"
+        if line["warranty_term_months"] is not None:
+            description += f" ; garantie {line['warranty_term_months'] // 12} ans Dell Basic Onsite"
         line_total = Decimal(line["unit_price_ht"]) * int(line["qty"])
         lines.append(
             f"""
@@ -934,8 +969,12 @@ def build_facturx_xml(invoice: dict[str, Any]) -> str:
   <rsm:ExchangedDocument>
     <ram:ID>{_xml_escape(invoice["invoice_number"])}</ram:ID>
     <ram:TypeCode>380</ram:TypeCode>
-    <ram:IssueDateTime><udt:DateTimeString format="102">{date_text}</udt:DateTimeString></ram:IssueDateTime>
-    <ram:IncludedNote><ram:Content>Garantie Warranty+ incluse : {warranty_note}.</ram:Content></ram:IncludedNote>
+    <ram:IssueDateTime>
+      <udt:DateTimeString format="102">{date_text}</udt:DateTimeString>
+    </ram:IssueDateTime>
+    <ram:IncludedNote>
+      <ram:Content>Garantie Warranty+ incluse : {warranty_note}.</ram:Content>
+    </ram:IncludedNote>
   </rsm:ExchangedDocument>
   <rsm:SupplyChainTradeTransaction>
     {"".join(lines)}
@@ -968,7 +1007,9 @@ def build_facturx_xml(invoice: dict[str, Any]) -> str:
     </ram:ApplicableHeaderTradeAgreement>
     <ram:ApplicableHeaderTradeDelivery>
       <ram:ActualDeliverySupplyChainEvent>
-        <ram:OccurrenceDateTime><udt:DateTimeString format="102">{date_text}</udt:DateTimeString></ram:OccurrenceDateTime>
+        <ram:OccurrenceDateTime>
+          <udt:DateTimeString format="102">{date_text}</udt:DateTimeString>
+        </ram:OccurrenceDateTime>
       </ram:ActualDeliverySupplyChainEvent>
     </ram:ApplicableHeaderTradeDelivery>
     <ram:ApplicableHeaderTradeSettlement>
@@ -1021,9 +1062,8 @@ def _fixed_identifier(length: int) -> bytes:
 def draw_facturx_pdf(path: Path, invoice: dict[str, Any]) -> None:
     from unittest.mock import patch
 
-    import facturx.facturx as facturx_implementation  # type: ignore[import-untyped]
-    from facturx import generate_from_file  # type: ignore[import-untyped]
-    from pypdf import _writer as pypdf_writer
+    import facturx.facturx as facturx_implementation
+    from facturx import generate_from_file
 
     with TemporaryDirectory(prefix="appelia-fx-") as temp_directory:
         base_pdf = Path(temp_directory) / "base.pdf"
@@ -1031,7 +1071,7 @@ def draw_facturx_pdf(path: Path, invoice: dict[str, Any]) -> None:
         xml = build_facturx_xml(invoice)
         with (
             patch.object(facturx_implementation, "datetime", _FixedDateTime),
-            patch.object(pypdf_writer.secrets, "token_bytes", _fixed_identifier),
+            patch("pypdf._writer.secrets.token_bytes", _fixed_identifier),
         ):
             generate_from_file(
                 str(base_pdf),
@@ -1100,11 +1140,13 @@ def make_annotations(
                 "serials": line["serials"],
                 "qty": line["qty"],
                 "unit_price_ht": line["unit_price_ht"],
+                "warranty_term_months": line["warranty_term_months"],
             }
             for line in invoice["lines"]
         ],
         "total_ttc": invoice["total_ttc"],
         "has_warranty_plus": invoice["has_warranty_plus"],
+        "warranty_term_months": invoice["warranty_term_months"],
         "pages": {
             "supplier_name": 1,
             "supplier_address": 1,
@@ -1118,11 +1160,17 @@ def make_annotations(
                     "serials": 1,
                     "qty": 1,
                     "unit_price_ht": 1,
+                    "warranty_term_months": (
+                        1 if line["warranty_term_months"] is not None else None
+                    ),
                 }
-                for _ in invoice["lines"]
+                for line in invoice["lines"]
             ],
             "total_ttc": 1,
             "has_warranty_plus": 1,
+            "warranty_term_months": (
+                1 if invoice["warranty_term_months"] is not None else None
+            ),
         },
     }
 
@@ -1275,7 +1323,7 @@ def build_traps(
             ("trap-13",),
             invoice_for("trap-13"),
             "likely_covered",
-            "email_reseller",
+            "browser_portal",
             "La date de facture place l'expiration au 2026-11-30; la livraison est absente.",
         ),
         (
@@ -1315,6 +1363,7 @@ def build_traps(
         )
     paul_filename = invoice_for("demo-paul")[0]
     dell_filename = invoice_for("demo-dell")[0]
+    dell_no_term_filename = invoice_for("demo-dell-no-term")[0]
     return {
         "traps": traps,
         "demo_cases": [
@@ -1335,6 +1384,15 @@ def build_traps(
                 "expected_verdict": "covered",
                 "expected_channel": "browser_portal",
                 "reason": "Latitude 7440 à 1 249 EUR, sous garantie.",
+            },
+            {
+                "id": "demo-dell-no-warranty-term",
+                "equipment_id": by_scenario["demo-dell-no-term"]["id"],
+                "description": "Le Dell Latitude 5440 ne démarre plus.",
+                "documents": [dell_no_term_filename],
+                "expected_verdict": "to_verify",
+                "expected_channel": "manual",
+                "reason": "La facture ne précise pas la durée de garantie.",
             },
         ],
     }
@@ -1406,7 +1464,7 @@ def _make_support_documents(
                 "FICTIF — aucun certificat réel n'est émis.",
                 f"Produit : Jabra {item['model']}.",
                 f"Numéro de série : {item['serial']}.",
-                f"Extension Warranty+ : {item['warranty_plus_months'] or 12} mois.",
+                f"extension_months : {item['warranty_plus_months'] or 12} mois (Warranty+).",
                 f"Date de début : {item['purchase_date']}.",
                 f"Référence de test : WP-WPPLUS-{suffix}.",
             ],
@@ -1418,9 +1476,11 @@ def _make_support_documents(
             "FICTIF — contrat de démonstration sans couverture réelle.",
             "Client : Appelia SAS.",
             "Couverture : 20 ordinateurs Dell Latitude.",
+            "extension_months : 36 mois (Dell ProSupport).",
             "Numéros de série couverts : "
             + ", ".join(item["serial"] for item in dell_laptops),
-            f"Date d'effet : {prosupport_start.isoformat()}; fin de couverture : {prosupport_end.isoformat()}.",
+            f"Date d'effet : {prosupport_start.isoformat()}; "
+            f"fin de couverture : {prosupport_end.isoformat()}.",
         ],
     )
     trap7 = by_scenario["trap-7"]
@@ -1434,7 +1494,8 @@ def _make_support_documents(
             "Destinataire : Appelia SAS.",
             f"Produit : Dell {trap7['model']}, série {trap7['serial']}.",
             f"Date de livraison : {trap7_delivery_date.strftime('%d/%m/%Y')}.",
-            f"Facture associée : {trap7['invoice_number']} en date du {trap7_invoice_date.strftime('%d/%m/%Y')}.",
+            f"Facture associée : {trap7['invoice_number']} en date du "
+            f"{trap7_invoice_date.strftime('%d/%m/%Y')}.",
         ],
     )
     return support_files
@@ -1442,7 +1503,7 @@ def _make_support_documents(
 
 def _document_record(
     path: Path, relative_filename: str, kind: str, source: str
-) -> dict[str, str]:
+) -> dict[str, Any]:
     return {
         "id": stable_id("document", relative_filename),
         "filename": relative_filename,
@@ -1516,7 +1577,7 @@ def generate_dataset(output_directory: Path | None = None) -> None:
         "dell_prosupport": ("contract", "upload"),
         "delivery": ("delivery_note", "upload"),
     }
-    documents: list[dict[str, str]] = []
+    documents: list[dict[str, Any]] = []
     for annotation in [
         *invoice_annotations[:49],
         duplicate_annotation,
@@ -1533,7 +1594,12 @@ def generate_dataset(output_directory: Path | None = None) -> None:
         )
     for key, filename in support_files.items():
         kind, source = support_kinds[key]
-        documents.append(_document_record(output / filename, filename, kind, source))
+        document_record = _document_record(output / filename, filename, kind, source)
+        if key.startswith("warranty_plus"):
+            document_record["extension_months"] = 12
+        elif key == "dell_prosupport":
+            document_record["extension_months"] = 36
+        documents.append(document_record)
 
     file_by_invoice = dict(invoice_directory_names)
     file_by_invoice[first_invoice["invoice_number"]] = "invoices/invoice-001.pdf"

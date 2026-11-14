@@ -25,9 +25,16 @@ CII conserve cette preuve avec le modèle et le SKU; les SKU figurent aussi dans
 `ram:SellerAssignedID`.
 
 `annotations.json` contient la vérité terrain et les pages des champs de chacune
-des 60 factures. `traps.json` décrit 15 pièges et deux cas nominaux de démonstration.
+des 60 factures. `traps.json` décrit 15 pièges, deux cas nominaux et un cas
+supplémentaire dont la facture ne précise pas la durée de garantie.
 `documents/` contient le contrat de location, deux certificats Warranty+, le
 contrat Dell ProSupport et le bon de livraison associé au piège 7.
+
+Les factures Dell indiquent la durée de garantie sur chaque ligne et
+`annotations.json` la reprend dans `warranty_term_months`. Le cas de démonstration
+`demo-dell-no-warranty-term` est l'exception sans durée probante : son verdict
+attendu est `to_verify`. Les certificats Warranty+ indiquent `extension_months`;
+les équipements reconditionnés portent `condition: "refurbished"`.
 
 Chargement des objets des contrats Pydantic, sans accès à une base :
 

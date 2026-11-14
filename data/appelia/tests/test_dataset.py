@@ -6,10 +6,11 @@ from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree
 
-from app.contracts.models import Document, Equipment, Person
 from appelia.generate import HIDDEN_PROMPT, generate_dataset
 from appelia.load import load_dataset
 from pypdf import PdfReader
+
+from app.contracts.models import Document, Equipment, Person
 
 DATA_DIRECTORY = Path(__file__).resolve().parents[1]
 XML_NAMESPACES = {
@@ -128,6 +129,11 @@ def test_facturx_xml_matches_annotations() -> None:
             description = _xml_text(product, "ram:Description")
             for serial in expected["serials"]:
                 assert serial in description
+            if expected["warranty_term_months"] is not None:
+                assert (
+                    f"garantie {expected['warranty_term_months'] // 12} ans Dell Basic Onsite"
+                    in description
+                )
             assert (
                 int(
                     _xml_text(
@@ -160,7 +166,37 @@ def test_traps_reference_existing_equipment_and_documents() -> None:
     equipment_ids = {item["id"] for item in _read_json("equipment.json")}
     assert len(trap_data["traps"]) == 15
     assert {trap["id"] for trap in trap_data["traps"]} == set(range(1, 16))
-    assert len(trap_data["demo_cases"]) == 2
+    assert len(trap_data["demo_cases"]) == 3
+    assert all(
+        trap["expected_channel"] == "manual"
+        for trap in trap_data["traps"]
+        if trap["expected_verdict"] == "to_verify"
+    )
+    traps_by_id = {trap["id"]: trap for trap in trap_data["traps"]}
+    assert traps_by_id[4]["expected_channel"] == "email_lessor"
+    assert traps_by_id[10]["expected_channel"] == "email_manufacturer_support"
+    assert traps_by_id[13]["expected_channel"] == "browser_portal"
+    assert all(
+        traps_by_id[trap_id]["expected_channel"] == "email_reseller"
+        for trap_id in (2, 3, 5, 9, 11)
+    )
+    assert all(
+        case["expected_channel"] == "email_reseller"
+        for case in trap_data["demo_cases"]
+        if case["id"] == "demo-paul-martin"
+    )
+    assert all(
+        case["expected_channel"] == "browser_portal"
+        for case in trap_data["demo_cases"]
+        if case["id"] == "demo-dell-latitude-7440"
+    )
+    missing_term_case = next(
+        case
+        for case in trap_data["demo_cases"]
+        if case["id"] == "demo-dell-no-warranty-term"
+    )
+    assert missing_term_case["expected_verdict"] == "to_verify"
+    assert missing_term_case["expected_channel"] == "manual"
 
     for case in [*trap_data["traps"], *trap_data["demo_cases"]]:
         case_equipment_ids = case.get("equipment_ids", [case["equipment_id"]])
@@ -208,6 +244,63 @@ def test_loader_validates_contract_models() -> None:
         isinstance(item, Document) and item.untrusted for item in dataset.documents
     )
     assert all(
+        item["condition"] in {"new", "refurbished"} for item in equipment_records
+    )
+    assert all(
+        item["condition"] == "refurbished"
+        for item in equipment_records
+        if item["refurbished"]
+    )
+    annotations = _read_json("annotations.json")
+    equipment_by_serial = {item["serial"]: item for item in equipment_records}
+    for annotation in annotations:
+        is_dell_invoice = any(
+            equipment_by_serial[serial]["brand"] == "Dell"
+            for line in annotation["lines"]
+            for serial in line["serials"]
+        )
+        if is_dell_invoice:
+            for line in annotation["lines"]:
+                for serial in line["serials"]:
+                    assert (
+                        line["warranty_term_months"]
+                        == equipment_by_serial[serial]["warranty_months"]
+                    )
+            warranty_terms = {
+                line["warranty_term_months"]
+                for line in annotation["lines"]
+                if line["warranty_term_months"] is not None
+            }
+            expected_invoice_term = (
+                next(iter(warranty_terms)) if len(warranty_terms) == 1 else None
+            )
+            assert annotation["warranty_term_months"] == expected_invoice_term
+    docs_by_filename = {item["filename"]: item for item in _read_json("documents.json")}
+    for filename in (
+        "documents/jabra-warranty-plus-001.pdf",
+        "documents/jabra-warranty-plus-002.pdf",
+    ):
+        assert docs_by_filename[filename]["extension_months"] == 12
+        certificate_text = (
+            PdfReader(str(DATA_DIRECTORY / filename)).pages[0].extract_text() or ""
+        )
+        assert "extension_months : 12 mois" in certificate_text
+    assert (
+        docs_by_filename["documents/contrat-dell-prosupport.pdf"]["extension_months"]
+        == 36
+    )
+    prosupport_text = (
+        PdfReader(str(DATA_DIRECTORY / "documents/contrat-dell-prosupport.pdf"))
+        .pages[0]
+        .extract_text()
+        or ""
+    )
+    assert "extension_months : 36 mois" in prosupport_text
+    no_term_equipment = next(
+        item for item in equipment_records if item["scenario"] == "demo-dell-no-term"
+    )
+    assert no_term_equipment["warranty_months"] is None
+    assert all(
         person.email and person.email.endswith("@appelia.example")
         for person in dataset.people
     )
@@ -215,3 +308,91 @@ def test_loader_validates_contract_models() -> None:
     assert people_by_name["Paul Martin"].role == "technicien plateau"
     assert people_by_name["Karim Benali"].role == "responsable informatique"
     assert people_by_name["Claire Dubois"].role == "DAF"
+
+
+def test_jabra_invoice_pdfs_show_required_purchase_proof() -> None:
+    annotations = _read_json("annotations.json")
+    suppliers = {item["id"]: item for item in _read_json("suppliers.json")}
+    equipment = {item["serial"]: item for item in _read_json("equipment.json")}
+    jabra_invoices = [
+        item for item in annotations if item["supplier_id"] == "SUP-AUDIO"
+    ]
+    assert jabra_invoices
+
+    for annotation in jabra_invoices:
+        text = (
+            PdfReader(str(DATA_DIRECTORY / annotation["filename"]))
+            .pages[0]
+            .extract_text()
+            or ""
+        )
+        supplier = suppliers[annotation["supplier_id"]]
+        assert supplier["name"] in text
+        assert supplier["address"] in text
+        assert annotation["invoice_number"] in text
+        invoice_date = annotation["invoice_date"]
+        assert f"{invoice_date[8:10]}/{invoice_date[5:7]}/{invoice_date[:4]}" in text
+        for line in annotation["lines"]:
+            assert line["model"] in text
+            assert line["sku"] in text
+            assert all(
+                equipment[serial]["brand"] == "Jabra" for serial in line["serials"]
+            )
+
+
+def test_dell_invoice_warranty_terms_are_present_or_explicitly_missing() -> None:
+    annotations = _read_json("annotations.json")
+    equipment = {item["serial"]: item for item in _read_json("equipment.json")}
+    dell_annotations = [
+        annotation
+        for annotation in annotations
+        if any(
+            equipment[serial]["brand"] == "Dell"
+            for line in annotation["lines"]
+            for serial in line["serials"]
+        )
+    ]
+    missing_terms = []
+
+    for annotation in dell_annotations:
+        warranty_terms = {
+            line["warranty_term_months"]
+            for line in annotation["lines"]
+            if line["warranty_term_months"] is not None
+        }
+        expected_invoice_term = (
+            next(iter(warranty_terms)) if len(warranty_terms) == 1 else None
+        )
+        assert annotation["warranty_term_months"] == expected_invoice_term
+        path = DATA_DIRECTORY / annotation["filename"]
+        if annotation["format"] == "pdf":
+            text = PdfReader(str(path)).pages[0].extract_text() or ""
+        else:
+            reader = PdfReader(str(path))
+            xml_content = next(
+                contents[0]
+                for name, contents in reader.attachments.items()
+                if name.lower().endswith(".xml")
+            )
+            xml_root = ElementTree.fromstring(xml_content)
+            text = " ".join(
+                element.text or ""
+                for element in xml_root.findall(".//ram:Description", XML_NAMESPACES)
+            )
+        for line in annotation["lines"]:
+            for serial in line["serials"]:
+                term_months = line["warranty_term_months"]
+                if term_months is None:
+                    missing_terms.append(serial)
+                    assert equipment[serial]["scenario"] == "demo-dell-no-term"
+                    assert "Dell Basic Onsite" not in text
+                else:
+                    assert term_months in {24, 36}
+                    expected_term = (
+                        f"garantie {term_months // 12} ans dell basic onsite"
+                    )
+                    normalized_text = " ".join(text.lower().replace(":", "").split())
+                    assert expected_term in normalized_text
+
+    assert len(missing_terms) == 1
+    assert equipment[missing_terms[0]]["scenario"] == "demo-dell-no-term"

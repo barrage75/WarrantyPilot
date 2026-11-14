@@ -309,7 +309,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "upload",
-    "sha256": "98ec72594e0b1ce8cf283dba7db1896518e6c477169eed93ffc00675a50d8028"
+    "sha256": "05e651e806081b9f456035273c9040d5b32b83b79373e1858768c074f1524ba8"
   },
   {
     "id": "7293e89b-9290-5a35-ad57-3bd3209df262",
@@ -317,7 +317,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "upload",
-    "sha256": "e68fb0da6ae4395ec58d87dd86aa58a67fd017958ee5020b2b5d75d27d0d0e91"
+    "sha256": "44e0405bf1a15368330c75b11d7955498868109369a9948b9548fd6f7f9c27d3"
   },
   {
     "id": "dc50a82a-2899-5c3f-a356-1fcc1797abec",
@@ -325,7 +325,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "upload",
-    "sha256": "9e29823fec0b352ff3baf6080f8f17598b3ccd703c19df892c7e1528cac404f3"
+    "sha256": "61e6b7ca8282a09c72e63f62189f7dcc683a08f602f5b5d54833db5ac547d18f"
   },
   {
     "id": "d3d38733-6840-59cb-a3bb-6fde883a3b88",
@@ -333,7 +333,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "upload",
-    "sha256": "9f61ce37519c787af11bf370f1086bacb662a753b96c367641a68f3d053ce00e"
+    "sha256": "47f910ed76663c2c1d714ef93e5585ccedabc2304b49ef60d2bbeda9ad8120fa"
   },
   {
     "id": "97f32f48-576c-5c32-b24c-2434d20db427",
@@ -341,7 +341,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "upload",
-    "sha256": "74bb0cd4a2d4701b5c0bee8e57b4213fef618b6266fc172090613eefc2c88435"
+    "sha256": "115dc4981f550da4b9bf475029036be7705d125e80ad9b98603040e1956eea0d"
   },
   {
     "id": "850344e2-19b2-5335-9cb4-028ef952028f",
@@ -349,7 +349,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "upload",
-    "sha256": "fee469f6311e78de883d8e6df67c663e9cdde4bfd2b1fcff4187a13657bd10be"
+    "sha256": "ecf8502e3a098edd96e4039890199a4836439ec3635eca2aa32f0578e8e02f0e"
   },
   {
     "id": "bd6e87fa-82a1-514c-a452-8270fcd50e8a",
@@ -357,7 +357,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "upload",
-    "sha256": "cfd34bfdd35054441684abce2e7722121959bf02e886bb019fef6b4bb98b3b8f"
+    "sha256": "3cc1fc54827c1521262d9b053b5e0a67ae1185e10cc16539f70b5b7ef3b297d8"
   },
   {
     "id": "e6aad4af-b803-559d-9035-8f928f2909a0",
@@ -365,7 +365,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "upload",
-    "sha256": "02d64854bdf496391f808bf423ee0a2dca9efadc293263b0aec389e6cbab7c9a"
+    "sha256": "fa97468945975d8254e0d4dc87e60a3c4baaf74b01fb116a1f1bc7a754a3d3fc"
   },
   {
     "id": "3fee4dce-a5a2-5451-b73e-e90990d9d65b",
@@ -373,7 +373,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "upload",
-    "sha256": "a944e08f84f89b003adaa94a3a6fbbf80d49b027b5eec693110a66665c2c12d2"
+    "sha256": "c75485bbe58259db38116e9fb99f0655ddea888ed86cec700c01a602fbd4e2ca"
   },
   {
     "id": "ed90f46d-4103-5cbe-b99b-ec75a219a6e1",
@@ -381,7 +381,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "upload",
-    "sha256": "9ea0d92f36939312c2dfa011cd585a26391337bc770e8cf95ecbeaab98cbb4e4"
+    "sha256": "6e67fc21720d8a3fdc3febaca1bbbcad5abcd88e8fc6008e31b39ac8a25f521d"
   },
   {
     "id": "0d13b13c-258b-5624-a733-b7194b93aece",
@@ -389,7 +389,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "upload",
-    "sha256": "c405a94ccd6129f47074b02f28263ae13561d38c175847d4efb4d5c44c59f36b"
+    "sha256": "413db75fcd0cfe7c26c33624be26f5ed1754cc10ea572801bb12e3ad615a80ef"
   },
   {
     "id": "b6d7a10c-1a19-50e7-8692-aa5b1b3a486a",
@@ -405,7 +405,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "facturx",
-    "sha256": "c12487bc3785b7324e6f289e3f6347b5dd67dd25e85250b5c2e0ffc6782eabe5"
+    "sha256": "1539603025d7c6df4f8328ab39288d1e4db4239d6866d1d0a7e232bce2287749"
   },
   {
     "id": "4dcc19d9-4d80-5cde-a9c7-f48c6980feb8",
@@ -413,7 +413,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "facturx",
-    "sha256": "f0cbbb1b814ac89685bf89303dd0be04bb95eb321f3d9ab634d3899fc6c307a2"
+    "sha256": "8f811968924646140770f2960e9c36660bf59cdaf9d5d2b37d874b6e62f3bf1c"
   },
   {
     "id": "c5770ad3-e400-58f7-96a7-f24a1d48aa12",
@@ -421,7 +421,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "facturx",
-    "sha256": "a2e388d2cab11b10eea77ba9c98ead87a79bdd815a2ae5ee30500fd4001b6641"
+    "sha256": "74eadf62bb3f8216fd5aa585945ea0ca0e9f687fbf9705504ee59663e13ee1f2"
   },
   {
     "id": "c5cb8071-e034-51f2-84b5-9e7050fdd0bb",
@@ -429,7 +429,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "facturx",
-    "sha256": "16208fc518b28cb6f708002f993df6c5fe7f65b8666d53631379912cc86f4eac"
+    "sha256": "30ac8f11ad5602a5fb5fe43be52ac15f01f3fdd6070e3fd4f460727cda4ec135"
   },
   {
     "id": "23c0ed82-4468-50f0-acf3-b9856b380e1e",
@@ -437,7 +437,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "facturx",
-    "sha256": "0cd9992075a083ef211650387962ed7ee5751e889eb9b5655caf37e2a2c40772"
+    "sha256": "0d0f3ff36e3589a704498a2c116def3453441b0fe54ed3ac62250f1332f9fc61"
   },
   {
     "id": "f75089c4-ce43-5fba-88d9-e0b6b79f98b2",
@@ -445,7 +445,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "facturx",
-    "sha256": "348950f6143a5cf93da472f16c0d7e42e038b83d6e7edcf17edd6fc6d4be4fa3"
+    "sha256": "84806fe8e238c4ad4d07ab5905ac151f6126b8f94678afe5cc1ec5487eccc322"
   },
   {
     "id": "f35bd13f-e54f-52a9-9b72-520006b82d8f",
@@ -453,7 +453,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "facturx",
-    "sha256": "4960a398b11545cb6e980850314064852f1b27732e3aa94aded0f276fbac75d8"
+    "sha256": "2ef90f5bc29e84a8d522ef0071cbf477b8cd9fda2163aa8e9ccdba6c48018a64"
   },
   {
     "id": "8b68ead8-4b70-5a36-87f1-20948ae4d9a2",
@@ -461,7 +461,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "facturx",
-    "sha256": "16dde2fca9bd105113cc3ccee750d2fabf517e72b244669954f68cd5292c86b6"
+    "sha256": "d345e5ad5b6064089345be85c3f3a2bb6ea45ceaec4829a80ced3e4fab8506bd"
   },
   {
     "id": "51523ac2-f88a-5055-86cb-5db034d56dd8",
@@ -469,7 +469,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "facturx",
-    "sha256": "9a6451998ced458935b4fd8f18bb9edbcb5f5191ee7d0d571fb75bb564dde34a"
+    "sha256": "e7915a844523b418e20d7496dee88a5e353a0dc2bbb7bf89fc7601a24b0834cc"
   },
   {
     "id": "4d31ccc4-6a2f-50b2-a0d0-2c810417df04",
@@ -477,7 +477,7 @@
     "kind": "invoice",
     "mime": "application/pdf",
     "source": "facturx",
-    "sha256": "6ed44687450ffd6bc9529f56102075762f97b2a75f0b4c6d841c0c49659c8ad6"
+    "sha256": "4a39c5166c12c1a51462927c2037a1967e5f77086281b28a1596a704489b0235"
   },
   {
     "id": "891cbd39-f59a-57ae-8aab-0fc3267b21ac",
@@ -493,7 +493,8 @@
     "kind": "warranty_certificate",
     "mime": "application/pdf",
     "source": "upload",
-    "sha256": "24779aac26f051f9e6ce89c059551b2ee1eec67a146817ebb140ba64ed72ca22"
+    "sha256": "ea9484f87aaa890b5260dc52730a7002eac036a1bd7f93f5e373c95618cd9926",
+    "extension_months": 12
   },
   {
     "id": "f75d515a-be67-55d6-bf2c-873966cde39a",
@@ -501,7 +502,8 @@
     "kind": "warranty_certificate",
     "mime": "application/pdf",
     "source": "upload",
-    "sha256": "adedce8268e1516da4026d6914425f59d6fdc5f3e9a85d88467cb13f79c7d1f1"
+    "sha256": "c5c3ef8bde0deb03e03cb8d0d7842de53b6481c9f3d3d36e1c40801be049ca99",
+    "extension_months": 12
   },
   {
     "id": "4bc04b0c-fdc0-5219-9818-d6c32bad512e",
@@ -509,7 +511,8 @@
     "kind": "contract",
     "mime": "application/pdf",
     "source": "upload",
-    "sha256": "ee26ecaadd9c54f50e7c797c7a6cf2dcaf48b96426ab225c9ec6c1bd518aa190"
+    "sha256": "37c2ef95de289bc9e921f646433abb050bd5c56dc7f435eb4375870d3bd8681a",
+    "extension_months": 36
   },
   {
     "id": "16aee7d6-af69-538b-9fc2-27813f2def72",

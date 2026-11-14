@@ -196,7 +196,7 @@
         "invoices/invoice-040.pdf"
       ],
       "expected_verdict": "likely_covered",
-      "expected_channel": "email_reseller",
+      "expected_channel": "browser_portal",
       "reason": "La date de facture place l'expiration au 2026-11-30; la livraison est absente."
     },
     {
@@ -252,6 +252,17 @@
       "expected_verdict": "covered",
       "expected_channel": "browser_portal",
       "reason": "Latitude 7440 à 1 249 EUR, sous garantie."
+    },
+    {
+      "id": "demo-dell-no-warranty-term",
+      "equipment_id": "72c182d6-3ab7-549a-a4de-a7bf6ed2b2e1",
+      "description": "Le Dell Latitude 5440 ne démarre plus.",
+      "documents": [
+        "invoices/invoice-042.pdf"
+      ],
+      "expected_verdict": "to_verify",
+      "expected_channel": "manual",
+      "reason": "La facture ne précise pas la durée de garantie."
     }
   ]
 }
