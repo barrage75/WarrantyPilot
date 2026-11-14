@@ -1,5 +1,5 @@
 import asyncio
-from threading import Event
+from threading import Event, get_ident
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -146,14 +146,33 @@ async def test_upload_inspection_and_extraction_leave_database_available(
         assert session.scalar(select(func.count()).select_from(people)) == 2
 
 
-async def test_async_dataset_matches_synchronous_facts_rights_and_progress():
+async def test_async_dataset_matches_synchronous_facts_rights_and_progress(monkeypatch):
     sync_progress = []
     async_progress = []
+    loop_thread = get_ident()
+    progress_threads = []
+    worker_threads = []
+    original_run_pdf_task = load.run_pdf_task
+
+    async def run_step(step):
+        def run():
+            worker_threads.append(get_ident())
+            return step()
+
+        return await original_run_pdf_task(run)
+
+    def on_document(done, total):
+        progress_threads.append(get_ident())
+        async_progress.append((done, total))
+
+    monkeypatch.setattr(load, "run_pdf_task", run_step)
     expected = await asyncio.to_thread(
         load.load_dataset, on_document=lambda done, total: sync_progress.append((done, total))
     )
-    actual = await load.load_dataset_async(
-        on_document=lambda done, total: async_progress.append((done, total))
-    )
+    actual = await load.load_dataset_async(on_document=on_document)
     assert actual == expected
     assert async_progress == sync_progress == [(done, 65) for done in range(66)]
+    assert progress_threads == [loop_thread] * 66
+    assert len(worker_threads) == 60
+    assert len(set(worker_threads)) == 1
+    assert loop_thread not in worker_threads
