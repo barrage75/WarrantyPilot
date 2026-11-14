@@ -14,7 +14,7 @@ Tout tourne en local sur `127.0.0.1`. L'API locale n'a pas d'authentification (`
    uv run pytest -v
    cd ../..
    ```
-4. Vérifications du dépôt : `make lint typecheck test` et `make frontend-build`.
+4. Vérifications du dépôt, **services de démo arrêtés** (sinon 3 tests échouent en « Address already in use » sur le port de la repro Dell) : `make lint typecheck test` et `make frontend-build`.
 5. **`make p0` n'existe pas** dans le `Makefile` (cibles : `setup dev smtp test lint typecheck openapi reset preflight frontend-build`). Équivalent P0 : `make test` + les tests E2E du parcours principal (`frontend/e2e/README.md`, `frontend/e2e/smoke.spec.ts`), qui demandent d'arrêter `make dev` car ils lancent leur propre API isolée.
 6. Répéter le script complet deux fois, chronométrer.
 7. Enregistrer la **vidéo de secours** (3 min, script complet, écran 1440×900) et la copier sur la machine de démo **et** une clé USB. Copier aussi un jeu de captures Dell (`runtime/browser/screenshots/<action_id>/*.png`) dans un dossier hors `runtime/` (le reset efface `runtime/`).
