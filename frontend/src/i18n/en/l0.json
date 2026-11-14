@@ -1,0 +1,34 @@
+{
+  "title": "Warranty, with evidence.",
+  "journal": "Verifiable journal",
+  "journalDescription": "Integrity of the event chain and external anchors.",
+  "preflight": "Demo preflight",
+  "workboard": "WORKBOARD",
+  "cases": "Cases",
+  "pause": "Pause agent",
+  "resume": "Resume agent",
+  "refresh": "Refresh",
+  "loading": "Loading…",
+  "ready": "Ready",
+  "actionRequired": "Needs review",
+  "integrityOk": "Intact",
+  "integrityFailed": "Review needed",
+  "noCases": "No cases yet.",
+  "apiUnavailable": "API unavailable",
+  "actionFailed": "The action failed.",
+  "statuses": {
+    "prepared": "Prepared",
+    "awaiting_validation": "Awaiting validation",
+    "sending": "Sending",
+    "sent": "Sent",
+    "failed": "Failed",
+    "tracked": "Tracked",
+    "resolved": "Resolved",
+    "cancelled": "Cancelled"
+  },
+  "badges": {
+    "real": "Real",
+    "reproduction": "Reproduction",
+    "simulated": "Simulated"
+  }
+}
