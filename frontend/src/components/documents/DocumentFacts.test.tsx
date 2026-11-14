@@ -27,4 +27,13 @@ describe.each([
   expect(screen.getByText("https://example.test/invoices/041.pdf").closest("details")).not.toBeNull();
   expect(screen.getByText("/var/data/invoices/041.pdf").closest("details")).not.toBeNull();
  });
+
+ it("keeps a raw slash-formatted invoice date visible", async () => {
+  await i18n.changeLanguage(language);
+  const { container } = render(<DocumentFacts facts={[{ field: "invoice_date", value: date, confidence: 1 }]}/>);
+  const value = screen.getByText(date);
+  expect(value).toBeVisible();
+  expect(value.closest("details")).toBeNull();
+  expect(container.querySelector("details")).toBeNull();
+ });
 });

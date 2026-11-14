@@ -35,8 +35,10 @@ export function technicalLabel(key: string, language: string): string {
 
 export function isTechnicalValue(value: unknown): boolean {
  if (typeof value !== "string") return false;
- return /https?:\/\/|(?:[A-Za-z]:\\|\/{1,2}[A-Za-z_][\w:.-]*(?:\/[\w:.*@-]+)+)|\b(?:[A-Za-z_][\w.-]*:)?[\w.-]+(?:\/(?:[A-Za-z_][\w.-]*:)?[\w.*@-]+){2,}|\b[a-f0-9]{32,}\b|\b[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\b|\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(value)
-  || (value.length > 160 && !/\s/.test(value));
+ if (/https?:\/\/|\b[a-f0-9]{32,}\b|\b[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\b|\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b|\b[A-Za-z_][\w.[\]-]*\s*=\s*\S/i.test(value)
+  || (value.length > 160 && !/\s/.test(value))) return true;
+ const withoutStandaloneDates = value.replace(/(^|[^\w./\\@*-])\d{1,2}\/\d{1,2}\/\d{4}(?![\w/\\:@*-]|\.\w)/g, "$1");
+ return /(?:[A-Za-z]:\\|\/{1,2}[A-Za-z_][\w:.-]*(?:\/[\w:.*@-]+)+)|\b(?:[A-Za-z_][\w.-]*:)?[\w.-]+(?:\/(?:[A-Za-z_][\w.-]*:)?[\w.*@-]+){2,}/i.test(withoutStandaloneDates);
 }
 
 export function isTechnicalField(key: string): boolean {

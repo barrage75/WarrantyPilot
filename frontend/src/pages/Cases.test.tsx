@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { Decisions, CasesPage, CaseDetail } from "./Cases";
+import { Decisions as HomeDecisions } from "./Home";
 import type { components } from "@/api/schema";
 import i18n from "@/i18n";
 import { apiErrorKey } from "@/api/errors";
@@ -49,9 +50,9 @@ beforeEach(async () => {
  }));
 });
 afterEach(() => { cleanup(); resetPendingValidations(); vi.useRealTimers(); vi.unstubAllGlobals(); });
-function show(kind: "decisions" | "cases" | "detail", identity = true) {
+function show(kind: "decisions" | "homeDecisions" | "cases" | "detail", identity = true) {
  const cache = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
- return render(<QueryClientProvider client={cache}><TestSession user={identity ? sessionUser : null}><MemoryRouter initialEntries={[kind === "detail" ? "/cases/" + caseId : "/"]}><Routes><Route path="/" element={kind === "decisions" ? <Decisions/> : <CasesPage/>}/><Route path="/cases/:id" element={<CaseDetail/>}/></Routes></MemoryRouter></TestSession></QueryClientProvider>);
+ return render(<QueryClientProvider client={cache}><TestSession user={identity ? sessionUser : null}><MemoryRouter initialEntries={[kind === "detail" ? "/cases/" + caseId : "/"]}><Routes><Route path="/" element={kind === "decisions" ? <Decisions/> : kind === "homeDecisions" ? <HomeDecisions/> : <CasesPage/>}/><Route path="/cases/:id" element={<CaseDetail/>}/></Routes></MemoryRouter></TestSession></QueryClientProvider>);
 }
 function visibleText(element: HTMLElement) {
  const copy = element.cloneNode(true) as HTMLElement;
@@ -59,6 +60,59 @@ function visibleText(element: HTMLElement) {
  return copy.textContent ?? "";
 }
 const uuidPattern = /\b[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}\b/i;
+it.each(["fr", "en"])("shows dated rule checks, evidence and timeline messages outside technical details in %s", async language => {
+ await i18n.changeLanguage(language);
+ const fr = language === "fr", date = fr ? "20/11/2025" : "11/20/2025";
+ const details = fr ? ["Date de facture : 20/11/2025 (date estimée)", "Date d'achat : 21/11/2026"] : ["Invoice date: 11/20/2025 (estimated date)", "Purchase date: 11/21/2026"];
+ const excerpt = fr ? "Facture émise le " + date : "Invoice issued on " + date;
+ const description = fr ? "Formulaire complété le " + date : "Form completed on " + date;
+ data[0].verdict!.checks = details.map((detail, index) => ({ name: index ? "purchase_date" : "invoice_date", passed: true, detail }));
+ data[0].verdict!.evidence = [{ document_id: person, page: 2, excerpt }];
+ events = [
+  { seq: 1, case_id: caseId, type: "action_step", actor: "agent", at: "2026-01-01T12:00:00Z", payload: { text: description } },
+  { seq: 2, case_id: caseId, type: "fact_extracted", actor: "agent", at: "2026-01-01T12:00:00Z", payload: { purchase_date: date } },
+ ];
+ show("detail");
+ for (const detail of details) {
+  const text = await screen.findByText(detail);
+  expect(text).toBeVisible();
+  expect(text.closest("details")).toBeNull();
+ }
+ expect(screen.getByText(excerpt, { selector: "blockquote" })).toBeVisible();
+ expect(await screen.findByText(description)).toBeVisible();
+ expect(screen.getByText(date, { selector: "dd" })).toBeVisible();
+});
+
+it.each(["fr", "en"])("keeps paths, URLs, UUIDs and key=value rule checks and evidence collapsed in %s", async language => {
+ await i18n.changeLanguage(language);
+ const details = ["/tmp/x.pdf", "runtime/browser/case/step.png", "https://example.test/invoice.pdf", "rule_id=dell-laptop", "Date : 20/11/2025 ; fichier /tmp/x.pdf", "2994dff0-6a5d-421a-b61b-c7b71c49dce9"];
+ data[0].verdict!.checks = details.map((detail, index) => ({ name: "technical_check_" + index, passed: true, detail }));
+ data[0].verdict!.evidence = details.map(excerpt => ({ document_id: person, page: 2, excerpt }));
+ const { container } = show("detail");
+ await screen.findByRole("heading", { name: language === "fr" ? "Verdict et trace des règles" : "Verdict and rule trace" });
+ for (const detail of details) {
+  expect(visibleText(container)).not.toContain(detail);
+  const raw = Array.from(container.querySelectorAll("details pre")).filter(pre => pre.textContent?.includes(JSON.stringify(detail)));
+  expect(raw).toHaveLength(2);
+  raw.forEach(pre => expect(pre).not.toBeVisible());
+ }
+ const path = Array.from(container.querySelectorAll("details pre")).find(pre => pre.textContent?.includes(JSON.stringify(details[0])))!;
+ await userEvent.click(within(path.closest("details")!).getByText(language === "fr" ? "Détails techniques" : "Technical details"));
+ expect(path).toBeVisible();
+});
+
+it.each(["fr", "en"])("shows dated Home evidence while keeping raw paths in nested technical details in %s", async language => {
+ await i18n.changeLanguage(language);
+ const excerpt = language === "fr" ? "Date de facture : 20/11/2025 (date estimée)" : "Invoice date: 11/20/2025 (estimated date)";
+ const path = "runtime/browser/case/step.png";
+ data[0].verdict!.evidence = [excerpt, path].map(excerpt => ({ document_id: person, page: 2, excerpt }));
+ const { container } = show("homeDecisions");
+ await userEvent.click(await screen.findByText(language === "fr" ? "Preuves (2)" : "Evidence (2)", { selector: "summary" }));
+ expect(screen.getByText(excerpt, { selector: "blockquote" })).toBeVisible();
+ expect(visibleText(container)).not.toContain(path);
+ expect(container.querySelectorAll("blockquote")).toHaveLength(1);
+});
+
 it("shows the queue and validates after the undo window with the session as actor", async () => {
  show("decisions"); await screen.findByText("Couverture fictive");
  expect(screen.getByText("Achat fictif")).toBeInTheDocument();
