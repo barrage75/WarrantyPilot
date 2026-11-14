@@ -14,6 +14,7 @@ from app.rules import (
     KeywordIncidentClassifier,
     load_rules,
 )
+from app.rules import engine as engine_module
 from app.rules.engine import CHECK_NAMES
 
 TODAY = DEMO_REFERENCE_DATE
@@ -402,6 +403,22 @@ def test_uncertainty_conflicts_determinism_and_rights() -> None:
     item = equipment("Dell", "Latitude")
     result = engine.evaluate(item, [proof, fact("warranty_term_months", 36)], event, RULES, [])
     assert result.target_url == "http://localhost/custom"
+
+
+def test_conflict_on_unlisted_field_uses_humanized_label(monkeypatch: pytest.MonkeyPatch) -> None:
+    field = "support_start_date"
+    assert field not in engine_module.FACT_LABELS
+    monkeypatch.setattr(engine_module, "DATE_FIELDS", engine_module.DATE_FIELDS | {field})
+    conflicting = [fact(field, "2025-03-12"), fact(field, "2025-04-01")]
+
+    result = DeterministicRulesEngine(TODAY).evaluate(
+        equipment(), conflicting, incident(), RULES, []
+    )
+
+    assert result.value == "to_verify"
+    detail = next(c.detail for c in result.checks if c.name == "document_conflict")
+    assert detail.startswith("Conflit — support start date : ")
+    assert all(proof.provenance in result.evidence for proof in conflicting)
 
 
 def test_fact_filtering_and_proof_confidence() -> None:

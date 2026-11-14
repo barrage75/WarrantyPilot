@@ -60,6 +60,10 @@ EXCLUSION_LABELS = {
 }
 
 
+def _fact_label(name: str) -> str:
+    return FACT_LABELS.get(name, name.replace("_", " "))
+
+
 def fact_value(fact: Fact) -> str | int | bool | date:
     value = fact.value
     if fact.field in DATE_FIELDS:
@@ -252,7 +256,7 @@ class DeterministicRulesEngine:
                 for fact in values:
                     use(fact)
                 detail = "; ".join(f"{f.value}{_page_reference(f.provenance.page)}" for f in values)
-                check("document_conflict", False, f"Conflit — {FACT_LABELS[name]} : {detail}")
+                check("document_conflict", False, f"Conflit — {_fact_label(name)} : {detail}")
                 return verify(
                     f"documents contradictoires : {detail}", f"conflicting documents: {detail}"
                 )
@@ -280,9 +284,7 @@ class DeterministicRulesEngine:
         missing.extend(
             name for name in rule.proof_required if name not in fields and name != "purchase_date"
         )
-        missing_labels = ", ".join(
-            FACT_LABELS.get(name, name.replace("_", " ")) for name in missing
-        )
+        missing_labels = ", ".join(_fact_label(name) for name in missing)
         check(
             "purchase_proof",
             True,
@@ -301,7 +303,7 @@ class DeterministicRulesEngine:
         start_fact = get(event)
         start = fact_value(start_fact) if start_fact else None
         approximated = False
-        origin = FACT_LABELS[event]
+        origin = _fact_label(event)
         if not isinstance(start, date):
             start = (
                 getattr(equipment, event, None) if event in {"ship_date", "delivery_date"} else None
@@ -312,7 +314,7 @@ class DeterministicRulesEngine:
             invoice = get("invoice_date")
             fallback = invoice if invoice and isinstance(fact_value(invoice), date) else proof
             start = fact_value(fallback)
-            origin = FACT_LABELS[fallback.field]
+            origin = _fact_label(fallback.field)
         if not isinstance(start, date):
             raise RuntimeError("Date de départ invalide après résolution")
         check(
