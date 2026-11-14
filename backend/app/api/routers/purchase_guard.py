@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, model_validator
 from sqlalchemy import insert, select, update
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_orchestrator, get_session
+from app.api.dependencies import _require_person, get_orchestrator, get_session
 from app.contracts.enums import (
     CaseStatus,
     Channel,
@@ -63,6 +63,11 @@ class PurchaseDecision(BaseModel):
         if self.choice == "keep" and not (self.reason or "").strip():
             raise ValueError("a reason is required to keep the purchase")
         return self
+
+
+class HumanActionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    person_id: UUID
 
 
 def _row(session: Session, purchase_id: UUID):
@@ -244,10 +249,12 @@ async def decide(
 )
 def confirm_cancellation(
     purchase_id: UUID,
+    body: HumanActionRequest,
     request: Request,
     session: Session = Depends(get_session),
 ) -> PurchaseRecommendation:
     row = _row(session, purchase_id)
+    _require_person(session, body.person_id)
     if row["state"] != PurchaseGuardState.PURCHASE_SUSPENDED.value:
         raise HTTPException(status_code=409, detail="Purchase is not suspended")
     now = utc_now()
@@ -272,7 +279,7 @@ def confirm_cancellation(
     append_event(
         session,
         EventType.PURCHASE_GUARD_CANCELLED,
-        actor="human:purchase-guard",
+        actor=f"human:{body.person_id}",
         payload={"purchase_request_id": str(purchase_id), "at": now.isoformat()},
     )
     if state == PurchaseGuardState.SAVING_REALIZED:

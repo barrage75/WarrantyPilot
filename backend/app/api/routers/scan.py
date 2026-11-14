@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import sys
 from datetime import timedelta
 from pathlib import Path
@@ -20,7 +21,7 @@ from app.contracts.enums import (
     RealityBadge,
     RightType,
 )
-from app.contracts.models import Incident
+from app.contracts.models import Fact, Incident
 from app.core.tables import purchase_requests
 from app.ingestion.registry import ExtractorRegistry
 from app.rules import DeterministicRulesEngine
@@ -63,6 +64,30 @@ class ScanStartResponse(BaseModel):
     scan_id: str
 
 
+def _rule_facts(facts: list[Fact]) -> list[Fact]:
+    aliases = {
+        "supplier_name": "reseller_name",
+        "supplier_address": "reseller_address",
+        "customer_name": "buyer_name",
+        "warranty_duration_months": "warranty_term_months",
+    }
+    line_aliases = {
+        "model": ("model_number", "product_type"),
+        "serial": ("serial_number",),
+        "warranty_duration_months": ("warranty_term_months",),
+    }
+    normalized: list[Fact] = []
+    for fact in facts:
+        line_field = re.fullmatch(r"lines\[\d+\]\.([a-z_]+)", fact.field)
+        fields = (
+            line_aliases.get(line_field[1], (fact.field,))
+            if line_field
+            else (aliases.get(fact.field, fact.field),)
+        )
+        normalized.extend(fact.model_copy(update={"field": field}) for field in fields)
+    return normalized
+
+
 async def _run_scan(application: Any, scan_id: str) -> None:
     state: dict[str, Any] = application.state.scans[scan_id]
     try:
@@ -90,7 +115,7 @@ async def _run_scan(application: Any, scan_id: str) -> None:
             engine = DeterministicRulesEngine(application.state.app_settings.demo_today)
         rules = application.state.services.get("rules", [])
         facts_by_equipment: dict[UUID, list[Any]] = {}
-        for fact in extracted_facts:
+        for fact in _rule_facts(extracted_facts):
             if fact.equipment_id is not None:
                 facts_by_equipment.setdefault(fact.equipment_id, []).append(fact)
         rights_by_equipment: dict[UUID, list[Any]] = {}

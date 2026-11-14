@@ -5,8 +5,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy import insert, select, update
 
 from app.api.main import create_app
-from app.contracts.enums import CaseStatus, EventType
-from app.core.tables import cases, equipment, events, people
+from app.contracts.enums import CaseStatus, Channel, EventType, VerdictValue
+from app.contracts.models import Verdict
+from app.core.tables import actions, cases, equipment, events, people, verdicts
+from app.testing.fakes import FakeRulesEngine
 
 
 def _reset(client: TestClient) -> None:
@@ -111,6 +113,8 @@ def test_scan_runs_in_background_and_reports_document_progress(db_engine, app_se
     assert result["status"] == "completed", result
     assert result["progress"] == 100
     assert result["documentsDone"] == result["documentsTotal"] == 65
+    assert result["coveredEquipmentEur"] > 0
+    assert result["realizedSavingsEur"] == 0
     assert result["invoices"] == 60
     assert result["badge"] == "reproduction"
 
@@ -142,9 +146,22 @@ def test_purchase_guard_requires_reason_and_realizes_savings_after_both_conditio
         case_id = suspended.json()["caseId"]
         assert suspended.json()["state"] == "purchase_suspended"
 
-        cancelled = client.post(f"/api/purchase-requests/{purchase['id']}/confirm-cancellation")
+        paul_id = _paul_id(session_factory)
+        cancelled = client.post(
+            f"/api/purchase-requests/{purchase['id']}/confirm-cancellation",
+            json={"person_id": paul_id},
+        )
         assert cancelled.status_code == 200
         assert cancelled.json()["state"] == "cancelled"
+        with session_factory() as session:
+            cancellation_event = (
+                session.execute(
+                    select(events).where(events.c.type == EventType.PURCHASE_GUARD_CANCELLED.value)
+                )
+                .mappings()
+                .one()
+            )
+        assert cancellation_event["actor"] == f"human:{paul_id}"
 
         with session_factory.begin() as session:
             session.execute(
@@ -156,6 +173,26 @@ def test_purchase_guard_requires_reason_and_realizes_savings_after_both_conditio
     assert realized.json()["state"] == "saving_realized"
     assert realized.json()["cancelledAt"]
     assert realized.json()["resolvedAt"]
+
+
+def test_purchase_cancellation_requires_existing_person(
+    db_engine, session_factory, app_settings
+) -> None:
+    application = create_app(app_settings=app_settings, app_engine=db_engine)
+    with TestClient(application) as client:
+        _reset(client)
+        purchase = client.get("/api/purchase-requests").json()[0]
+        suspended = client.post(
+            f"/api/purchase-requests/{purchase['id']}/decision",
+            json={"choice": "suspend"},
+        )
+        assert suspended.status_code == 200
+        cancelled = client.post(
+            f"/api/purchase-requests/{purchase['id']}/confirm-cancellation",
+            json={"person_id": str(uuid4())},
+        )
+
+    assert cancelled.status_code == 404
 
 
 def test_purchase_guard_allows_keep_only_with_reason(db_engine, app_settings) -> None:
@@ -171,3 +208,99 @@ def test_purchase_guard_allows_keep_only_with_reason(db_engine, app_settings) ->
     assert kept.status_code == 200
     assert kept.json()["state"] == "purchase_kept"
     assert kept.json()["reason"] == "Budget déjà engagé"
+
+
+def test_manual_verdict_requires_human_takeover_and_proof(
+    db_engine, session_factory, app_settings
+) -> None:
+    application = create_app(app_settings=app_settings, app_engine=db_engine)
+    verdict = Verdict(
+        value=VerdictValue.TO_VERIFY,
+        channel=Channel.MANUAL,
+        rule_id="manual-review",
+        rule_version="1",
+        explanation_fr="Une vérification humaine est nécessaire.",
+        explanation_en="Human verification is required.",
+    )
+    with TestClient(application) as client:
+        _reset(client)
+        application.state.services["rules_engine"] = FakeRulesEngine(verdict)
+        person_id = _paul_id(session_factory)
+        conversation = client.post("/api/chat/conversations").json()
+        created = client.post(
+            f"/api/chat/conversations/{conversation['id']}/messages",
+            json={
+                "text": "Mon casque Jabra Evolve2 65 ne charge plus.",
+                "reporter_id": person_id,
+            },
+        )
+        assert created.status_code == 200, created.text
+        case_id = created.json()["case_id"]
+        assert case_id
+
+        validated = client.post(
+            f"/api/cases/{case_id}/validate",
+            json={"person_id": person_id},
+        )
+        assert validated.status_code == 200, validated.text
+        assert validated.json()["status"] == CaseStatus.MANUAL_TAKEOVER.value
+        with session_factory() as session:
+            stored_verdict = session.execute(
+                select(verdicts.c.value)
+                .join(cases, cases.c.verdict_id == verdicts.c.id)
+                .where(cases.c.id == case_id)
+            ).scalar_one()
+            manual_action = (
+                session.execute(select(actions).where(actions.c.case_id == case_id))
+                .mappings()
+                .one()
+            )
+            case_events = (
+                session.execute(
+                    select(events.c.type, events.c.payload).where(events.c.case_id == case_id)
+                )
+                .mappings()
+                .all()
+            )
+        assert stored_verdict == VerdictValue.TO_VERIFY.value
+        assert manual_action["channel"] == Channel.MANUAL.value
+        assert manual_action["badge"] == "reproduction"
+        assert not any(event["type"] == EventType.ACTION_FAILED.value for event in case_events)
+        assert not any(
+            event["type"] == EventType.STATUS_CHANGED.value
+            and event["payload"].get("to") == CaseStatus.SENT.value
+            for event in case_events
+        )
+
+        proof = client.post(
+            f"/api/cases/{case_id}/manual-proof",
+            json={"person_id": person_id, "proof": "ticket humain confirmé"},
+        )
+        assert proof.status_code == 200, proof.text
+        assert proof.json()["status"] == CaseStatus.SENT.value
+
+    with session_factory() as session:
+        status_events = (
+            session.execute(
+                select(events.c.payload).where(
+                    events.c.case_id == case_id,
+                    events.c.type == EventType.STATUS_CHANGED.value,
+                )
+            )
+            .scalars()
+            .all()
+        )
+        success_event = (
+            session.execute(
+                select(events).where(
+                    events.c.case_id == case_id,
+                    events.c.type == EventType.ACTION_SUCCEEDED.value,
+                )
+            )
+            .mappings()
+            .one()
+        )
+    assert any(
+        payload.get("reason") == "prise en main humaine requise" for payload in status_events
+    )
+    assert success_event["actor"] == f"human:{person_id}"

@@ -118,6 +118,38 @@ class FacturXExtractor:
                         path,
                         "decimal" if name in {f.QUANTITY, f.UNIT_PRICE_HT} else "text",
                     )
+                descriptions = nodes(line, "SpecifiedTradeProduct/Description")
+                if descriptions:
+                    description_node = descriptions[0]
+                    description = " ".join(" ".join(description_node.itertext()).split())
+                    description_path = root.getroottree().getpath(description_node)
+                    serial = re.search(
+                        r"(?:numéros?\s+de\s+série|serial(?:\s+numbers?)?|S/N)\s*:\s*([\w-]+)",
+                        description,
+                        re.I,
+                    )
+                    if serial:
+                        add(
+                            f.line_field(i, f.SERIAL),
+                            serial[1],
+                            description_path,
+                        )
+                    duration = re.search(
+                        r"(\d+)\s*(mois|months?|ans?|years?)\b",
+                        description,
+                        re.I,
+                    )
+                    if duration and re.search(
+                        r"garantie|warranty|prosupport|onsite", description, re.I
+                    ):
+                        months = int(duration[1])
+                        if duration[2].casefold() in {"an", "ans", "year", "years"}:
+                            months *= 12
+                        add(
+                            f.line_field(i, f.WARRANTY_DURATION_MONTHS),
+                            months,
+                            description_path,
+                        )
                 for characteristic in nodes(
                     line, "SpecifiedTradeProduct/ApplicableProductCharacteristic"
                 ):
@@ -168,7 +200,10 @@ class FacturXExtractor:
             path = root.getroottree().getpath(note)
             if re.search(r"Warranty\+|extension de garantie", text, re.I):
                 add(f.WARRANTY_EXTENSION_MENTIONED, True, path)
-            duration = re.search(r"(\d+)\s*(?:mois|months)", text, re.I)
+            duration = re.search(r"(\d+)\s*(mois|months?|ans?|years?)\b", text, re.I)
             if duration and re.search(r"garantie|warranty", text, re.I):
-                add(f.WARRANTY_DURATION_MONTHS, int(duration[1]), path)
+                months = int(duration[1])
+                if duration[2].casefold() in {"an", "ans", "year", "years"}:
+                    months *= 12
+                add(f.WARRANTY_DURATION_MONTHS, months, path)
         return facts

@@ -14,6 +14,7 @@ from app.actions.email.transports import (
     LocalSmtpTransport,
     refresh_token_provider,
 )
+from app.actions.manual import ManualAdapter
 from app.api.routers import (
     agent,
     cases,
@@ -146,6 +147,7 @@ def create_app(
                         BrowserSettings.from_env(),
                         on_step=_browser_step_recorder(active_session_factory),
                     ),
+                    Channel.MANUAL: ManualAdapter(),
                 },
                 "follow_up": FakeFollowUp(),
             }

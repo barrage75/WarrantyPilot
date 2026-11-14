@@ -790,6 +790,20 @@ class Orchestrator:
                         updated_at=datetime.now(UTC).isoformat(),
                     )
                 )
+            if action.channel == Channel.MANUAL:
+                takeover = transition(CaseStatus.SENDING, CaseStatus.MANUAL_TAKEOVER)
+                self._set_status(session, case, takeover)
+                append_event(
+                    session,
+                    EventType.STATUS_CHANGED,
+                    case_id=str(case.id),
+                    payload={
+                        "from": CaseStatus.SENDING.value,
+                        "to": takeover.value,
+                        "reason": "prise en main humaine requise",
+                    },
+                )
+                return case.model_copy(update={"status": takeover})
             if result.status == ActionResultStatus.SUCCESS:
                 current = CaseStatus.SENDING
                 sent = transition(current, CaseStatus.SENT, action_result=result)

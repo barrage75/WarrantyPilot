@@ -12,7 +12,7 @@ from sqlalchemy import insert, select, update
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
 
-from app.api.dependencies import get_orchestrator, get_session
+from app.api.dependencies import _require_person, get_orchestrator, get_session
 from app.contracts.enums import (
     ActionResultStatus,
     CaseStatus,
@@ -101,12 +101,6 @@ def _equipment_from_row(row: Any) -> Equipment:
         delivery_date=row["delivery_date"],
         ship_date=row["ship_date"],
     )
-
-
-def _require_person(session: Session, person_id: UUID) -> None:
-    exists = session.execute(select(people.c.id).where(people.c.id == str(person_id))).first()
-    if exists is None:
-        raise HTTPException(status_code=404, detail="Human approver not found")
 
 
 def _case_from_row(session: Session, row: Any) -> Case:

@@ -854,6 +854,14 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** HumanActionRequest */
+        HumanActionRequest: {
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            person_id: string;
+        };
         /** ManualProofRequest */
         ManualProofRequest: {
             /**
@@ -1766,7 +1774,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HumanActionRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
