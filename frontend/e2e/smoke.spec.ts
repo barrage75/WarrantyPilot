@@ -16,7 +16,7 @@ test("real chat, scan and purchase guard endpoints as the signed-in operator", a
  await page.goto("/dashboard");
  await page.getByRole("button", { name: "Lancer le scan", exact: true }).click();
  await expect(page.getByRole("status").filter({ hasText: /Scan terminé : (\d+) \/ \1 documents lus/ })).toBeVisible({ timeout: 30000 });
- await expect(page.getByText("Reproduction", { exact: true })).toBeVisible();
+ await expect(page.getByText("Reproduction locale", { exact: true })).toBeVisible();
  await page.goto("/purchase-guard");
  await expect(page.getByText(/Jabra Evolve2 65/).first()).toBeVisible();
  await page.getByRole("button", { name: "Lancer la garantie et suspendre l'achat", exact: true }).click();

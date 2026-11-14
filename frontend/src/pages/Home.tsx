@@ -8,7 +8,7 @@ import { useEquipment } from "@/api/resources";
 import { useOperator } from "@/operator-state";
 import { HumanActions } from "@/components/case/HumanActions";
 import { StatusBadge, VerdictBadge } from "@/components/Badges";
-import { RealityPill } from "@/components/parc/RealityPill";
+import { CaseRealityPill as RealityPill } from "@/components/case/CaseRealityPill";
 import { Tile } from "@/components/bento/Tile";
 import { EmptyState } from "@/components/bento/EmptyState";
 import { EquipmentIcon } from "@/components/bento/EquipmentIcon";

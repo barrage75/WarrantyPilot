@@ -26,7 +26,7 @@ it("runs the real scan, shows progress and expiring rights with one compact savi
  expect(screen.getAllByText(/8.346,00/)).toHaveLength(1);
  expect(screen.getByText("Achats évitables").closest("span")).toHaveTextContent("120,00");
  expect(screen.getByText("Achats évités").closest("span")).toHaveTextContent("0,00");
- expect(screen.getByText("Reproduction")).toBeInTheDocument(); expect(screen.queryByText("Simulé")).not.toBeInTheDocument();
+ expect(screen.getByText("Reproduction locale")).toBeInTheDocument(); expect(screen.queryByText("Simulé")).not.toBeInTheDocument();
  expect(screen.getByText("Jabra Evolve2 65")).toBeInTheDocument(); expect(screen.getByText("Garantie fabricant")).toBeInTheDocument();
  expect(screen.getByRole("cell", { name: "10" })).toBeInTheDocument();
  expect(calls.filter(call => call.method === "POST")).toEqual([{ method: "POST", path: "/api/scan" }]);

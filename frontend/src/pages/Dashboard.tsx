@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { startScan, useScan } from "@/api/resources";
 import { apiErrorKey } from "@/api/errors";
-import { RealityPill } from "@/components/parc/RealityPill";
+import { CaseRealityPill as RealityPill } from "@/components/case/CaseRealityPill";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table } from "@/components/ui/table";
