@@ -4,11 +4,11 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { Decisions, CasesPage, CaseDetail } from "./Cases";
-import { OperatorProvider, OperatorSelector } from "@/operator";
 import type { components } from "@/api/schema";
 import i18n from "@/i18n";
 import { apiErrorKey } from "@/api/errors";
 import { ApiError } from "@/api/client";
+import { TestSession, sessionUser } from "@/test/http";
 const person = "10000000-0000-4000-8000-000000000001";
 const caseId = "20000000-0000-4000-8000-000000000002";
 const item: components["schemas"]["Case"] = { id: caseId, incident_id: caseId, equipment_id: person, status: "awaiting_validation", badge: "simulated", channel: "email_reseller", verdict: { value: "covered", explanation_fr: "Couverture fictive", explanation_en: "Fictional coverage", checks: [{ name: "Facture", passed: true, detail: "Facture valide" }, { name: "Date", passed: null, detail: "Date absente" }], evidence: [{ document_id: person, page: 2, excerpt: "Achat fictif" }] }, policy: { outcome: "needs_validation", reasons: ["under_threshold"], conditions: { under_threshold: false, verdict_covered: true, equipment_unambiguous: true, no_possible_exclusion: true, no_suspicious_signal: true, low_commitment_action: true } } };
@@ -40,15 +40,14 @@ beforeEach(async () => {
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 function show(kind: "decisions" | "cases" | "detail", identity = true) {
- if (identity) localStorage.setItem("wp-person-id", person);
  const cache = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
- return render(<QueryClientProvider client={cache}><OperatorProvider><MemoryRouter initialEntries={[kind === "detail" ? "/cases/" + caseId : "/"]}><Routes><Route path="/" element={kind === "decisions" ? <Decisions/> : <CasesPage/>}/><Route path="/cases/:id" element={<CaseDetail/>}/></Routes></MemoryRouter></OperatorProvider></QueryClientProvider>);
+ return render(<QueryClientProvider client={cache}><TestSession user={identity ? sessionUser : null}><MemoryRouter initialEntries={[kind === "detail" ? "/cases/" + caseId : "/"]}><Routes><Route path="/" element={kind === "decisions" ? <Decisions/> : <CasesPage/>}/><Route path="/cases/:id" element={<CaseDetail/>}/></Routes></MemoryRouter></TestSession></QueryClientProvider>);
 }
-it("shows the queue and validates with the operator UUID in one click", async () => {
+it("shows the queue and validates in one click with the session as actor", async () => {
  show("decisions"); await screen.findByText("Couverture fictive");
  expect(screen.getByText("Achat fictif")).toBeInTheDocument();
  await userEvent.click(screen.getByRole("button", { name: "Valider" }));
- await waitFor(() => expect(posts).toEqual([{ url: "/api/cases/" + caseId + "/validate", body: { person_id: person } }]));
+ await waitFor(() => expect(posts).toEqual([{ url: "/api/cases/" + caseId + "/validate", body: {} }]));
  await screen.findByText("Rien à décider");
 });
 it("requires a note to resolve a sent case as the active person", async () => {
@@ -69,13 +68,13 @@ it("requires a nonblank rejection reason", async () => {
  expect(within(dialog).getByRole("button", { name: "Confirmer le rejet" })).toBeDisabled();
  await userEvent.type(within(dialog).getByLabelText("Motif"), "Erreur de matériel");
  await userEvent.click(within(dialog).getByRole("button", { name: "Confirmer le rejet" }));
- await waitFor(() => expect(posts[0]).toEqual({ url: "/api/cases/" + caseId + "/reject", body: { person_id: person, reason: "Erreur de matériel" } }));
+ await waitFor(() => expect(posts[0]).toEqual({ url: "/api/cases/" + caseId + "/reject", body: { reason: "Erreur de matériel" } }));
 });
 it("disables human actions without identity", async () => {
  show("decisions", false);
  expect(await screen.findByRole("button", { name: "Valider" })).toBeDisabled();
  expect(screen.getByRole("button", { name: "Rejeter" })).toBeDisabled();
- expect(screen.getByText(/Définissez votre identité/)).toBeInTheDocument();
+ expect(screen.getByText(/Connectez-vous pour activer/)).toBeInTheDocument();
 });
 it("shows translated person-not-found errors", async () => {
  postStatus = 404; show("decisions");
@@ -102,6 +101,7 @@ it("filters cases by status and ID", async () => {
  expect(screen.getByText("Aucun dossier ne correspond aux filtres.")).toBeInTheDocument();
 });
 it("handles an empty decision queue", async () => { data = []; show("decisions"); expect(await screen.findByText("Rien à décider")).toBeInTheDocument(); });
+<<<<<<< HEAD
 it("selects the operator from GET /people and persists the real id", async () => {
  const cache = new QueryClient({ defaultOptions: { queries: { retry: false } } });
  render(<QueryClientProvider client={cache}><OperatorProvider><OperatorSelector/></OperatorProvider></QueryClientProvider>);
@@ -126,6 +126,26 @@ it("shows the decision channel in the case detail header", async () => {
  expect(screen.getByText("Browser portal")).toBeInTheDocument();
 });
 it("renders browser steps with screenshots and the structured Dell case number", async () => {
+||||||| parent of 13ec235 (feat(securite): écran de connexion, session frontend, e2e authentifiés et ancrage non bloquant)
+it("selects the operator from GET /people and persists the real id", async () => {
+ const cache = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+ render(<QueryClientProvider client={cache}><OperatorProvider><OperatorSelector/></OperatorProvider></QueryClientProvider>);
+ const select = screen.getByLabelText("Vous agissez en tant que");
+ await screen.findByRole("option", { name: "Camille Martin · IT" });
+ expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+ await userEvent.selectOptions(select, person);
+ expect(localStorage.getItem("wp-person-id")).toBe(person); expect(screen.getByText("Opérateur actif : Camille Martin")).toBeInTheDocument();
+});
+it("flags a stored person that no longer exists", async () => {
+ localStorage.setItem("wp-person-id", "10000000-0000-4000-8000-00000000dead");
+ const cache = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+ render(<QueryClientProvider client={cache}><OperatorProvider><OperatorSelector/></OperatorProvider></QueryClientProvider>);
+ expect(await screen.findByRole("alert")).toHaveTextContent("Personne inconnue dans la base de démo");
+});
+it("renders browser steps with screenshot path, Dell case number and the actions history", async () => {
+=======
+it("renders browser steps with screenshot path, Dell case number and the actions history", async () => {
+>>>>>>> 13ec235 (feat(securite): écran de connexion, session frontend, e2e authentifiés et ancrage non bloquant)
  events = [
   { seq: 1, case_id: caseId, type: "action_step", actor: "agent", at: "2026-01-01T12:00:00Z", payload: { text: "Formulaire rempli avec les données de l'action", screenshot_path: "/runtime/screens/filled.png", screenshot_url: "/api/cases/case/screenshots/filled.png?action_id=a1" } },
   { seq: 2, case_id: caseId, type: "action_step", actor: "agent", at: "2026-01-01T12:00:05Z", payload: { text: "Dossier créé au portail", case_number: "DELL-REP-123456", screenshot_path: "/runtime/screens/confirmation.png", screenshot_url: "/api/cases/case/screenshots/confirmation.png?action_id=a1" } }

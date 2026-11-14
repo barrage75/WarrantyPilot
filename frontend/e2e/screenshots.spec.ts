@@ -2,7 +2,8 @@ import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, test } from "@playwright/test";
 import { fakeCase, resolveFromUi } from "./helpers";
-test("capture every screen in French and English with isolated fictional cases", async ({ page, request }) => {
+test("capture every screen in French and English with isolated fictional cases", async ({ page }) => {
+ const request = page.request;
  const data = await resolveFromUi(page, request);
  const waiting = await fakeCase(request, data.jabra, data.person);
  expect(waiting.status).toBe("awaiting_validation");

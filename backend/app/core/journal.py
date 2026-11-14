@@ -326,9 +326,19 @@ def anchor_due(session: Session, settings: AppSettings) -> bool:
 
 
 def auto_anchor(session_factory: sessionmaker[Session], settings: AppSettings) -> bool:
-    with _APPEND_LOCK, session_factory() as session:
-        if not anchor_due(session, settings):
+    # Writers take the database lock and _APPEND_LOCK in either order; never wait on
+    # _APPEND_LOCK while holding the database write lock, skip and retry later instead.
+    with session_factory() as session:
+        session.connection()
+        if not _APPEND_LOCK.acquire(timeout=0.2):
+            session.rollback()
             return False
-        _anchor_locked(session, settings)
-        session.commit()
-        return True
+        try:
+            if not anchor_due(session, settings):
+                session.rollback()
+                return False
+            _anchor_locked(session, settings)
+            session.commit()
+            return True
+        finally:
+            _APPEND_LOCK.release()

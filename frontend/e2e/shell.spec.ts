@@ -1,5 +1,7 @@
 import { test, expect } from "@playwright/test";
+import { loginUi } from "./helpers";
 test("agent remains visible across navigation and language changes", async ({ page }) => {
+ await loginUi(page);
  await page.route("**/api/agent/status", route => route.fulfill({ json: { paused: false } }));
  await page.route("**/api/agent/pause", route => route.fulfill({ json: { paused: true } }));
  await page.route("**/api/journal/verify", route => route.fulfill({ json: { ok: true, checked: 0, first_bad_seq: null, anchors_ok: true } }));

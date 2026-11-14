@@ -29,13 +29,13 @@ it("requires a nonblank reason to buy anyway and sends it to the server", async 
  expect(calls).toContainEqual({ method: "POST", path: "/api/purchase-requests/p1/decision", body: { choice: "keep", reason: "Besoin immédiat" } });
  expect(screen.getByRole("status")).toHaveTextContent("Économie réelle : 0,00");
 });
-it("suspends, confirms cancellation with person_id, and shows realized savings only from the server state", async () => {
+it("suspends, confirms cancellation as the session user, and shows realized savings only from the server state", async () => {
  localStorage.setItem("wp-person-id", person); renderWithApi(<PurchaseGuard/>);
  await userEvent.click(await screen.findByRole("button", { name: "Lancer la garantie et suspendre l'achat" }));
  const confirm = await screen.findByRole("button", { name: "Confirmer l’annulation de l’achat" });
  expect(screen.getByRole("link", { name: "Dossier de garantie #40000000" })).toHaveAttribute("href", "/cases/" + caseId);
  await userEvent.click(confirm);
- await waitFor(() => expect(calls).toContainEqual({ method: "POST", path: "/api/purchase-requests/p1/confirm-cancellation", body: { person_id: person } }));
+ await waitFor(() => expect(calls).toContainEqual({ method: "POST", path: "/api/purchase-requests/p1/confirm-cancellation", body: {} }));
  await waitFor(() => expect(screen.getByText(/Achat annulé le : 02/)).toBeInTheDocument());
  expect(screen.getByRole("status")).toHaveTextContent("Économie réelle : 0,00");
  await userEvent.click(screen.getByRole("button", { name: "Vérifier la résolution du dossier" }));
@@ -44,7 +44,7 @@ it("suspends, confirms cancellation with person_id, and shows realized savings o
 });
 it("disables cancellation without identity and renders empty lists and errors (English)", async () => {
  await i18n.changeLanguage("en"); item = { ...item, state: "purchase_suspended", caseId };
- const view = renderWithApi(<PurchaseGuard/>);
+ const view = renderWithApi(<PurchaseGuard/>, "/", null);
  expect(await screen.findByRole("button", { name: "Confirm purchase cancellation" })).toBeDisabled();
  expect(screen.getByText("Headset still under manufacturer warranty.")).toBeInTheDocument(); view.unmount();
  list = []; const empty = renderWithApi(<PurchaseGuard/>); await screen.findByText("No purchase recommendations."); empty.unmount();

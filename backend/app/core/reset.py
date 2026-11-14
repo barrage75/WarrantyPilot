@@ -333,3 +333,25 @@ def reset_demo(engine: Engine, settings: AppSettings, *, actor: str = "system") 
                 ),
             },
         )
+
+
+def main() -> int:
+    from app.core.db import make_engine
+    from app.core.journal import configure_journal_key
+    from app.core.settings import get_settings
+
+    settings = get_settings()
+    if settings.environment != "dev" or not settings.demo_mode:
+        print("demo seed is restricted to WP_ENV=dev with demo_mode", file=sys.stderr)
+        return 2
+    configure_journal_key(settings.journal_anchor_key)
+    engine = make_engine(settings.database_url)
+    try:
+        reset_demo(engine, settings, actor="system")
+    finally:
+        engine.dispose()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

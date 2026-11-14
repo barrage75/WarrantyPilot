@@ -17,10 +17,10 @@
   "error": "API unavailable or action failed.",
   "notFound": "Page not found",
   "refresh": "Refresh",
-  "operator": "Acting as",
-  "operatorHelp": "Person from the Appelia demo database (GET /api/people).",
+  "operator": "Person",
+  "operatorHelp": "Authorised person from the Appelia demo database.",
   "operatorActive": "Active operator: {{name}}",
-  "identityRequired": "Set your identity in the header to enable human actions.",
+  "identityRequired": "Sign in to enable human actions.",
   "cancel": "Cancel",
   "conflict": "The status no longer allows this action. Refresh the case.",
   "unknownPerson": "Unknown person in the demo database. Choose a person from the list.",
@@ -29,5 +29,15 @@
   "choosePerson": "Choose a person…",
   "peopleError": "Unable to load people.",
   "save": "Save",
-  "simulated": "Simulation — no real action is executed."
+  "simulated": "Simulation — no real action is executed.",
+  "loginTitle": "Operator sign-in",
+  "loginHelp": "Choose your name, then enter the demo password (WP_DEMO_PASSWORD).",
+  "password": "Password",
+  "login": "Sign in",
+  "logout": "Sign out",
+  "loginFailed": "Invalid credentials.",
+  "roles": {
+    "admin": "administrator",
+    "operator": "operator"
+  }
 }

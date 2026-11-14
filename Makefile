@@ -1,10 +1,20 @@
+<<<<<<< HEAD
 .PHONY: setup dev smtp test p0 lint typecheck openapi login reset preflight frontend-build
+||||||| parent of 13ec235 (feat(securite): écran de connexion, session frontend, e2e authentifiés et ancrage non bloquant)
+.PHONY: setup dev smtp test lint typecheck openapi login reset preflight frontend-build
+=======
+.PHONY: setup seed dev smtp test lint typecheck openapi login reset preflight frontend-build
+>>>>>>> 13ec235 (feat(securite): écran de connexion, session frontend, e2e authentifiés et ancrage non bloquant)
 
 setup:
 	uv sync --project backend
 	cd frontend && npm ci
 	uv run --project backend alembic -c backend/alembic.ini upgrade head
+	$(MAKE) seed
 	$(MAKE) openapi
+
+seed:
+	uv run --project backend python -m app.core.reset
 
 dev:
 	uv run --project backend python -m app.actions.email.local_smtp_server --port "$${WP_SMTP_PORT:-2525}" --maildir runtime/mail & \

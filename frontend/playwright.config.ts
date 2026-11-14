@@ -19,9 +19,9 @@ export default defineConfig({
    reuseExistingServer: false,
   },
   {
-   command: "uv run --project ../backend uvicorn --app-dir ../backend app.api.main:app --host 127.0.0.1 --port 8001",
+   command: "uv run --project ../backend python -m app.core.reset && uv run --project ../backend uvicorn --app-dir ../backend app.api.main:app --host 127.0.0.1 --port 8001",
    url: "http://127.0.0.1:8001/api/health",
-   env: { WP_ENV: "dev", WP_DATABASE_URL: `sqlite:///${join(runtime, "warrantypilot.db")}`, WP_ANCHOR_FILE: join(runtime, "anchors.jsonl"), WP_MAILDIR_PATH: join(runtime, "mail"), WP_EMAIL_SENT_LEDGER_PATH: join(runtime, "email_sent.jsonl"), WP_BROWSER_RUNTIME_DIR: join(runtime, "browser"), WP_SMTP_PORT: "2526" },
+   env: { WP_ENV: "dev", WP_DATABASE_URL: `sqlite:///${join(runtime, "warrantypilot.db")}`, WP_ANCHOR_FILE: join(runtime, "anchors.jsonl"), WP_MAILDIR_PATH: join(runtime, "mail"), WP_EMAIL_SENT_LEDGER_PATH: join(runtime, "email_sent.jsonl"), WP_BROWSER_RUNTIME_DIR: join(runtime, "browser"), WP_SMTP_PORT: "2526", WP_JOURNAL_ARCHIVE_DIR: join(runtime, "journal-archive") },
    // Never attach a resetting test to the operator's development database.
    reuseExistingServer: false,
   },

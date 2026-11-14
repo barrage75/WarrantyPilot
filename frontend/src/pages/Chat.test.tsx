@@ -40,7 +40,7 @@ it("shows the server AI disclosure before the first message, clarifying question
  expect(screen.queryByText(/Quel équipement est concerné/)).not.toBeInTheDocument();
 });
 it("requires a selected person before sending (English)", async () => {
- await i18n.changeLanguage("en"); renderWithApi(<Chat/>);
+ await i18n.changeLanguage("en"); renderWithApi(<Chat/>, "/", null);
  expect(await screen.findByRole("note", { name: "AI disclosure" })).toHaveTextContent(disclosure);
  await userEvent.type(screen.getByLabelText("Describe the fault"), "Broken");
  expect(screen.getByRole("button", { name: "Send" })).toBeDisabled();
