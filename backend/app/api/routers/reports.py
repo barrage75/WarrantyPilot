@@ -7,7 +7,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy import select
 
-from app.contracts.enums import CaseStatus, Channel, enum_label
+from app.contracts.enums import CaseStatus, Channel, PurchaseGuardState, enum_label
 from app.contracts.models import utc_now
 from app.core import tables
 from app.core.journal import verify
@@ -17,15 +17,22 @@ router = APIRouter(prefix="/reports", tags=["reports"])
 
 
 class SavingsLine(BaseModel):
-    case_id: str
+    """One report line; amounts follow the same rules as the report totals.
+
+    A purchase request with no case gets its own line: ``case_id``, ``channel``
+    and ``status`` are then ``None`` and ``purchase_request_id`` is set.
+    """
+
+    case_id: str | None
     equipment_label: str
     manufacturer: str
-    channel: Channel
-    status: CaseStatus
+    channel: Channel | None
+    status: CaseStatus | None
     amount_eur: float
     realized: bool
     resolved_at: str | None
     reference: str | None
+    purchase_request_id: str | None = None
 
 
 class SavingsReport(BaseModel):
@@ -51,12 +58,23 @@ def savings(request: Request) -> SavingsReport:
             select(tables.events.c.hash).order_by(tables.events.c.seq.desc()).limit(1)
         ).scalar_one_or_none()
         equipment = {row.id: row for row in session.execute(select(tables.equipment))}
-        purchases: dict[str, list[tuple[float, str, str | None]]] = {}
-        for row in session.execute(select(tables.purchase_requests)):
+        purchases: dict[str, list[tuple[float, bool, str | None]]] = {}
+        unlinked = []
+        for row in session.execute(
+            select(tables.purchase_requests).order_by(tables.purchase_requests.c.id)
+        ):
+            if row.state == PurchaseGuardState.PURCHASE_KEPT.value:
+                continue
             if row.case_id:
                 purchases.setdefault(row.case_id, []).append(
-                    (float(row.amount), row.state, row.resolved_at)
+                    (
+                        float(row.amount),
+                        row.state == PurchaseGuardState.SAVING_REALIZED.value,
+                        row.resolved_at,
+                    )
                 )
+            else:
+                unlinked.append(row)
         references: dict[str, str] = {}
         for row in session.execute(select(tables.actions)):
             if row.payload.get("proof_type") == "case_number":
@@ -85,26 +103,45 @@ def savings(request: Request) -> SavingsReport:
         ):
             item = equipment.get(row.equipment_id)
             linked = purchases.get(row.id, [])
-            resolved = [p[2] for p in linked if p[2]]
+            groups = [
+                [p for p in linked if p[1] is realized]
+                for realized in (False, True)
+                if any(p[1] is realized for p in linked)
+            ] or [[]]
+            for group in groups:
+                realized = bool(group) and group[0][1]
+                resolved = [p[2] for p in group if p[2]]
+                lines.append(
+                    SavingsLine(
+                        case_id=row.id,
+                        equipment_label=f"{item.brand} {item.model}" if item else "",
+                        manufacturer=item.brand if item else "",
+                        channel=channels.get(row.verdict_id) or row.channel,
+                        status=row.status,
+                        amount_eur=round(sum(p[0] for p in group), 2),
+                        realized=realized,
+                        resolved_at=max(resolved)
+                        if resolved
+                        else row.updated_at
+                        if row.status == "resolved"
+                        else None,
+                        reference=references.get(row.id),
+                    )
+                )
+        for purchase in unlinked:
+            item = equipment.get(purchase.equipment_id)
             lines.append(
                 SavingsLine(
-                    case_id=row.id,
+                    case_id=None,
                     equipment_label=f"{item.brand} {item.model}" if item else "",
                     manufacturer=item.brand if item else "",
-                    channel=channels.get(row.verdict_id) or row.channel,
-                    status=row.status,
-                    amount_eur=round(sum(p[0] for p in linked), 2)
-                    if linked
-                    else float(item.purchase_price or 0)
-                    if item
-                    else 0,
-                    realized=bool(linked) and all(p[1] == "saving_realized" for p in linked),
-                    resolved_at=max(resolved)
-                    if resolved
-                    else row.updated_at
-                    if row.status == "resolved"
-                    else None,
-                    reference=references.get(row.id),
+                    channel=None,
+                    status=None,
+                    amount_eur=round(float(purchase.amount), 2),
+                    realized=purchase.state == PurchaseGuardState.SAVING_REALIZED.value,
+                    resolved_at=purchase.resolved_at,
+                    reference=None,
+                    purchase_request_id=purchase.id,
                 )
             )
     return SavingsReport(
@@ -146,11 +183,11 @@ def savings_csv(request: Request) -> Response:
             [
                 _csv_cell(value)
                 for value in (
-                    line.case_id,
+                    line.case_id or "",
                     line.equipment_label,
                     line.manufacturer,
-                    enum_label(line.channel),
-                    enum_label(line.status),
+                    enum_label(line.channel) if line.channel else "",
+                    enum_label(line.status) if line.status else "",
                     f"{line.amount_eur:.2f}",
                     "oui" if line.realized else "non",
                     line.resolved_at or "",

@@ -3447,7 +3447,14 @@
       "SavingsLine": {
         "properties": {
           "case_id": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Case Id"
           },
           "equipment_label": {
@@ -3459,10 +3466,24 @@
             "title": "Manufacturer"
           },
           "channel": {
-            "$ref": "#/components/schemas/Channel"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Channel"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "status": {
-            "$ref": "#/components/schemas/CaseStatus"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CaseStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "amount_eur": {
             "type": "number",
@@ -3493,6 +3514,17 @@
               }
             ],
             "title": "Reference"
+          },
+          "purchase_request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purchase Request Id"
           }
         },
         "type": "object",
@@ -3507,7 +3539,8 @@
           "resolved_at",
           "reference"
         ],
-        "title": "SavingsLine"
+        "title": "SavingsLine",
+        "description": "One report line; amounts follow the same rules as the report totals.\n\nA purchase request with no case gets its own line: ``case_id``, ``channel``\nand ``status`` are then ``None`` and ``purchase_request_id`` is set."
       },
       "SavingsReport": {
         "properties": {
