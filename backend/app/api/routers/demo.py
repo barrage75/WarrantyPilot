@@ -4,8 +4,15 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
-from app.api.dependencies import get_app_settings, get_orchestrator, get_session
+from app.api.dependencies import (
+    get_app_settings,
+    get_orchestrator,
+    get_session,
+    require_admin,
+    session_token,
+)
 from app.contracts.enums import (
     CaseStatus,
     Channel,
@@ -15,6 +22,7 @@ from app.contracts.enums import (
     RealityBadge,
 )
 from app.contracts.models import Case, utc_now
+from app.core.auth import Operator, export_session, restore_session
 from app.core.journal import append_event
 from app.core.orchestrator import Orchestrator
 from app.core.preflight import preflight_payload, run_checks
@@ -33,11 +41,26 @@ class FakeCaseRequest(BaseModel):
 
 
 @router.post("/demo/reset")
-def demo_reset(
+async def demo_reset(
     request: Request,
     settings: AppSettings = Depends(get_app_settings),
+    operator: Operator = Depends(require_admin),
 ) -> dict[str, str]:
-    reset_demo(request.app.state.engine, settings)
+    if not settings.demo_mode or settings.environment != "dev":
+        raise HTTPException(status_code=404, detail="Not found")
+    try:
+        body = await request.json()
+    except ValueError:
+        body = None
+    if not isinstance(body, dict) or body != {"confirm": "RESET"}:
+        raise HTTPException(status_code=400, detail='Body must be {"confirm": "RESET"}')
+    token = session_token(request)
+    with request.app.state.session_factory() as session:
+        kept_session = export_session(session, token) if token else None
+    await run_in_threadpool(reset_demo, request.app.state.engine, settings, actor=operator.actor)
+    if kept_session is not None:
+        with request.app.state.session_factory.begin() as session:
+            restore_session(session, kept_session)
     return {"status": "reset"}
 
 

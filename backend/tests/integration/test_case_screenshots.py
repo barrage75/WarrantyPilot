@@ -6,6 +6,7 @@ from app.contracts.enums import Channel, EventType, RealityBadge
 from app.contracts.models import Action
 from app.core.journal import append_event
 from app.core.tables import actions
+from tests.auth_helpers import login
 from tests.integration.helpers import create_case
 
 PNG_BYTES = b"\x89PNG\r\n\x1a\nscreenshot"
@@ -57,6 +58,7 @@ def test_case_screenshot_is_served_only_for_its_action_and_case(
 
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
+        login(client)
         served = client.get(
             f"/api/cases/{case.id}/screenshots/{screenshot_name}",
             params={"action_id": str(action.id)},

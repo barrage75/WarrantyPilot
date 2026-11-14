@@ -8,8 +8,10 @@ from app.actions.browser import BrowserPortalAdapter, BrowserSettings
 from app.api.main import _browser_step_recorder, create_app
 from app.contracts.enums import Channel, ChecklistStepName, EventType, VerdictValue
 from app.contracts.models import ChecklistStep, DataChecklist, Verdict, utc_now
+from app.core.settings_store import read_settings, write_settings
 from app.core.tables import action_results, actions, data_checklists, equipment, events
 from app.testing.fakes import FakeExtractor, FakeFollowUp, FakeRulesEngine
+from tests.auth_helpers import KARIM_ID, login
 
 
 def test_dell_chat_validation_files_one_portal_case(
@@ -50,7 +52,21 @@ def test_dell_chat_validation_files_one_portal_case(
     )
 
     with TestClient(application) as client:
-        assert client.post("/api/demo/reset").status_code == 200
+        login(client, person_id=KARIM_ID)
+        assert client.post("/api/demo/reset", json={"confirm": "RESET"}).status_code == 200
+        with session_factory.begin() as session:
+            current = read_settings(session)
+            write_settings(
+                session,
+                current.model_copy(
+                    update={
+                        "browser_allowed_origins": [
+                            *current.browser_allowed_origins,
+                            f"http://127.0.0.1:{dell_repro.port}",
+                        ]
+                    }
+                ),
+            )
         with session_factory() as session:
             device = (
                 session.execute(select(equipment).where(equipment.c.serial == "7XK4L93"))
@@ -92,12 +108,12 @@ def test_dell_chat_validation_files_one_portal_case(
             )
         checklist_update = client.post(
             f"/api/cases/{case_id}/checklist/{ChecklistStepName.REPAIR_TYPE.value}",
-            json={"person_id": person_id},
+            json={},
         )
         assert checklist_update.status_code == 200, checklist_update.text
         sent = client.post(
             f"/api/cases/{case_id}/validate",
-            json={"person_id": person_id},
+            json={},
         )
         assert sent.status_code == 200, sent.text
 

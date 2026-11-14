@@ -7,6 +7,7 @@ from app.api.main import create_app
 from app.contracts.enums import ActionResultStatus, CaseStatus, Channel, RealityBadge
 from app.contracts.models import Action, ActionResult
 from app.core.tables import action_results, actions, cases
+from tests.auth_helpers import login
 from tests.integration.helpers import create_case
 
 
@@ -54,6 +55,7 @@ def test_people_equipment_actions_and_event_resume(
 
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
+        login(client)
         people = client.get("/api/people")
         equipment = client.get("/api/equipment")
         assert people.status_code == 200
@@ -91,6 +93,7 @@ def test_validate_and_reject_require_an_existing_person(
 
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
+        login(client)
         validate = client.post(
             f"/api/cases/{case.id}/validate",
             json={"person_id": str(uuid4())},
@@ -100,8 +103,8 @@ def test_validate_and_reject_require_an_existing_person(
             json={"person_id": str(uuid4()), "reason": "unknown approver"},
         )
 
-    assert validate.status_code == 404
-    assert reject.status_code == 404
+    assert validate.status_code == 403
+    assert reject.status_code == 403
 
 
 def test_sse_stream_does_not_block_another_database_request(
@@ -110,10 +113,9 @@ def test_sse_stream_does_not_block_another_database_request(
     case, _ = create_case(session_factory)
     application = create_app(app_settings=app_settings, app_engine=db_engine)
 
-    with (
-        TestClient(application) as client,
-        client.stream("GET", f"/api/cases/{case.id}/stream") as stream,
-    ):
-        assert stream.status_code == 200
-        people = client.get("/api/people")
-        assert people.status_code == 200
+    with TestClient(application) as client:
+        login(client)
+        with client.stream("GET", f"/api/cases/{case.id}/stream") as stream:
+            assert stream.status_code == 200
+            people = client.get("/api/people")
+            assert people.status_code == 200

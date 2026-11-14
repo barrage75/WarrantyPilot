@@ -42,7 +42,7 @@ from app.contracts.models import (
 )
 from app.core.checklists import ensure_data_checklist
 from app.core.journal import append_event
-from app.core.policy import decide
+from app.core.policy import decide, purchase_proof_is_llm_only
 from app.core.security import SecurityViolation, assert_email_allowed, assert_url_allowed
 from app.core.settings import AppSettings
 from app.core.status import transition
@@ -321,6 +321,7 @@ class Orchestrator:
                     requires_checklist and action_channel != Channel.BROWSER_PORTAL
                 ),
                 suspicious_signal=suspicious_signal,
+                purchase_proof_llm_only=purchase_proof_is_llm_only(case_facts),
             )
             self._record_step(
                 session,

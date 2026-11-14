@@ -33,6 +33,7 @@ from app.core.tables import (
 from app.rules import DEFAULT_RULES_DIR, DeterministicRulesEngine, load_rules
 from app.rules.classifier import KeywordIncidentClassifier
 from app.testing.fakes import FakeExtractor, FakeFollowUp
+from tests.auth_helpers import KARIM_ID, open_test_session
 
 
 @pytest.mark.asyncio
@@ -83,14 +84,16 @@ async def test_paul_case_auto_sends_after_demo_reset_with_message_id_proof(
             services=services,
         )
 
+        _, token = open_test_session(application, person_id=KARIM_ID)
         async with (
             application.router.lifespan_context(application),
             httpx.AsyncClient(
                 transport=httpx.ASGITransport(app=application),
-                base_url="http://warrantypilot.test",
+                base_url="http://testserver",
+                headers={"Authorization": f"Bearer {token}"},
             ) as client,
         ):
-            reset = await client.post("/api/demo/reset")
+            reset = await client.post("/api/demo/reset", json={"confirm": "RESET"})
             assert reset.status_code == 200
             with session_factory() as session:
                 assert read_settings(session).auto_send_threshold_eur == Decimal("300")

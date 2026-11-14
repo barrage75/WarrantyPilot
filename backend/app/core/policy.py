@@ -1,7 +1,17 @@
+from collections.abc import Iterable
 from decimal import Decimal
 
-from app.contracts.enums import PolicyOutcome, VerdictValue
-from app.contracts.models import Case, Equipment, PolicyDecision, Settings, Verdict
+from app.contracts.enums import FactField, FactSource, PolicyOutcome, VerdictValue
+from app.contracts.models import Case, Equipment, Fact, PolicyDecision, Settings, Verdict
+
+PURCHASE_PROOF_FIELDS = frozenset(
+    {FactField.PURCHASE_DATE.value, FactField.INVOICE_DATE.value, FactField.DELIVERY_DATE.value}
+)
+
+
+def purchase_proof_is_llm_only(facts: Iterable[Fact]) -> bool:
+    sources = [fact.source for fact in facts if str(fact.field) in PURCHASE_PROOF_FIELDS]
+    return bool(sources) and all(source == FactSource.LLM for source in sources)
 
 
 def decide(
@@ -15,6 +25,7 @@ def decide(
     requires_data_checklist: bool = False,
     suspicious_signal: bool = False,
     equipment_unambiguous: bool | None = None,
+    purchase_proof_llm_only: bool = False,
 ) -> PolicyDecision:
     under_threshold = (
         equipment is not None
@@ -41,9 +52,14 @@ def decide(
         reasons.append("verdict_not_covered")
     if reasons:
         outcome = PolicyOutcome.BLOCKED
-    elif all(conditions.values()):
+    elif all(conditions.values()) and not purchase_proof_llm_only:
         outcome = PolicyOutcome.AUTO_SEND
+    elif all(conditions.values()):
+        outcome = PolicyOutcome.NEEDS_VALIDATION
+        reasons.append("purchase_proof_llm_only")
     else:
         outcome = PolicyOutcome.NEEDS_VALIDATION
         reasons.extend(name for name, passed in conditions.items() if not passed)
+        if purchase_proof_llm_only:
+            reasons.append("purchase_proof_llm_only")
     return PolicyDecision(outcome=outcome, reasons=reasons, conditions=conditions)

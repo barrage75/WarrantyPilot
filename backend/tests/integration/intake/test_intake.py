@@ -34,6 +34,7 @@ from app.intake.documents import MAX_DOCUMENT_BYTES, DocumentIntake
 from app.intake.reporting import report_failure
 from app.intake.service import IntakeService
 from app.intake.transports import READONLY_SCOPE, GmailTransport, MaildirInbox
+from tests.auth_helpers import login
 from tests.unit.ingestion.fixture_generator import cii, facturx_pdf, invoice_pdf
 
 
@@ -99,7 +100,7 @@ def intake(tmp_path: Path) -> IntakeService:
 def client(
     engine: Engine, factory: sessionmaker[Session], settings: AppSettings, intake: IntakeService
 ) -> TestClient:
-    return TestClient(
+    api = TestClient(
         create_app(
             app_engine=engine,
             session_factory=factory,
@@ -107,6 +108,8 @@ def client(
             services={"intake": intake},
         )
     )
+    login(api)
+    return api
 
 
 def test_poll_idempotent_across_restart(

@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, model_validator
 from sqlalchemy import insert, select, update
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import _require_person, get_orchestrator, get_session
+from app.api.dependencies import actor_for, get_orchestrator, get_session, require_session
 from app.contracts.enums import (
     CaseStatus,
     Channel,
@@ -21,6 +21,7 @@ from app.contracts.enums import (
     VerdictValue,
 )
 from app.contracts.models import utc_now
+from app.core.auth import Operator
 from app.core.checklists import ensure_data_checklist
 from app.core.journal import append_event
 from app.core.orchestrator import Orchestrator
@@ -68,7 +69,7 @@ class PurchaseDecision(BaseModel):
 
 class HumanActionRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    person_id: UUID
+    person_id: UUID | None = None
 
 
 def _row(session: Session, purchase_id: UUID):
@@ -219,7 +220,9 @@ async def decide(
     request: Request,
     session: Session = Depends(get_session),
     orchestrator: Orchestrator = Depends(get_orchestrator),
+    operator: Operator = Depends(require_session),
 ) -> PurchaseRecommendation:
+    actor = operator.actor
     row = _row(session, purchase_id)
     if row["state"] not in {
         PurchaseGuardState.RECOMMENDATION.value,
@@ -239,7 +242,7 @@ async def decide(
         append_event(
             session,
             EventType.PURCHASE_GUARD_KEPT,
-            actor="human:purchase-guard",
+            actor=actor,
             payload={"purchase_request_id": str(purchase_id), "reason": body.reason},
         )
     else:
@@ -255,7 +258,7 @@ async def decide(
         append_event(
             session,
             EventType.PURCHASE_GUARD_SUSPENDED,
-            actor="human:purchase-guard",
+            actor=actor,
             case_id=str(case_id),
             payload={"purchase_request_id": str(purchase_id)},
         )
@@ -265,7 +268,7 @@ async def decide(
     append_event(
         session,
         EventType.PURCHASE_GUARD_DECISION,
-        actor="human:purchase-guard",
+        actor=actor,
         payload={"purchase_request_id": str(purchase_id), "choice": body.choice, "at": now},
     )
     session.commit()
@@ -281,9 +284,10 @@ def confirm_cancellation(
     body: HumanActionRequest,
     request: Request,
     session: Session = Depends(get_session),
+    operator: Operator = Depends(require_session),
 ) -> PurchaseRecommendation:
+    actor = actor_for(operator, body.person_id)
     row = _row(session, purchase_id)
-    _require_person(session, body.person_id)
     if row["state"] != PurchaseGuardState.PURCHASE_SUSPENDED.value:
         raise HTTPException(status_code=409, detail="Purchase is not suspended")
     now = utc_now()
@@ -308,7 +312,7 @@ def confirm_cancellation(
     append_event(
         session,
         EventType.PURCHASE_GUARD_CANCELLED,
-        actor=f"human:{body.person_id}",
+        actor=actor,
         payload={"purchase_request_id": str(purchase_id), "at": now.isoformat()},
     )
     if state == PurchaseGuardState.SAVING_REALIZED:
