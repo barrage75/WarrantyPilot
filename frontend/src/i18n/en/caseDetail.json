@@ -67,6 +67,7 @@
   },
   "actionSuccess": "Action saved.",
   "evidence": "Evidence",
+  "evidenceFact": "{{label}}: {{value}}",
   "document": "Document",
   "page": "Page",
   "none": "No items",

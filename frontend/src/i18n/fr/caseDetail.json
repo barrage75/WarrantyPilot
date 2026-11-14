@@ -67,6 +67,7 @@
   },
   "actionSuccess": "Action enregistrée.",
   "evidence": "Preuves",
+  "evidenceFact": "{{label}} : {{value}}",
   "document": "Document",
   "page": "Page",
   "none": "Aucun élément",
