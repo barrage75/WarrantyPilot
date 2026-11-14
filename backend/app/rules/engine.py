@@ -286,7 +286,16 @@ class DeterministicRulesEngine:
             origin = fallback.field
         if not isinstance(start, date):
             raise RuntimeError("Date de départ invalide après résolution")
-        check("start_date", True, f"{origin} : {start:%d/%m/%Y}, approximation={approximated}")
+        check(
+            "start_date",
+            today >= start,
+            f"{origin} : {start:%d/%m/%Y}, approximation={approximated}",
+        )
+        if today < start:
+            return verify(
+                f"garantie non commencée (début le {start:%d/%m/%Y})",
+                f"warranty has not started (starts on {start:%d/%m/%Y})",
+            )
         end = (
             start + timedelta(days=rule.duration_days - 1)
             if rule.duration_days
@@ -299,39 +308,58 @@ class DeterministicRulesEngine:
             f"{rule.duration_days} days" if rule.duration_days else f"{months} months"
         )
         check("extension", None, "Extension non nécessaire ou sans preuve")
-        if today > end:
-            for extension in (r for r in matches if r.right_type == RightType.EXTENSION):
-                certificate = get(
-                    "warranty_plus_certificate"
-                    if extension.requires_certificate
-                    else "service_contract"
-                )
-                extension_right = next(
-                    (r for r in own_rights if r.right_type == RightType.EXTENSION), None
-                )
-                if not truthy(certificate) and extension_right is None:
+        coverage_end = end
+        for extension in (r for r in matches if r.right_type == RightType.EXTENSION):
+            certificate = get(
+                "warranty_plus_certificate"
+                if extension.requires_certificate
+                else "service_contract"
+            )
+            extension_right = next(
+                (
+                    r
+                    for r in own_rights
+                    if r.right_type == RightType.EXTENSION and r.rule_id == extension.id
+                ),
+                None,
+            )
+            if not truthy(certificate) and extension_right is None:
+                continue
+            if extension_right:
+                evidence.extend(p for p in extension_right.evidence if p not in evidence)
+                if (
+                    today < extension_right.start_date
+                    and extension_right.start_date > end + timedelta(days=1)
+                ):
+                    check(
+                        "extension",
+                        False,
+                        f"Extension non commencée : {extension_right.start_date:%d/%m/%Y}",
+                    )
                     continue
-                if extension_right:
-                    evidence.extend(p for p in extension_right.evidence if p not in evidence)
-                    extended_end = extension_right.end_date
-                    extension_label = "extension contractuelle"
-                    extension_english = "contractual extension"
-                else:
-                    term = get("extension_months")
-                    duration = fact_value(term) if term else None
-                    if not isinstance(duration, int) or isinstance(duration, bool) or duration <= 0:
+                extended_end = extension_right.end_date
+                extension_label = "extension contractuelle"
+                extension_english = "contractual extension"
+            else:
+                term = get("extension_months")
+                duration = fact_value(term) if term else None
+                if not isinstance(duration, int) or isinstance(duration, bool) or duration <= 0:
+                    check("extension", False, "Preuve présente mais durée d'extension absente")
+                    if today > end:
                         missing[:] = ["extension_months"]
-                        check("extension", False, "Preuve présente mais durée d'extension absente")
                         return verify("durée d'extension absente", "missing extension duration")
-                    extended_end = add_months(end + timedelta(days=1), duration) - timedelta(days=1)
-                    extension_label = f"extension de {duration} mois"
-                    extension_english = f"{duration} month extension"
-                check(
-                    "extension",
-                    today <= extended_end,
-                    f"{extension.id} jusqu'au {extended_end:%d/%m/%Y}",
-                )
-                if today <= extended_end:
+                    continue
+                extended_end = add_months(end + timedelta(days=1), duration) - timedelta(days=1)
+                extension_label = f"extension de {duration} mois"
+                extension_english = f"{duration} month extension"
+            check(
+                "extension",
+                today <= extended_end,
+                f"{extension.id} jusqu'au {extended_end:%d/%m/%Y}",
+            )
+            if today <= extended_end:
+                coverage_end = max(end, extended_end)
+                if today > end:
                     rule = extension
                     end = extended_end
                     duration_label = extension_label
@@ -342,9 +370,9 @@ class DeterministicRulesEngine:
                         True,
                         f"{rule.id} version {rule.version}, motif {rule.applies_to.model_glob}",
                     )
-                    break
+                break
         if dates is not None:
-            dates["warranty_end"] = end
+            dates["warranty_end"] = coverage_end
         categories = fields.get("incident_category", [])
         if not categories and self.classifier:
             categories = [self.classifier.to_fact(incident)]
