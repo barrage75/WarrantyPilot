@@ -11,7 +11,7 @@ Repères : API `http://127.0.0.1:8001/api` (`WP_API`), front `http://127.0.0.1:5
 3. Reproduction Dell, une fois : `cd repro/dell && uv sync --locked && uv run playwright install --with-deps chromium && uv run pytest -v && cd ../..`.
 4. Vérifications, **tous les services de démo arrêtés** (port 8100 libre, voir § Port 8100) : `make lint typecheck test`, `make p0`, `make frontend-build`.
    - `make p0` : lance sa propre reproduction Dell sur 8100 (runtime temporaire), attend `GET /__test__/cases`, puis `pytest -m p0 backend/tests/p0/test_p0_gate.py`. Mesuré : `10 passed` en 23 s.
-5. Répéter le script deux fois, chronométrer (référence : 27,8 s de parcours automatisé, voir `SCRIPT_3MIN.md`).
+5. Répéter le script deux fois, chronométrer (référence : 25,9 s de parcours automatisé à chaud, voir `SCRIPT_3MIN.md`).
 6. Enregistrer la **vidéo de secours** (3 min, 1440×900) sur la machine **et** une clé USB. Copier les captures Dell (`runtime/browser/screenshots/<action_id>/*.png`) hors de `runtime/`.
 7. Désactiver mises à jour, notifications, veille.
 
@@ -31,6 +31,8 @@ make preflight   # attendu "ok": true
 curl -s -X POST http://127.0.0.1:8100/__test__/reset   # vide les dossiers du portail reproduit ; attendu {"reset":true}
 ls runtime/journal-archive/ | tail -1                  # le journal précédent est archivé (events.jsonl, anchors.jsonl)
 ```
+
+**Répétition de chauffe obligatoire** : après chaque démarrage de `make dev`, jouer une fois le parcours Dell (dossier par le chat, checklist, « Valider ») puis refaire `make reset` et le reset du portail. Mesuré : la première action portail après redémarrage a pris 32 s, les suivantes 1,7 à 2,1 s.
 
 `make seed` recrée la base sans passer par l'API (`python -m app.core.reset`) : à utiliser **API arrêtée**, par exemple si `make reset` échoue faute de session. Reset par l'interface : connecté en Karim, page **Démo** → **« Réinitialiser la démo »** → **« Confirmer la remise à zéro »** ; message « Démo réinitialisée. Le journal précédent a été archivé… ». Un opérateur (Paul) ne peut pas faire le reset.
 

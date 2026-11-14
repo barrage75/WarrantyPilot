@@ -2,20 +2,23 @@
 
 Données 100 % fictives (Appelia, domaines `.example`, Service Tag fictif `7XK4L93`, voir `data/appelia/README.md`). Aucun envoi à un fabricant, aucun service public : tout écoute sur `127.0.0.1`.
 
-Rejoué le 14/11/2026 sur `integration` (après #35, #37, #38), une fois par l'API et une fois par l'interface (Playwright, Chromium 1440×900). Durées mesurées (machine de dev, sans pauses de parole) :
+Rejoué le 14/11/2026 sur `integration` (après #35, #37, #38, #39), par l'API (script complet : 7,9 s) puis deux fois par l'interface (Playwright, Chromium 1440×900). Durées de l'interface, sans pauses de parole :
 
-| Étape | API | Interface |
+| Étape | Rejeu 1 | Rejeu 2 |
 |---|---|---|
-| Connexion Paul | < 0,1 s | 0,2 s |
-| Scan 65 documents | < 2 s | 2,1 s |
-| Chat Jabra → dossier créé, e-mail parti | 0,14 s | 1,0 s |
-| Chat Dell → dossier créé avec checklist PC | 0,02 s | (par l'API, voir écart 1) |
-| 7 étapes de checklist + validation → `tracked` (portail local rempli) | 1,7 s | 3,9 s + 1,6 s |
-| Portail local avancé jusqu'à `closed` → dossier `resolved` | tick 0,02 s | 2,5 s (suivi périodique 5 s) |
-| Garde-fou : suspendre + annuler | < 0,1 s | 2,6 s |
-| Résolution humaine Jabra + économie réalisée | < 0,1 s | 3,5 s |
-| Scan final | < 2 s | 2,2 s |
-| **Total automatisé** | — | **27,8 s** |
+| Connexion Paul | 0,2 s | 0,2 s |
+| Scan 65 documents | 2,2 s | 2,2 s |
+| Chat Jabra → dossier créé, e-mail parti | 1,0 s | 1,0 s |
+| Connexion Karim + dossier Dell par le chat (API, voir écart 1) | 2,3 s | 2,3 s |
+| 7 étapes de checklist + « Valider » | 5,0 s | 5,0 s |
+| Portail local rempli → `tracked` | **32,0 s** | 2,1 s |
+| Portail avancé à `closed` → `resolved` (suivi périodique 5 s) | 3,7 s | 2,6 s |
+| Garde-fou : suspendre + annuler | 2,6 s | 2,6 s |
+| Résolution humaine Jabra + économie réalisée | 3,5 s | 3,5 s |
+| Scan final | 2,2 s | 1,8 s |
+| **Total** | **57,3 s** | **25,9 s** |
+
+Le rejeu 1 suivait un redémarrage de `make dev` : la première action portail a pris 32 s (cause non isolée ; premier lancement du navigateur piloté probable). D'où la répétition de chauffe à H-30 (`RUNBOOK.md`). Par l'API, la validation → `tracked` a pris 1,7 s.
 
 Le reste des 3 minutes, c'est la parole. Les temps du tableau « Minutage » sont des cibles de répétition, pas des mesures.
 
