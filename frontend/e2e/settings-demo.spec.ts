@@ -1,5 +1,4 @@
-import { mkdirSync } from "node:fs";
-import { resolve } from "node:path";
+import { screenshotPath } from "./screenshot-path";
 import { expect, test, type Locator } from "@playwright/test";
 import { loginUi, resetFromUi } from "./helpers";
 
@@ -37,8 +36,6 @@ test("Karim manages real settings and confirms demo reset in responsive bento ti
  const response = await page.request.get("/api/settings");
  expect(response.ok()).toBeTruthy();
  expect(Number((await response.json() as { auto_send_threshold_eur: string }).auto_send_threshold_eur)).toBe(37.5);
- const directory = "/home/ubuntu/screenshots/settings-demo";
- mkdirSync(directory, { recursive: true });
  for (const [name, path] of [["settings", "/settings"], ["demo", "/demo"]]) {
   await page.goto(path);
   if (name === "settings") await expect(threshold).toHaveValue("37.50");
@@ -47,7 +44,7 @@ test("Karim manages real settings and confirms demo reset in responsive bento ti
    await page.setViewportSize({ width, height });
    await page.evaluate(() => window.scrollTo(0, 0));
    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-   if (width === 1440 || width === 390) await page.screenshot({ path: resolve(directory, `${name}-karim-${width}x${height}.png`), animations: "disabled" });
+   if (width === 1440 || width === 390) await page.screenshot({ path: screenshotPath("settings-demo", `${name}-karim-${width}x${height}.png`), animations: "disabled" });
   }
  }
  await page.setViewportSize({ width: 390, height: 844 });
@@ -58,7 +55,7 @@ test("Karim manages real settings and confirms demo reset in responsive bento ti
  await reset.hover();
  await expect.poll(() => contrastRatio(reset)).toBeGreaterThanOrEqual(4.5);
  console.log(`Reset button contrast: ${resetContrast.toFixed(2)}:1`);
- await page.screenshot({ path: resolve(directory, "demo-danger-karim-390x844.png"), animations: "disabled" });
+ await page.screenshot({ path: screenshotPath("settings-demo", "demo-danger-karim-390x844.png"), animations: "disabled" });
  let resets = 0;
  page.on("request", request => { if (request.method() === "POST" && request.url().endsWith("/api/demo/reset")) resets++; });
  await reset.click();
@@ -70,7 +67,7 @@ test("Karim manages real settings and confirms demo reset in responsive bento ti
  await confirmButton.hover();
  await expect.poll(() => contrastRatio(confirmButton)).toBeGreaterThanOrEqual(4.5);
  console.log(`Confirm button contrast: ${confirmContrast.toFixed(2)}:1`);
- await page.screenshot({ path: resolve(directory, "demo-confirmation-karim-390x844.png"), animations: "disabled" });
+ await page.screenshot({ path: screenshotPath("settings-demo", "demo-confirmation-karim-390x844.png"), animations: "disabled" });
  await dialog.getByRole("button", { name: "Annuler", exact: true }).click();
  await expect(dialog).not.toBeVisible(); expect(resets).toBe(0);
  await reset.click();

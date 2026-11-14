@@ -1,9 +1,9 @@
-import { mkdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { KARIM, loginUi } from "./helpers";
+import { screenshotPath } from "./screenshot-path";
 
 test("upload an Appelia Factur-X invoice and check the inbox against the real API", async ({ page }) => {
  await loginUi(page);
@@ -18,14 +18,12 @@ test("upload an Appelia Factur-X invoice and check the inbox against the real AP
  await expect(page.getByRole("article", { name: /invoice-001.pdf/ })).toContainText("Factur-X");
  await page.getByText("Voir les faits extraits", { exact: true }).click();
  await expect(page.locator("main dl dt").first()).toBeVisible();
- const directory = "/home/ubuntu/screenshots/ui-fix";
- mkdirSync(directory, { recursive: true });
- await page.screenshot({ path: resolve(directory, "documents-upload-fr.png"), animations: "disabled" });
+ await page.screenshot({ path: screenshotPath("ui-fix", "documents-upload-fr.png"), animations: "disabled" });
  await page.getByText("Voir les faits extraits", { exact: true }).click();
  await page.getByRole("button", { name: "Relever la boîte de réception", exact: true }).click();
  await expect(page.getByRole("heading", { name: "Bilan de la relève" })).toBeVisible();
  await expect(page.getByText("Factures : 0", { exact: true })).toBeVisible();
- await page.screenshot({ path: resolve(directory, "documents-poll-fr.png"), animations: "disabled" });
+ await page.screenshot({ path: screenshotPath("ui-fix", "documents-poll-fr.png"), animations: "disabled" });
  await page.getByLabel("Choisir un fichier", { exact: true }).setInputFiles(resolve("../data/appelia/invoices/invoice-001.pdf"));
  await expect(page.getByText("Doublon — déjà importé", { exact: true })).toBeVisible();
  await captureUpload(page, "duplicate");
@@ -81,9 +79,7 @@ test("uploads a new unique Factur-X invoice with facts and no duplicate row", as
   await expectNoHorizontalOverflow(page);
  }
  await page.setViewportSize({ width: 1440, height: 900 });
- const directory = "/home/ubuntu/screenshots/ui-fix";
- mkdirSync(directory, { recursive: true });
- await page.screenshot({ path: resolve(directory, "documents-facturx.png"), animations: "disabled" });
+ await page.screenshot({ path: screenshotPath("ui-fix", "documents-facturx.png"), animations: "disabled" });
  await page.getByLabel("Choisir un fichier", { exact: true }).setInputFiles(file);
  await expect(page.getByText(/doublon détecté : contenu identique/)).toBeVisible();
  await expect(page.getByRole("article", { name: new RegExp(invoiceNumber) })).toHaveCount(1);
@@ -134,13 +130,11 @@ async function expectNoHorizontalOverflow(page: Page) {
 }
 
 async function captureUpload(page: Page, state: string) {
- const directory = "/home/ubuntu/screenshots/documents-review";
- mkdirSync(directory, { recursive: true });
  for (const [width, height] of [[1440, 900], [390, 844]]) {
   await page.setViewportSize({ width, height });
   await page.getByTestId("upload-card").scrollIntoViewIfNeeded();
   await expectNoHorizontalOverflow(page);
-  await page.screenshot({ path: resolve(directory, `${state}-${width}x${height}.png`), animations: "disabled" });
+  await page.screenshot({ path: screenshotPath("documents-review", `${state}-${width}x${height}.png`), animations: "disabled" });
  }
  await page.setViewportSize({ width: 1440, height: 900 });
 }

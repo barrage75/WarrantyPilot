@@ -1,5 +1,4 @@
-import { mkdirSync } from "node:fs";
-import { resolve } from "node:path";
+import { screenshotPath } from "./screenshot-path";
 import { expect, test } from "@playwright/test";
 import { demoIdentities, fakeCase, resetFromUi } from "./helpers";
 
@@ -34,13 +33,11 @@ test("Karim reviews real case events and anchors the journal", async ({ page }) 
   await timeline.getByRole("button", { name: "Afficher plus d’événements" }).click();
   await expect(timeline.getByRole("listitem")).toHaveCount(Math.min(events.length, 20));
  }
- const directory = "/home/ubuntu/screenshots/journal";
- mkdirSync(directory, { recursive: true });
  for (const [width, height] of [[1440, 900], [390, 844], [360, 844], [768, 900], [1920, 1080]]) {
   await page.setViewportSize({ width, height });
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  if (width === 1440 || width === 390) await page.screenshot({ path: resolve(directory, `seeded-karim-${width}x${height}.png`), animations: "disabled" });
+  if (width === 1440 || width === 390) await page.screenshot({ path: screenshotPath("journal", `seeded-karim-${width}x${height}.png`), animations: "disabled" });
  }
  const anchorResponse = page.waitForResponse(response => response.url().endsWith("/api/journal/anchor") && response.request().method() === "POST");
  await page.getByRole("button", { name: "Ancrer maintenant" }).click();

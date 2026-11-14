@@ -1,5 +1,4 @@
-import { mkdirSync } from "node:fs";
-import { resolve } from "node:path";
+import { screenshotPath } from "./screenshot-path";
 import { expect, test } from "@playwright/test";
 import { resetFromUi } from "./helpers";
 
@@ -17,12 +16,10 @@ test("Karim reviews seeded purchase requests as responsive bento tiles", async (
   await expect(card).toContainText(item.explanationFr);
   await expect(card).toContainText(new Intl.NumberFormat("fr", { style: "currency", currency: "EUR" }).format(item.amountEur));
  }
- const directory = "/home/ubuntu/screenshots/purchase-guard";
- mkdirSync(directory, { recursive: true });
  for (const [width, height] of [[1440, 900], [390, 844], [360, 844], [768, 900], [1920, 1080]]) {
   await page.setViewportSize({ width, height });
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  if (width === 1440 || width === 390) await page.screenshot({ path: resolve(directory, `seeded-karim-${width}x${height}.png`), animations: "disabled" });
+  if (width === 1440 || width === 390) await page.screenshot({ path: screenshotPath("purchase-guard", `seeded-karim-${width}x${height}.png`), animations: "disabled" });
  }
  await page.emulateMedia({ reducedMotion: "reduce" });
  await page.reload();
