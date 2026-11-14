@@ -27,7 +27,8 @@ def get_session(request: Request) -> Generator[Session, None, None]:
 
 
 def get_app_settings(request: Request) -> AppSettings:
-    return request.app.state.app_settings
+    settings: AppSettings = request.app.state.app_settings
+    return settings
 
 
 def get_orchestrator(request: Request) -> Orchestrator:

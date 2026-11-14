@@ -41,7 +41,10 @@ from app.api.routers import (
     health,
     intake,
     journal,
+    notifications,
+    overview,
     purchase_guard,
+    reports,
     scan,
     settings,
 )
@@ -327,11 +330,14 @@ def create_app(
     for public_router in (health.router, auth.router):
         application.include_router(public_router, prefix="/api")
     for api_router in (
+        overview.router,
         intake.router,
         cases.router,
         followup.router,
         chat.router,
         scan.router,
+        reports.router,
+        notifications.router,
         purchase_guard.router,
         journal.router,
         agent.router,

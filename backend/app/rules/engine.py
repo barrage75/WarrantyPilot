@@ -95,6 +95,8 @@ class DeterministicRulesEngine:
         incident: Incident,
         rules: list[Rule],
         rights: list[Right],
+        *,
+        dates: dict[str, date] | None = None,
     ) -> Verdict:
         today = self.today() if callable(self.today) else self.today
         usable = [
@@ -247,6 +249,8 @@ class DeterministicRulesEngine:
         purchase = fact_value(proof)
         if not isinstance(purchase, date):
             raise RuntimeError("Date d'achat invalide après validation de la preuve")
+        if dates is not None:
+            dates["purchase_date"] = purchase
         missing.extend(
             name for name in rule.proof_required if name not in fields and name != "purchase_date"
         )
@@ -339,6 +343,8 @@ class DeterministicRulesEngine:
                         f"{rule.id} version {rule.version}, motif {rule.applies_to.model_glob}",
                     )
                     break
+        if dates is not None:
+            dates["warranty_end"] = end
         categories = fields.get("incident_category", [])
         if not categories and self.classifier:
             categories = [self.classifier.to_fact(incident)]
