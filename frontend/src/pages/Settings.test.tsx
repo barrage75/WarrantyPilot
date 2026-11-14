@@ -22,15 +22,17 @@ it.each(["-1", "1,20", "1.234", "", "abc"])("blocks saving an invalid threshold 
  expect(screen.getByRole("button", { name: "Enregistrer" })).toBeDisabled();
  expect(calls.some(call => call.method === "PUT")).toBe(false);
 });
-it("keeps duplicate prevention, removal and empty feature state inside tiles", async () => {
- flags = {}; renderWithApi(<Settings/>); await screen.findByText("Aucun drapeau de fonctionnalité renvoyé par l’API.");
+it("keeps duplicate prevention and removal while hiding the empty feature tile", async () => {
+ flags = {}; renderWithApi(<Settings/>); await screen.findByLabelText("Seuil d’envoi automatique (€)");
+ expect(screen.queryByRole("article", { name: "Fonctionnalités" })).not.toBeInTheDocument();
+ expect(screen.queryByRole("heading", { name: "Fonctionnalités" })).not.toBeInTheDocument();
  const emails = within(screen.getByRole("group", { name: "Liste blanche d’e-mails" }));
  await userEvent.type(emails.getByLabelText("Valeur à ajouter"), "a@example.test");
  expect(emails.getByRole("button", { name: "Ajouter" })).toBeDisabled();
  await userEvent.click(emails.getByRole("button", { name: "Supprimer a@example.test" }));
  expect(emails.queryByText("a@example.test")).not.toBeInTheDocument();
  expect(emails.getByRole("button", { name: "Ajouter" })).toBeEnabled();
- expect(screen.getAllByRole("article")).toHaveLength(6);
+ expect(screen.getAllByRole("article")).toHaveLength(5);
 });
 it("pauses and resumes independently of saving settings", async () => {
  renderWithApi(<Settings/>);

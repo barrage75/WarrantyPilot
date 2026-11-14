@@ -76,6 +76,15 @@ it("uploads multipart, announces progress, shows extracted facts and refreshes t
  expect(screen.getByRole("progressbar")).not.toHaveAttribute("aria-valuenow");
  expect(screen.queryByLabelText("Terminé")).not.toBeInTheDocument();
  expect(screen.getByText("Envoi").closest("li")).toHaveAttribute("aria-current", "step");
+ const dropzone = screen.getByRole("button", { name: /Déposez/ });
+ expect(dropzone).toHaveAttribute("aria-disabled", "true");
+ expect(dropzone).toHaveAttribute("tabindex", "-1");
+ const input = screen.getByLabelText("Choisir un fichier"), click = vi.spyOn(input, "click");
+ expect(input).toBeDisabled();
+ fireEvent.keyDown(dropzone, { key: "Enter" });
+ fireEvent.drop(dropzone, { dataTransfer: { files: [new File(["x"], "other.pdf")] } });
+ expect(click).not.toHaveBeenCalled();
+ expect(calls.filter(call => call.path.endsWith("/upload"))).toHaveLength(1);
  finish();
  expect(await screen.findByText("2 informations extraites")).toHaveClass("bg-ok/15");
  expect(screen.queryByText("Résultat du dépôt")).not.toBeInTheDocument();
@@ -164,12 +173,19 @@ it("polls the inbox, summarises every state, and refreshes", async () => {
  expect(calls.some(call => call.path === "/api/intake/poll" && call.method === "POST")).toBe(true);
  expect(calls.filter(call => call.path.startsWith("/api/documents?")).length).toBe(2);
 });
-it("supports keyboard activation of the drop zone and regular file input", async () => {
+it("uses the drop zone as the only visible keyboard file control", async () => {
  await render();
  const input = screen.getByLabelText("Choisir un fichier"), click = vi.spyOn(input, "click");
- screen.getByRole("button", { name: /Déposez/ }).focus();
+ const dropzone = screen.getByRole("button", { name: /Déposez/ });
+ expect(input).toHaveClass("sr-only");
+ expect(input).toHaveAttribute("id", "document-file");
+ expect(input).toHaveAttribute("accept", ".pdf,.xml");
+ expect(input).toHaveAttribute("aria-describedby", "document-formats");
+ expect(screen.queryByText("Choisir un fichier")).not.toBeInTheDocument();
+ await userEvent.tab(); expect(dropzone).toHaveFocus();
  await userEvent.keyboard("{Enter}"); expect(click).toHaveBeenCalledOnce();
- await userEvent.tab(); expect(input).toHaveFocus();
+ await userEvent.keyboard(" "); expect(click).toHaveBeenCalledTimes(2);
+ await userEvent.tab(); expect(screen.getByRole("button", { name: "Relever la boîte de réception" })).toHaveFocus();
 });
 it("registers matching FR/EN namespace keys and renders English", async () => {
  const keys = (value: Record<string, unknown>): string[] => Object.entries(value).flatMap(([key, child]) => typeof child === "object" && child ? keys(child as Record<string, unknown>).map(nested => key + "." + nested) : [key]).sort();

@@ -21,7 +21,6 @@
   "flags": "Fonctionnalités",
   "other": "Autres fonctionnalités",
   "priority": "Priorité {{priority}}",
-  "noFlags": "Aucun drapeau de fonctionnalité renvoyé par l’API.",
   "saved": "Paramètres enregistrés.",
   "agent": "Pause et reprise",
   "agentHint": "Le bouton de pause/reprise reste toujours disponible dans l’en-tête. La pause est indépendante de l’enregistrement des paramètres.",

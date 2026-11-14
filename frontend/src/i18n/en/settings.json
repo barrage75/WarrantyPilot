@@ -21,7 +21,6 @@
   "flags": "Features",
   "other": "Other features",
   "priority": "Priority {{priority}}",
-  "noFlags": "No feature flags returned by the API.",
   "saved": "Settings saved.",
   "agent": "Pause and resume",
   "agentHint": "The pause/resume button is always available in the header. Pausing is independent from saving settings.",

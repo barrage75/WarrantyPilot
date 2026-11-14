@@ -25,7 +25,7 @@
     "low_commitment_action": "Low-commitment action",
     "conditions": "Conditions"
   },
-  "intact": "Journal intact ✓",
+  "intact": "Journal intact",
   "modified": "Tampering detected at event no. {{seq}}",
   "invalid": "Journal integrity could not be verified",
   "checked": "{{count}} events verified",

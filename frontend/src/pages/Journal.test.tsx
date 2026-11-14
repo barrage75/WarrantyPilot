@@ -32,6 +32,7 @@ it("merges case events newest first, resolves actors, links cases and expands de
  await userEvent.click(within(rows[0]).getByText("Voir les détails"));
  await waitFor(() => expect(within(rows[0]).getByText("Équipement en panne")).toBeVisible());
  expect(screen.getByRole("status")).toHaveTextContent("Journal intègre");
+ expect(screen.getByText("Journal intègre", { exact: true })).toHaveClass("text-xl", "font-semibold");
  expect(screen.getByText("32 événements vérifiés")).toBeInTheDocument();
 });
 it("caps event requests at the 20 most recently updated cases", async () => {

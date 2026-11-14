@@ -25,7 +25,7 @@
     "low_commitment_action": "Action à faible engagement",
     "conditions": "Conditions"
   },
-  "intact": "Journal intègre ✓",
+  "intact": "Journal intègre",
   "modified": "Modification détectée à l'événement n° {{seq}}",
   "invalid": "Intégrité du journal non vérifiée",
   "checked": "{{count}} événements vérifiés",
