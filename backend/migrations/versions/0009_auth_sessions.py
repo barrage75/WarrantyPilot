@@ -5,8 +5,8 @@ from alembic import op
 
 from app.contracts.enums import EventType
 
-revision = "0008_auth_sessions"
-down_revision = "0007_purchase_guard_lifecycle"
+revision = "0009_auth_sessions"
+down_revision = "0008_intake_events"
 branch_labels = None
 depends_on = None
 

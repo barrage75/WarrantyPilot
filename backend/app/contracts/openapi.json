@@ -5,6 +5,129 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Api Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/people": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login People",
+        "operationId": "login_people_api_auth_people_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LoginPerson"
+                  },
+                  "type": "array",
+                  "title": "Response Login People Api Auth People Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login",
+        "operationId": "login_api_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionInfo"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Logout",
+        "operationId": "logout_api_auth_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Me",
+        "operationId": "me_api_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/documents": {
       "get": {
         "tags": [
@@ -161,28 +284,6 @@
                   "additionalProperties": true,
                   "type": "object",
                   "title": "Response Upload Api Documents Upload Post"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/health": {
-      "get": {
-        "summary": "Health",
-        "operationId": "health_api_health_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "type": "object",
-                  "title": "Response Health Api Health Get"
                 }
               }
             }
@@ -1942,16 +2043,20 @@
       "ChecklistStepUpdate": {
         "properties": {
           "person_id": {
-            "type": "string",
-            "format": "uuid",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Person Id"
           }
         },
         "additionalProperties": false,
         "type": "object",
-        "required": [
-          "person_id"
-        ],
         "title": "ChecklistStepUpdate"
       },
       "DataChecklist": {
@@ -2368,7 +2473,8 @@
           "intake_message_received",
           "intake_document_received",
           "reminder_drafted",
-          "chat_disclosure"
+          "chat_disclosure",
+          "settings_changed"
         ],
         "title": "EventType"
       },
@@ -2451,52 +2557,149 @@
       "HumanActionRequest": {
         "properties": {
           "person_id": {
-            "type": "string",
-            "format": "uuid",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Person Id"
           }
         },
         "additionalProperties": false,
         "type": "object",
-        "required": [
-          "person_id"
-        ],
         "title": "HumanActionRequest"
       },
-      "ManualProofRequest": {
+      "LoginPerson": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "operator"
+            ],
+            "title": "Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "role"
+        ],
+        "title": "LoginPerson"
+      },
+      "LoginRequest": {
         "properties": {
           "person_id": {
             "type": "string",
             "format": "uuid",
             "title": "Person Id"
           },
-          "proof": {
+          "password": {
             "type": "string",
+            "maxLength": 256,
             "minLength": 1,
-            "title": "Proof"
+            "title": "Password"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
           "person_id",
-          "proof"
+          "password"
         ],
-        "title": "ManualProofRequest"
+        "title": "LoginRequest"
       },
-      "ManualTakeoverRequest": {
+      "ManualProofRequest": {
         "properties": {
           "person_id": {
-            "type": "string",
-            "format": "uuid",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Person Id"
+          },
+          "proof_type": {
+            "$ref": "#/components/schemas/ManualProofType"
+          },
+          "reference": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 4,
+            "title": "Reference"
+          },
+          "proof_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Proof Date"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "person_id"
+          "proof_type",
+          "reference",
+          "proof_date"
         ],
+        "title": "ManualProofRequest"
+      },
+      "ManualProofType": {
+        "type": "string",
+        "enum": [
+          "case_number",
+          "email_message_id",
+          "portal_screenshot",
+          "carrier_tracking"
+        ],
+        "title": "ManualProofType"
+      },
+      "ManualTakeoverRequest": {
+        "properties": {
+          "person_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Person Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
         "title": "ManualTakeoverRequest"
       },
       "Person": {
@@ -2791,19 +2994,27 @@
       "RejectionRequest": {
         "properties": {
           "person_id": {
-            "type": "string",
-            "format": "uuid",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Person Id"
           },
           "reason": {
             "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
             "title": "Reason"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "person_id",
           "reason"
         ],
         "title": "RejectionRequest"
@@ -2949,6 +3160,46 @@
         ],
         "title": "ScanSummary"
       },
+      "SessionInfo": {
+        "properties": {
+          "person_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Person Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "operator"
+            ],
+            "title": "Role"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "person_id",
+          "name",
+          "role"
+        ],
+        "title": "SessionInfo"
+      },
       "Settings-Input": {
         "properties": {
           "id": {
@@ -3085,16 +3336,20 @@
       "ValidationRequest": {
         "properties": {
           "person_id": {
-            "type": "string",
-            "format": "uuid",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Person Id"
           }
         },
         "additionalProperties": false,
         "type": "object",
-        "required": [
-          "person_id"
-        ],
         "title": "ValidationRequest"
       },
       "Verdict": {
