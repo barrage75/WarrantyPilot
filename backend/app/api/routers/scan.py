@@ -9,18 +9,19 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.contracts.enums import (
     DocumentKind,
-    DocumentSource,
     RealityBadge,
     RightType,
 )
 from app.contracts.interfaces import RulesEngine
 from app.contracts.models import Equipment, Fact, Incident, Right, Rule, Verdict
+from app.core import tables
 from app.core.warranty import evaluate_equipment, savings_totals
 from app.ingestion.pdf_executor import run_pdf_task
-from app.ingestion.registry import ExtractorRegistry
 from app.rules import DeterministicRulesEngine
 
 router = APIRouter(prefix="/scan", tags=["scan"])
@@ -80,6 +81,24 @@ def _evaluate_equipment(
     )
 
 
+def _persist_scan_facts(session: Session, extracted: list[Fact]) -> None:
+    """Fill missing seed facts, keeping stable IDs and user edits across scans."""
+    if not extracted:
+        return
+    existing: set[str] = set(session.execute(select(tables.facts.c.id)).scalars())
+    equipment_ids: set[str] = set(session.execute(select(tables.equipment.c.id)).scalars())
+    document_ids: set[str] = set(session.execute(select(tables.documents.c.id)).scalars())
+    missing = [
+        fact.model_dump(mode="json")
+        for fact in extracted
+        if str(fact.id) not in existing
+        and str(fact.equipment_id) in equipment_ids
+        and str(fact.document_id) in document_ids
+    ]
+    if missing:
+        session.execute(tables.facts.insert(), missing)
+
+
 async def _run_scan(application: Any, scan_id: str) -> None:
     state: dict[str, Any] = application.state.scans[scan_id]
     try:
@@ -88,17 +107,25 @@ async def _run_scan(application: Any, scan_id: str) -> None:
             sys.path.insert(0, str(repository_root))
         from data.appelia.load import load_dataset
 
-        dataset = await run_pdf_task(load_dataset)
-        data_directory = repository_root / "data" / "appelia"
+        loop = asyncio.get_running_loop()
+
+        def document_loaded(done: int, total: int) -> None:
+            # The loader runs on the PDF worker; publish completed documents on the event loop.
+            loop.call_soon_threadsafe(
+                state.update,
+                {
+                    "documents_total": total,
+                    "documents_done": done,
+                    "progress": round(done * 100 / max(1, total)),
+                },
+            )
+
+        dataset = await run_pdf_task(
+            load_dataset,
+            facturx_extractor=application.state.services.get("extractor"),
+            on_document=document_loaded,
+        )
         state["documents_total"] = len(dataset.documents)
-        extractor = application.state.services.get("extractor") or ExtractorRegistry()
-        extracted_facts = list(dataset.facts)
-        for index, document in enumerate(dataset.documents, start=1):
-            if document.source == DocumentSource.FACTURX:
-                content = (data_directory / document.filename).read_bytes()
-                extracted_facts.extend(await run_pdf_task(extractor.extract, document, content))
-            state["documents_done"] = index
-            state["progress"] = round(index * 100 / max(1, len(dataset.documents)))
 
         engine = application.state.services.get("rules_engine")
         if engine is None:
@@ -123,7 +150,8 @@ async def _run_scan(application: Any, scan_id: str) -> None:
                     )
 
         def load_totals() -> dict[str, float]:
-            with application.state.session_factory() as session:
+            with application.state.session_factory() as session, session.begin():
+                _persist_scan_facts(session, list(dataset.facts))
                 return savings_totals(session, engine, rules)
 
         totals = await asyncio.to_thread(load_totals)

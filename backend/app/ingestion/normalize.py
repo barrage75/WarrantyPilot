@@ -45,6 +45,11 @@ def _normalized_facts(fact: Fact, fields: tuple[str, ...]) -> list[Fact]:
 
 
 def normalize_facts(facts: list[Fact], equipment: Equipment) -> list[Fact]:
+    owned_documents = {
+        _document_id(fact)
+        for fact in facts
+        if fact.equipment_id == equipment.id and _document_id(fact) is not None
+    }
     line_groups: dict[tuple[UUID, int], list[Fact]] = defaultdict(list)
     line_documents: set[UUID] = set()
 
@@ -81,7 +86,9 @@ def normalize_facts(facts: list[Fact], equipment: Equipment) -> list[Fact]:
             matched_documents.add(key[0])
             continue
 
-        if any(normalize_value(str(model)) == normalize_value(equipment.model) for model in models):
+        if key[0] in owned_documents and any(
+            normalize_value(str(model)) == normalize_value(equipment.model) for model in models
+        ):
             matched_lines[key] = None
             matched_documents.add(key[0])
 
@@ -116,6 +123,10 @@ def normalize_facts(facts: list[Fact], equipment: Equipment) -> list[Fact]:
         if fact.equipment_id not in (None, equipment.id):
             continue
         document_id = _document_id(fact)
+        if fact.equipment_id is None and (
+            document_id is None or document_id not in matched_documents | owned_documents
+        ):
+            continue
         if document_id in line_documents and document_id not in matched_documents:
             continue
         normalized.extend(_normalized_facts(fact, (_HEADER_ALIASES.get(fact.field, fact.field),)))

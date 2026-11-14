@@ -5,17 +5,25 @@ import re
 from io import BytesIO
 from pathlib import Path
 from urllib.parse import unquote
+from uuid import UUID
 
 from lxml import etree
 from pypdf import PdfReader
 from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
 
-from app.contracts.enums import DocumentKind, DocumentSource, EventType
+from app.contracts.enums import DocumentKind, DocumentSource, EventType, FactField
 from app.contracts.models import Document, Fact
 from app.core.journal import append_event
-from app.core.tables import documents, facts
-from app.ingestion.controls.duplicates import find_duplicates
+from app.core.tables import (
+    documents,
+    equipment,
+    equipment_documents,
+    equipment_suppliers,
+    facts,
+    suppliers,
+)
+from app.ingestion.controls.duplicates import find_duplicates, normalize
 from app.ingestion.controls.suspicious import (
     SuspicionReport,
     detect_suspicious,
@@ -222,8 +230,28 @@ class DocumentIntake:
         # Content addressing prevents client filenames from becoming filesystem paths.
         path.write_bytes(content)
         document.filename = str(path)
+        equipment_id, link_reason = self._match_equipment(session, extracted)
+        linkage = {
+            "equipment_id": str(equipment_id) if equipment_id is not None else None,
+            "link_status": "linked" if equipment_id is not None else "unlinked",
+            "link_reason": link_reason,
+        }
         session.execute(insert(documents).values(**document.model_dump(mode="json")))
+        if equipment_id is not None:
+            session.execute(
+                insert(equipment_documents).values(
+                    equipment_id=str(equipment_id), document_id=str(document.id)
+                )
+            )
         for fact in extracted:
+            fact = fact.model_copy(
+                update={
+                    "equipment_id": equipment_id,
+                    "document_id": document.id,
+                    "incident_id": None,
+                    "provenance": fact.provenance.model_copy(update={"document_id": document.id}),
+                }
+            )
             session.execute(insert(facts).values(**fact.model_dump(mode="json")))
             append_event(
                 session,
@@ -242,6 +270,7 @@ class DocumentIntake:
                 "source": source.value,
                 "state": state,
                 "untrusted": True,
+                **linkage,
             },
         )
         return {
@@ -251,4 +280,59 @@ class DocumentIntake:
             "suspicious": report.suspicious
             or any(f.field == "security.suspicious" for f in extracted),
             "facts": len(extracted),
+            **linkage,
         }
+
+    @staticmethod
+    def _match_equipment(session: Session, extracted: list[Fact]) -> tuple[UUID | None, str]:
+        serials: set[str] = set()
+        supplier_names: set[str] = set()
+        for fact in extracted:
+            if fact.confidence < 0.5 or fact.value is None:
+                continue
+            if fact.field in {"serial", FactField.SERIAL_NUMBER.value} or re.fullmatch(
+                r"lines\[\d+\]\.serial", fact.field
+            ):
+                values = (
+                    fact.value
+                    if isinstance(fact.value, (list, tuple, set))
+                    else re.split(r"[,;|\n]+", str(fact.value))
+                )
+                serials.update(normalize(str(value)) for value in values if value is not None)
+            elif fact.field in {"supplier_name", FactField.RESELLER_NAME.value}:
+                supplier_names.add(normalize(str(fact.value)))
+        serials.discard("")
+        supplier_names.discard("")
+        if len(serials) > 1:
+            return None, "ambiguous_serial"
+        if len(supplier_names) > 1:
+            return None, "ambiguous_supplier"
+
+        supplier_matches = {
+            str(row.equipment_id)
+            for row in session.execute(
+                select(equipment_suppliers.c.equipment_id, suppliers.c.name).join(
+                    suppliers, equipment_suppliers.c.supplier_id == suppliers.c.id
+                )
+            )
+            if normalize(row.name) in supplier_names
+        }
+        if serials:
+            candidates = {
+                str(row.id)
+                for row in session.execute(select(equipment.c.id, equipment.c.serial))
+                if normalize(row.serial) in serials
+            }
+            if not candidates:
+                return None, "unknown_serial"
+            if supplier_matches:
+                candidates &= supplier_matches
+                if not candidates:
+                    return None, "conflicting_supplier"
+            reason = "serial"
+        else:
+            candidates = supplier_matches
+            reason = "supplier"
+        if len(candidates) == 1:
+            return UUID(next(iter(candidates))), reason
+        return None, f"ambiguous_{reason}" if candidates else "unmatched"

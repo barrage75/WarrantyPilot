@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
@@ -15,8 +16,10 @@ from app.contracts.enums import (
     FactSource,
     RightType,
 )
+from app.contracts.interfaces import DocumentExtractor
 from app.contracts.models import Document, Equipment, Fact, Person, Provenance, Right
 from app.ingestion.registry import ExtractorRegistry
+from app.ingestion.text_invoice import TextInvoiceExtractor
 
 from .constants import UUID_NAMESPACE
 
@@ -37,7 +40,12 @@ class AppeliaDataset:
     equipment_records: tuple[dict[str, Any], ...]
 
 
-def load_dataset(directory: Path | None = None) -> AppeliaDataset:
+def load_dataset(
+    directory: Path | None = None,
+    *,
+    facturx_extractor: DocumentExtractor | None = None,
+    on_document: Callable[[int, int], None] | None = None,
+) -> AppeliaDataset:
     """Load the committed synthetic records without writing to or connecting to a database."""
     data_directory = directory or DATA_DIRECTORY
     people_records = _read_json(data_directory / "people.json")
@@ -87,25 +95,26 @@ def load_dataset(directory: Path | None = None) -> AppeliaDataset:
     )
     documents_by_filename = {item.filename: item for item in documents}
     equipment_by_serial = {item["serial"]: item for item in equipment_records}
-    equipment_ids = {
-        serial: UUID(item["id"]) for serial, item in equipment_by_serial.items()
-    }
+    equipment_ids = {serial: UUID(item["id"]) for serial, item in equipment_by_serial.items()}
     annotations_by_filename = {item["filename"]: item for item in annotations}
     extracted_facts: list[Fact] = []
-    registry = ExtractorRegistry()
-    for document in documents:
-        if document.source != DocumentSource.FACTURX:
+    registry = facturx_extractor or ExtractorRegistry()
+    if on_document is not None:
+        on_document(0, len(documents))
+    for index, document in enumerate(documents, start=1):
+        if document.kind != DocumentKind.INVOICE:
+            if on_document is not None:
+                on_document(index, len(documents))
             continue
         annotation = annotations_by_filename[document.filename]
         line_serials = [line["serials"] for line in annotation["lines"]]
         related_equipment = list(
-            dict.fromkeys(
-                equipment_ids[serial] for serials in line_serials for serial in serials
-            )
+            dict.fromkeys(equipment_ids[serial] for serials in line_serials for serial in serials)
         )
-        for fact in registry.extract(
-            document, (data_directory / document.filename).read_bytes()
-        ):
+        extractor = (
+            registry if document.source == DocumentSource.FACTURX else TextInvoiceExtractor()
+        )
+        for fact in extractor.extract(document, (data_directory / document.filename).read_bytes()):
             line_match = re.match(r"lines\[(\d+)\]\.", fact.field)
             serials = (
                 line_serials[int(line_match[1])]
@@ -135,6 +144,8 @@ def load_dataset(directory: Path | None = None) -> AppeliaDataset:
                         }
                     )
                 )
+        if on_document is not None:
+            on_document(index, len(documents))
 
     facts = list(extracted_facts)
     rights: list[Right] = []
@@ -219,9 +230,7 @@ def load_dataset(directory: Path | None = None) -> AppeliaDataset:
 
     certificate_by_scenario = {
         "trap-10": documents_by_filename["documents/jabra-warranty-plus-001.pdf"],
-        "warranty-plus-2": documents_by_filename[
-            "documents/jabra-warranty-plus-002.pdf"
-        ],
+        "warranty-plus-2": documents_by_filename["documents/jabra-warranty-plus-002.pdf"],
     }
     for scenario, document in certificate_by_scenario.items():
         item = equipment_records_by_scenario[scenario]
@@ -231,9 +240,7 @@ def load_dataset(directory: Path | None = None) -> AppeliaDataset:
             int(item["warranty_months"]),
         ) - timedelta(days=1)
         extension_start = warranty_end + timedelta(days=1)
-        extension_end = _add_months(extension_start, extension_months) - timedelta(
-            days=1
-        )
+        extension_end = _add_months(extension_start, extension_months) - timedelta(days=1)
         add_right(
             item,
             document,

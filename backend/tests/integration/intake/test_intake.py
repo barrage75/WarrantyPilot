@@ -34,6 +34,8 @@ from app.intake.documents import MAX_DOCUMENT_BYTES, DocumentIntake
 from app.intake.reporting import _equipment_category, report_failure
 from app.intake.service import IntakeService
 from app.intake.transports import READONLY_SCOPE, GmailTransport, MaildirInbox
+from app.rules import DEFAULT_RULES_DIR, DeterministicRulesEngine, load_rules
+from app.testing.fakes import FakeExtractor
 from tests.auth_helpers import login
 from tests.unit.ingestion.fixture_generator import cii, facturx_pdf, invoice_pdf
 
@@ -105,7 +107,13 @@ def client(
             app_engine=engine,
             session_factory=factory,
             app_settings=settings,
-            services={"intake": intake},
+            services={
+                "intake": intake,
+                "extractor": FakeExtractor(),
+                "rules_engine": DeterministicRulesEngine(settings.demo_today),
+                "rules": load_rules(DEFAULT_RULES_DIR),
+                "action_adapters": {},
+            },
         )
     )
     login(api)

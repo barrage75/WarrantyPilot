@@ -23,6 +23,8 @@ async def create_failure(
         badge=inbox.badge,
     )
     case_id = report.case_id
+    if report.equipment_id is not None:
+        return {"case_id": case_id, "verdict": None, "questions": report.questions}
     verdict = Verdict(
         value=VerdictValue.TO_VERIFY,
         missing=report.questions or ["Évaluer les preuves de garantie avant toute action"],

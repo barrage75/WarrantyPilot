@@ -426,6 +426,158 @@ def test_extension_right_and_classifier() -> None:
     assert result.value == "not_covered"
 
 
+@pytest.mark.parametrize("brand", ["Jabra", "Dell"])
+@pytest.mark.parametrize("has_right", [False, True], ids=["certificate", "right"])
+@pytest.mark.parametrize("offset", [-1, 0, 1], ids=["before", "last-day", "after"])
+def test_proven_extension_end_is_known_before_standard_expiry(
+    brand: str, has_right: bool, offset: int
+) -> None:
+    item = equipment(brand, "Evolve2 65" if brand == "Jabra" else "Latitude 5440")
+    base_end = date(2026, 11, 20)
+    extended_end = date(2027, 11, 20)
+    facts = [fact("purchase_date", "2024-11-21")]
+    extension_id = "jabra-warranty-plus" if brand == "Jabra" else "dell-prosupport"
+    if brand == "Dell":
+        facts.extend([fact("ship_date", "2024-11-21"), fact("warranty_term_months", 24)])
+    rights = []
+    if has_right:
+        rights.append(
+            Right(
+                equipment_id=item.id,
+                right_type="extension",
+                rule_id=extension_id,
+                start_date=base_end + timedelta(days=1),
+                end_date=extended_end,
+                evidence=[fact("service_contract", True).provenance],
+            )
+        )
+    else:
+        facts.extend(
+            [
+                fact("warranty_plus_certificate" if brand == "Jabra" else "service_contract", True),
+                fact("extension_months", 12),
+            ]
+        )
+    dates: dict[str, date] = {}
+
+    result = DeterministicRulesEngine(base_end + timedelta(days=offset)).evaluate(
+        item, facts, incident(), RULES, rights, dates=dates
+    )
+
+    assert result.value == "covered"
+    assert dates["warranty_end"] == extended_end
+    assert next(c for c in result.checks if c.name == "extension").passed is True
+    assert result.rule_id == (
+        extension_id if offset > 0 else "jabra-evolve" if brand == "Jabra" else "dell-latitude"
+    )
+    assert result.channel == (
+        "browser_portal"
+        if brand == "Dell"
+        else "email_manufacturer_support"
+        if offset > 0
+        else "email_reseller"
+    )
+    if has_right:
+        assert rights[0].evidence[0] in result.evidence
+
+
+@pytest.mark.parametrize(
+    "start_source",
+    ["purchase_date", "invoice_date", "ship_date", "ship_inventory", "ship_fallback"],
+)
+@pytest.mark.parametrize("offset", [-1, 0, 1], ids=["not-started", "first-day", "started"])
+def test_warranty_cannot_cover_before_resolved_start(start_source: str, offset: int) -> None:
+    start = date(2026, 11, 21)
+    item = equipment()
+    facts = [fact("invoice_date" if start_source == "invoice_date" else "purchase_date", start)]
+    if start_source.startswith("ship"):
+        item = equipment("Dell", "Latitude 5440")
+        facts.append(fact("warranty_term_months", 24))
+        if start_source != "ship_fallback":
+            facts[0] = fact("purchase_date", "2026-10-01")
+        if start_source == "ship_date":
+            facts.append(fact("ship_date", start))
+        elif start_source == "ship_inventory":
+            item.ship_date = start
+
+    result = DeterministicRulesEngine(start + timedelta(days=offset)).evaluate(
+        item, facts, incident(), RULES, []
+    )
+
+    assert result.value == ("to_verify" if offset < 0 else "covered")
+    assert next(c for c in result.checks if c.name == "start_date").passed is (offset >= 0)
+    if offset < 0:
+        assert "non commencée" in result.explanation_fr
+        assert "not started" in result.explanation_en
+
+
+@pytest.mark.parametrize("offset", [-1, 0, 1], ids=["not-started", "first-day", "started"])
+def test_future_extension_right_does_not_fill_gap_after_standard_expiry(offset: int) -> None:
+    item = equipment()
+    right = Right(
+        equipment_id=item.id,
+        right_type="extension",
+        rule_id="jabra-warranty-plus",
+        start_date=date(2027, 1, 1),
+        end_date=date(2028, 12, 31),
+    )
+    result = DeterministicRulesEngine(right.start_date + timedelta(days=offset)).evaluate(
+        item, [fact("purchase_date", "2024-01-01")], incident(), RULES, [right]
+    )
+
+    assert result.value == ("not_covered" if offset < 0 else "covered")
+    assert result.rule_id == ("jabra-evolve" if offset < 0 else "jabra-warranty-plus")
+    assert next(c for c in result.checks if c.name == "extension").passed is (offset >= 0)
+
+
+@pytest.mark.parametrize("offset", [-1, 0, 1], ids=["before", "last-day", "expired"])
+def test_extension_expiry_remains_inclusive(offset: int) -> None:
+    result = DeterministicRulesEngine(date(2027, 12, 31) + timedelta(days=offset)).evaluate(
+        equipment(),
+        [
+            fact("purchase_date", "2024-01-01"),
+            fact("warranty_plus_certificate", True),
+            fact("extension_months", 24),
+        ],
+        incident(),
+        RULES,
+        [],
+    )
+
+    assert result.value == ("covered" if offset <= 0 else "not_covered")
+
+
+@pytest.mark.parametrize("certificate", [False, True])
+def test_unproven_extension_does_not_change_active_standard_warranty(certificate: bool) -> None:
+    facts = [fact("purchase_date", "2025-03-12"), fact("extension_months", 12)]
+    if certificate:
+        facts = [facts[0], fact("warranty_plus_certificate", True)]
+    dates: dict[str, date] = {}
+    result = DeterministicRulesEngine(TODAY).evaluate(
+        equipment(), facts, incident(), RULES, [], dates=dates
+    )
+
+    assert result.value == "covered"
+    assert result.channel == "email_reseller"
+    assert dates["warranty_end"] == date(2027, 3, 11)
+
+
+@pytest.mark.parametrize(
+    "offset,expected", [(1, "likely_covered"), (29, "likely_covered"), (30, "not_covered")]
+)
+def test_expired_approximate_standard_warranty_preserves_grace(offset: int, expected: str) -> None:
+    end = date(2026, 11, 20)
+    result = DeterministicRulesEngine(end + timedelta(days=offset)).evaluate(
+        equipment("Dell", "Latitude 5440"),
+        [fact("purchase_date", "2024-11-21"), fact("warranty_term_months", 24)],
+        incident(),
+        RULES,
+        [],
+    )
+
+    assert result.value == expected
+
+
 def test_inventory_start_approximation_and_invalid_invoice() -> None:
     item = equipment("Dell", "Latitude")
     item.ship_date = date(2024, 12, 1)

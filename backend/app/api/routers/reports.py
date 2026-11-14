@@ -7,7 +7,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy import select
 
-from app.contracts.enums import CaseStatus, Channel, enum_label
+from app.contracts.enums import CaseStatus, Channel, PurchaseGuardState, enum_label
 from app.contracts.models import utc_now
 from app.core import tables
 from app.core.journal import verify
@@ -28,6 +28,16 @@ class SavingsLine(BaseModel):
     reference: str | None
 
 
+class PurchaseGuardSavingsLine(BaseModel):
+    purchase_request_id: str
+    equipment_label: str
+    manufacturer: str
+    state: PurchaseGuardState
+    amount_eur: float
+    realized: bool
+    resolved_at: str | None
+
+
 class SavingsReport(BaseModel):
     generated_at: datetime
     company: str
@@ -37,6 +47,8 @@ class SavingsReport(BaseModel):
     journal_ok: bool
     journal_head: str | None
     lines: list[SavingsLine]
+    # Totals = case lines + purchase-guard lines (purchases with no case).
+    purchase_guard_lines: list[PurchaseGuardSavingsLine] = []
 
 
 @router.get("/savings", response_model=SavingsReport)
@@ -51,12 +63,23 @@ def savings(request: Request) -> SavingsReport:
             select(tables.events.c.hash).order_by(tables.events.c.seq.desc()).limit(1)
         ).scalar_one_or_none()
         equipment = {row.id: row for row in session.execute(select(tables.equipment))}
-        purchases: dict[str, list[tuple[float, str, str | None]]] = {}
-        for row in session.execute(select(tables.purchase_requests)):
+        purchases: dict[str, list[tuple[float, bool, str | None]]] = {}
+        unlinked = []
+        for row in session.execute(
+            select(tables.purchase_requests).order_by(tables.purchase_requests.c.id)
+        ):
+            if row.state == PurchaseGuardState.PURCHASE_KEPT.value:
+                continue
             if row.case_id:
                 purchases.setdefault(row.case_id, []).append(
-                    (float(row.amount), row.state, row.resolved_at)
+                    (
+                        float(row.amount),
+                        row.state == PurchaseGuardState.SAVING_REALIZED.value,
+                        row.resolved_at,
+                    )
                 )
+            else:
+                unlinked.append(row)
         references: dict[str, str] = {}
         for row in session.execute(select(tables.actions)):
             if row.payload.get("proof_type") == "case_number":
@@ -85,26 +108,43 @@ def savings(request: Request) -> SavingsReport:
         ):
             item = equipment.get(row.equipment_id)
             linked = purchases.get(row.id, [])
-            resolved = [p[2] for p in linked if p[2]]
-            lines.append(
-                SavingsLine(
-                    case_id=row.id,
+            groups = [
+                [p for p in linked if p[1] is realized]
+                for realized in (False, True)
+                if any(p[1] is realized for p in linked)
+            ] or [[]]
+            for group in groups:
+                realized = bool(group) and group[0][1]
+                resolved = [p[2] for p in group if p[2]]
+                lines.append(
+                    SavingsLine(
+                        case_id=row.id,
+                        equipment_label=f"{item.brand} {item.model}" if item else "",
+                        manufacturer=item.brand if item else "",
+                        channel=channels.get(row.verdict_id) or row.channel,
+                        status=row.status,
+                        amount_eur=round(sum(p[0] for p in group), 2),
+                        realized=realized,
+                        resolved_at=max(resolved)
+                        if resolved
+                        else row.updated_at
+                        if row.status == "resolved"
+                        else None,
+                        reference=references.get(row.id),
+                    )
+                )
+        guard_lines = []
+        for purchase in unlinked:
+            item = equipment.get(purchase.equipment_id)
+            guard_lines.append(
+                PurchaseGuardSavingsLine(
+                    purchase_request_id=purchase.id,
                     equipment_label=f"{item.brand} {item.model}" if item else "",
                     manufacturer=item.brand if item else "",
-                    channel=channels.get(row.verdict_id) or row.channel,
-                    status=row.status,
-                    amount_eur=round(sum(p[0] for p in linked), 2)
-                    if linked
-                    else float(item.purchase_price or 0)
-                    if item
-                    else 0,
-                    realized=bool(linked) and all(p[1] == "saving_realized" for p in linked),
-                    resolved_at=max(resolved)
-                    if resolved
-                    else row.updated_at
-                    if row.status == "resolved"
-                    else None,
-                    reference=references.get(row.id),
+                    state=purchase.state,
+                    amount_eur=round(float(purchase.amount), 2),
+                    realized=purchase.state == PurchaseGuardState.SAVING_REALIZED.value,
+                    resolved_at=purchase.resolved_at,
                 )
             )
     return SavingsReport(
@@ -114,6 +154,7 @@ def savings(request: Request) -> SavingsReport:
         journal_ok=journal_ok,
         journal_head=head,
         lines=lines,
+        purchase_guard_lines=guard_lines,
     )
 
 
@@ -155,6 +196,23 @@ def savings_csv(request: Request) -> Response:
                     "oui" if line.realized else "non",
                     line.resolved_at or "",
                     line.reference or "",
+                )
+            ]
+        )
+    for guard in report.purchase_guard_lines:
+        writer.writerow(
+            [
+                _csv_cell(value)
+                for value in (
+                    "",
+                    guard.equipment_label,
+                    guard.manufacturer,
+                    "",
+                    enum_label(guard.state),
+                    f"{guard.amount_eur:.2f}",
+                    "oui" if guard.realized else "non",
+                    guard.resolved_at or "",
+                    "",
                 )
             ]
         )

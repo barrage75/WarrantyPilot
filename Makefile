@@ -1,6 +1,7 @@
 .PHONY: setup seed dev smtp test p0 lint typecheck openapi login reset preflight frontend-build
 
 setup:
+	mkdir -p runtime
 	uv sync --project backend
 	cd frontend && npm ci
 	uv run --project backend alembic -c backend/alembic.ini upgrade head

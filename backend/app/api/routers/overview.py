@@ -76,7 +76,11 @@ def overview(
         if q and q.casefold() not in " ".join([label, item.serial, name]).casefold():
             continue
         verdict, dates = inventory_verdict(
-            engine, item, facts, application.state.services.get("rules", []), rights
+            engine,
+            item,
+            facts.get(item.id, []),
+            application.state.services.get("rules", []),
+            rights,
         )
         end = dates.get("warranty_end")
         days = (end - application.state.app_settings.demo_today).days if end else None

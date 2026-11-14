@@ -33,6 +33,9 @@ _ACTION_CHANNELS = {
     Channel.BROWSER_PORTAL.value,
 }
 
+# A freshly submitted Dell case reads "received"; only a later change is a reply.
+_PORTAL_BASELINE_STATUS = "received"
+
 
 def _event_key(payload: dict[str, Any]) -> tuple[str, ...] | None:
     message_id = payload.get("message_id")
@@ -185,6 +188,7 @@ def _reminder_state(application: FastAPI, case_id: UUID) -> ReminderState | None
         successful_sends: list[datetime] = []
         reminder_sends: list[datetime] = []
         responses: list[datetime] = []
+        portal_statuses: dict[str, str] = {}
         for event_type, at, payload in event_rows:
             event_time = _parse_datetime(at)
             if event_time is None or not isinstance(payload, dict):
@@ -211,17 +215,18 @@ def _reminder_state(application: FastAPI, case_id: UUID) -> ReminderState | None
             elif (
                 event_type == EventType.FOLLOWUP_RECEIVED.value
                 and payload.get("kind") != "followup_error"
-                and (
-                    payload.get("message_id")
-                    or payload.get("case_number")
-                    or payload.get("portal_status")
-                    or (
-                        isinstance(payload.get("proof"), dict)
-                        and payload["proof"].get("portal_status")
-                    )
-                )
             ):
-                responses.append(event_time)
+                proof = payload.get("proof")
+                proof = proof if isinstance(proof, dict) else {}
+                portal_status = payload.get("portal_status") or proof.get("portal_status")
+                if isinstance(portal_status, str) and portal_status:
+                    number = str(payload.get("case_number") or proof.get("case_number") or "")
+                    previous = portal_statuses.get(number, _PORTAL_BASELINE_STATUS)
+                    portal_statuses[number] = portal_status
+                    if portal_status != previous:
+                        responses.append(event_time)
+                elif payload.get("message_id") or payload.get("case_number"):
+                    responses.append(event_time)
     if not successful_sends:
         return None
     sent_at = min(successful_sends)

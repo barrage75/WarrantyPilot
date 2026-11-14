@@ -1363,6 +1363,22 @@ export interface components {
             /** Reason */
             reason?: string | null;
         };
+        /** PurchaseGuardSavingsLine */
+        PurchaseGuardSavingsLine: {
+            /** Purchase Request Id */
+            purchase_request_id: string;
+            /** Equipment Label */
+            equipment_label: string;
+            /** Manufacturer */
+            manufacturer: string;
+            state: components["schemas"]["PurchaseGuardState"];
+            /** Amount Eur */
+            amount_eur: number;
+            /** Realized */
+            realized: boolean;
+            /** Resolved At */
+            resolved_at: string | null;
+        };
         /**
          * PurchaseGuardState
          * @enum {string}
@@ -1464,6 +1480,11 @@ export interface components {
             journal_head: string | null;
             /** Lines */
             lines: components["schemas"]["SavingsLine"][];
+            /**
+             * Purchase Guard Lines
+             * @default []
+             */
+            purchase_guard_lines: components["schemas"]["PurchaseGuardSavingsLine"][];
         };
         /** ScanStartResponse */
         ScanStartResponse: {

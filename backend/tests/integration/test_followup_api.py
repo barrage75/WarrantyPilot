@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import insert, select, update
 
 from app.api.main import create_app
+from app.api.routers.followup import _reminder_state
 from app.contracts.enums import (
     CaseStatus,
     Channel,
@@ -300,3 +301,153 @@ def test_human_case_resolution_requires_person_and_note_and_realizes_cancelled_s
         assert status_event["actor"] == f"human:{operator['id']}"
         assert status_event["payload"]["note"] == "Remplacement reçu."
         assert purchase_state == PurchaseGuardState.SAVING_REALIZED.value
+
+
+def _seed_sent_portal_case(session_factory) -> UUID:
+    case_id = _seed_case(session_factory, CaseStatus.SENT)
+    action_id = uuid4()
+    with session_factory.begin() as session:
+        session.execute(
+            insert(actions).values(
+                id=str(action_id),
+                case_id=str(case_id),
+                channel=Channel.BROWSER_PORTAL.value,
+                kind="dell_portal_submission",
+                idempotency_key=f"case:{case_id}:browser_portal:dell",
+                payload={},
+                badge=RealityBadge.REPRODUCTION.value,
+                requires_data_checklist=False,
+            )
+        )
+        session.execute(
+            insert(action_results).values(
+                id=str(uuid4()),
+                action_id=str(action_id),
+                status="success",
+                proof="case_number: 1234567890",
+                error=None,
+                badge=RealityBadge.REPRODUCTION.value,
+            )
+        )
+        append_event(
+            session,
+            EventType.ACTION_SUCCEEDED,
+            case_id=str(case_id),
+            payload={"action_id": str(action_id), "proof": "case_number: 1234567890"},
+        )
+    return case_id
+
+
+def _portal_reading(case_id: UUID, portal_status: str, status: str = "tracked"):
+    return {
+        "kind": "portal_status",
+        "case_id": str(case_id),
+        "status": status,
+        "proof": {
+            "url": "http://127.0.0.1:8100/support/status/1234567890",
+            "case_number": "1234567890",
+            "portal_status": portal_status,
+            "observed_at": followup_now().isoformat(),
+        },
+        "reality": "reproduction",
+        "untrusted": True,
+    }
+
+
+def _portal_app(db_engine, session_factory, app_settings):
+    return create_app(
+        app_settings=app_settings,
+        app_engine=db_engine,
+        session_factory=session_factory,
+    )
+
+
+def _install_due_scheduler(application, app_settings) -> None:
+    application.state.reminder_scheduler = ReminderScheduler(
+        ReminderPlanner(after_days=1, clock=lambda: followup_now() + timedelta(days=2)),
+        ReminderOutbox(app_settings.followup_outbox_path),
+    )
+
+
+def test_followup_repeated_received_portal_status_does_not_stop_reminders(
+    db_engine, session_factory, app_settings
+) -> None:
+    application = _portal_app(db_engine, session_factory, app_settings)
+    with TestClient(application) as client:
+        _reset(client)
+        _install_due_scheduler(application, app_settings)
+        case_id = _seed_sent_portal_case(session_factory)
+        application.state.services["follow_up"] = StaticFollowUp(
+            [_portal_reading(case_id, "received")]
+        )
+        for _ in range(3):
+            assert client.post("/api/followup/tick").status_code == 200
+        state = _reminder_state(application, case_id)
+        assert state is not None and state.last_response_at is None
+        drafts = application.state.reminder_outbox.pending(case_id)
+        assert [draft["kind"] for draft in drafts] == ["reminder_drafted"]
+        with session_factory() as session:
+            assert (
+                session.execute(
+                    select(cases.c.status).where(cases.c.id == str(case_id))
+                ).scalar_one()
+                == CaseStatus.TRACKED.value
+            )
+
+
+def test_followup_portal_status_change_counts_as_response_once(
+    db_engine, session_factory, app_settings
+) -> None:
+    application = _portal_app(db_engine, session_factory, app_settings)
+    with TestClient(application) as client:
+        _reset(client)
+        _install_due_scheduler(application, app_settings)
+        case_id = _seed_sent_portal_case(session_factory)
+        with session_factory.begin() as session:
+            append_event(
+                session,
+                EventType.FOLLOWUP_RECEIVED,
+                case_id=str(case_id),
+                payload=_portal_reading(case_id, "received"),
+            )
+        state = _reminder_state(application, case_id)
+        assert state is not None and state.last_response_at is None
+
+        application.state.services["follow_up"] = StaticFollowUp(
+            [_portal_reading(case_id, "in_progress")]
+        )
+        for _ in range(3):
+            assert client.post("/api/followup/tick").status_code == 200
+        state = _reminder_state(application, case_id)
+        assert state is not None and state.last_response_at is not None
+        assert application.state.reminder_outbox.pending(case_id) == []
+        with session_factory() as session:
+            readings = (
+                session.execute(
+                    select(events.c.payload).where(
+                        events.c.case_id == str(case_id),
+                        events.c.type == EventType.FOLLOWUP_RECEIVED.value,
+                    )
+                )
+                .scalars()
+                .all()
+            )
+        assert [r["proof"]["portal_status"] for r in readings] == ["received", "in_progress"]
+
+
+def test_followup_email_reply_still_counts_as_response(
+    db_engine, session_factory, app_settings
+) -> None:
+    application = _portal_app(db_engine, session_factory, app_settings)
+    with TestClient(application) as client:
+        _reset(client)
+        case_id = _seed_sent_portal_case(session_factory)
+        with session_factory.begin() as session:
+            append_event(
+                session,
+                EventType.FOLLOWUP_RECEIVED,
+                case_id=str(case_id),
+                payload={"kind": "email_reply", "message_id": "<r@example.test>"},
+            )
+        state = _reminder_state(application, case_id)
+        assert state is not None and state.last_response_at is not None
