@@ -17,10 +17,12 @@ from app.core.journal import append_event
 from app.core.tables import documents, facts
 from app.ingestion.controls.duplicates import find_duplicates
 from app.ingestion.controls.suspicious import (
+    SuspicionReport,
     detect_suspicious,
     scan_text,
     security_fact,
 )
+from app.ingestion.pdf_executor import run_pdf_task
 from app.ingestion.registry import ExtractorRegistry
 
 MAX_DOCUMENT_BYTES = 10 * 1024 * 1024
@@ -81,6 +83,10 @@ def inspect_document(filename: str, content: bytes) -> tuple[str, str, bool]:
     raise InvalidDocument("Seuls les PDF et factures XML sont acceptés")
 
 
+async def inspect_document_async(filename: str, content: bytes) -> tuple[str, str, bool]:
+    return await run_pdf_task(inspect_document, filename, content)
+
+
 class DocumentIntake:
     def __init__(self, root: Path, registry: ExtractorRegistry | None = None) -> None:
         self.root = root
@@ -96,16 +102,69 @@ class DocumentIntake:
     ) -> dict[str, object]:
         name, mime, structured = inspect_document(filename, content)
         sha = hashlib.sha256(content).hexdigest()
+        duplicate = self._duplicate_sha(session, sha)
+        if duplicate is not None:
+            return duplicate
+        document = self._new_document(name, sha, mime, structured, source)
+        report, extracted, state = self._extract_content(document, content, mime, structured)
+        return self._store_document(
+            session, name, source, sha, document, report, extracted, state, content
+        )
+
+    async def ingest_async(
+        self,
+        session: Session,
+        filename: str,
+        content: bytes,
+        *,
+        source: DocumentSource = DocumentSource.UPLOAD,
+        inspection: tuple[str, str, bool] | None = None,
+    ) -> dict[str, object]:
+        if inspection is None:
+            inspection = await inspect_document_async(filename, content)
+        name, mime, structured = inspection
+        sha = hashlib.sha256(content).hexdigest()
+        duplicate = self._duplicate_sha(session, sha)
+        if duplicate is not None:
+            return duplicate
+        document = self._new_document(name, sha, mime, structured, source)
+        report, extracted, state = await run_pdf_task(
+            self._extract_content, document, content, mime, structured
+        )
+        return self._store_document(
+            session, name, source, sha, document, report, extracted, state, content
+        )
+
+    @staticmethod
+    def _duplicate_sha(session: Session, sha: str) -> dict[str, object] | None:
         previous = session.execute(select(documents.c.id).where(documents.c.sha256 == sha)).first()
-        if previous is not None:
-            return {"document_id": str(previous.id), "duplicate": True, "reason": "sha256"}
-        document = Document(
+        if previous is None:
+            return None
+        return {"document_id": str(previous.id), "duplicate": True, "reason": "sha256"}
+
+    @staticmethod
+    def _new_document(
+        name: str,
+        sha: str,
+        mime: str,
+        structured: bool,
+        source: DocumentSource,
+    ) -> Document:
+        return Document(
             kind=DocumentKind.INVOICE,
             filename=name,
             sha256=sha,
             mime=mime,
             source=DocumentSource.FACTURX if structured else source,
         )
+
+    def _extract_content(
+        self,
+        document: Document,
+        content: bytes,
+        mime: str,
+        structured: bool,
+    ) -> tuple[SuspicionReport, list[Fact], str]:
         report = (
             detect_suspicious(content)
             if mime == "application/pdf"
@@ -126,6 +185,20 @@ class DocumentIntake:
             state = "pending_extraction"
         if any(f.field == "security.suspicious" for f in extracted):
             state = "quarantined"
+        return report, extracted, state
+
+    def _store_document(
+        self,
+        session: Session,
+        name: str,
+        source: DocumentSource,
+        sha: str,
+        document: Document,
+        report: SuspicionReport,
+        extracted: list[Fact],
+        state: str,
+        content: bytes,
+    ) -> dict[str, object]:
         known: list[tuple[Document, list[Fact]]] = []
         for row in session.execute(select(documents)).mappings():
             known_document = Document.model_validate(dict(row))

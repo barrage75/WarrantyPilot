@@ -208,7 +208,7 @@ async def upload(
     if not isinstance(content, bytes):
         raise HTTPException(status_code=400, detail="Fichier absent")
     try:
-        result = intake.documents.ingest(session, part.get_filename() or "", content)
+        result = await intake.documents.ingest_async(session, part.get_filename() or "", content)
         session.commit()
         return result
     except InvalidDocument as exc:

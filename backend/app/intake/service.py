@@ -12,7 +12,7 @@ from app.core.journal import append_event
 from app.core.tables import events, people
 from app.intake.chat_bridge import create_failure
 from app.intake.classifier import Classifier
-from app.intake.documents import DocumentIntake, InvalidDocument, inspect_document
+from app.intake.documents import DocumentIntake, InvalidDocument, inspect_document_async
 from app.intake.transports import Inbox
 
 logger = logging.getLogger(__name__)
@@ -80,7 +80,7 @@ class IntakeService:
 
     async def _process(self, session: Session, message: EmailMessage) -> dict[str, object]:
         bodies: list[str] = [str(message.get("Subject", ""))]
-        attachments: list[tuple[str, bytes]] = []
+        attachments: list[tuple[str, bytes, tuple[str, str, bool]]] = []
         rejected: list[str] = []
         for part in message.walk():
             if part.is_multipart():
@@ -90,11 +90,11 @@ class IntakeService:
                 content = part.get_payload(decode=True)
                 payload = content if isinstance(content, bytes) else b""
                 try:
-                    inspect_document(filename or "", payload)
+                    inspection = await inspect_document_async(filename or "", payload)
                 except InvalidDocument:
                     rejected.append("invalid_attachment")
                 else:
-                    attachments.append((filename or "", payload))
+                    attachments.append((filename or "", payload, inspection))
             elif part.get_content_maintype() == "text":
                 content = part.get_content()
                 if isinstance(content, str):
@@ -105,10 +105,17 @@ class IntakeService:
         if classification.suspicious:
             return {"state": "quarantined", "reason": "suspicious_body"}
         if classification.kind == "invoice":
-            documents = [
-                self.documents.ingest(session, name, content, source=DocumentSource.GMAIL)
-                for name, content in attachments
-            ]
+            documents = []
+            for name, content, inspection in attachments:
+                documents.append(
+                    await self.documents.ingest_async(
+                        session,
+                        name,
+                        content,
+                        source=DocumentSource.GMAIL,
+                        inspection=inspection,
+                    )
+                )
             return {"state": "invoice", "documents": documents, "rejected": rejected}
         if classification.kind != "failure":
             return {"state": "ignored", "reason": "other", "rejected": rejected}
