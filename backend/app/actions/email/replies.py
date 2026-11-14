@@ -1,4 +1,5 @@
 import re
+from email.utils import parseaddr
 from typing import Any, Protocol
 
 from app.actions.email.ledger import SentLedger
@@ -14,7 +15,19 @@ class KeywordReplyClassifier:
     def classify(self, data: dict[str, str]) -> str:
         text = data["untrusted_text"].casefold()
         groups = {
-            "rejected": ("refusé", "rejeté", "hors garantie", "denied", "rejected", "not covered"),
+            "rejected": (
+                "refusé",
+                "rejeté",
+                "hors garantie",
+                "denied",
+                "rejected",
+                "not covered",
+                "not accepted",
+                "non accepté",
+                "pas accepté",
+                "ne peut pas être accepté",
+                "cannot be accepted",
+            ),
             "info_requested": (
                 "merci de fournir",
                 "pourriez-vous",
@@ -24,7 +37,11 @@ class KeywordReplyClassifier:
             "accepted": ("accepté", "approuvé", "numéro de retour", "rma", "approved", "accepted"),
         }
         return next(
-            (outcome for outcome, words in groups.items() if any(word in text for word in words)),
+            (
+                outcome
+                for outcome, words in groups.items()
+                if any(re.search(r"\b" + re.escape(word) + r"\b", text) for word in words)
+            ),
             "unknown",
         )
 
@@ -35,14 +52,20 @@ class EmailReplyChecker:
         transport: MailTransport,
         ledger: SentLedger,
         classifier: ReplyClassifier | None = None,
+        sender: str = "garanties@appelia.example",
     ) -> None:
         self.transport, self.ledger = transport, ledger
         self.classifier = classifier or KeywordReplyClassifier()
+        self.sender = parseaddr(sender)[1].casefold()
 
     def check(self, case: Case) -> list[dict[str, Any]]:
         ids = {e["message_id"] for e in self.ledger.for_case(str(case.id))}
         results = []
         for msg in self.transport.fetch_replies():
+            if str(msg.get("Message-ID", "")) in ids or (
+                self.sender and parseaddr(str(msg.get("From", "")))[1].casefold() == self.sender
+            ):
+                continue
             matched = ""
             for header in ("In-Reply-To", "References"):
                 if ids.intersection(re.findall(r"<[^<>]+>", str(msg.get(header, "")))):
