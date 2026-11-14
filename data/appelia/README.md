@@ -75,8 +75,12 @@ from data.appelia.load import load_dataset
 dataset = load_dataset()
 ```
 
-Le loader passe les treize factures Factur-X par le registre d'extracteurs et expose
-les faits et droits déduits des preuves de location, Warranty+ et ProSupport.
+Le loader passe les treize factures Factur-X par le registre d'extracteurs et lit
+localement le texte étiqueté des 47 autres factures PDF, sans OCR ni service externe.
+Chaque fait conserve son extrait et sa page ; aucune durée absente du document
+n'est inventée. Il expose aussi les faits et droits déduits des preuves de
+location, Warranty+ et ProSupport. Le seed persiste ces faits ; un scan restaure
+les faits manquants d'une base déjà initialisée, sans les dupliquer.
 
 Les PDF sont produits avec des métadonnées à date fixe pour que la génération
 soit reproductible. Les outils de génération (`reportlab` et `factur-x`) sont

@@ -17,6 +17,7 @@ from app.contracts.enums import (
 )
 from app.contracts.models import Document, Equipment, Fact, Person, Provenance, Right
 from app.ingestion.registry import ExtractorRegistry
+from app.ingestion.text_invoice import TextInvoiceExtractor
 
 from .constants import UUID_NAMESPACE
 
@@ -87,25 +88,22 @@ def load_dataset(directory: Path | None = None) -> AppeliaDataset:
     )
     documents_by_filename = {item.filename: item for item in documents}
     equipment_by_serial = {item["serial"]: item for item in equipment_records}
-    equipment_ids = {
-        serial: UUID(item["id"]) for serial, item in equipment_by_serial.items()
-    }
+    equipment_ids = {serial: UUID(item["id"]) for serial, item in equipment_by_serial.items()}
     annotations_by_filename = {item["filename"]: item for item in annotations}
     extracted_facts: list[Fact] = []
     registry = ExtractorRegistry()
     for document in documents:
-        if document.source != DocumentSource.FACTURX:
+        if document.kind != DocumentKind.INVOICE:
             continue
         annotation = annotations_by_filename[document.filename]
         line_serials = [line["serials"] for line in annotation["lines"]]
         related_equipment = list(
-            dict.fromkeys(
-                equipment_ids[serial] for serials in line_serials for serial in serials
-            )
+            dict.fromkeys(equipment_ids[serial] for serials in line_serials for serial in serials)
         )
-        for fact in registry.extract(
-            document, (data_directory / document.filename).read_bytes()
-        ):
+        extractor = (
+            registry if document.source == DocumentSource.FACTURX else TextInvoiceExtractor()
+        )
+        for fact in extractor.extract(document, (data_directory / document.filename).read_bytes()):
             line_match = re.match(r"lines\[(\d+)\]\.", fact.field)
             serials = (
                 line_serials[int(line_match[1])]
@@ -219,9 +217,7 @@ def load_dataset(directory: Path | None = None) -> AppeliaDataset:
 
     certificate_by_scenario = {
         "trap-10": documents_by_filename["documents/jabra-warranty-plus-001.pdf"],
-        "warranty-plus-2": documents_by_filename[
-            "documents/jabra-warranty-plus-002.pdf"
-        ],
+        "warranty-plus-2": documents_by_filename["documents/jabra-warranty-plus-002.pdf"],
     }
     for scenario, document in certificate_by_scenario.items():
         item = equipment_records_by_scenario[scenario]
@@ -231,9 +227,7 @@ def load_dataset(directory: Path | None = None) -> AppeliaDataset:
             int(item["warranty_months"]),
         ) - timedelta(days=1)
         extension_start = warranty_end + timedelta(days=1)
-        extension_end = _add_months(extension_start, extension_months) - timedelta(
-            days=1
-        )
+        extension_end = _add_months(extension_start, extension_months) - timedelta(days=1)
         add_right(
             item,
             document,

@@ -22,22 +22,39 @@ def evaluate_equipment(
     *,
     dates: dict[str, date] | None = None,
 ) -> Verdict:
-    normalized = normalize_facts(facts, equipment)
+    scoped = [
+        fact.model_copy(update={"equipment_id": equipment.id})
+        if fact.equipment_id is None and fact.incident_id == incident.id
+        else fact
+        for fact in facts
+    ]
+    normalized = normalize_facts(scoped, equipment)
     if isinstance(engine, DeterministicRulesEngine):
         return engine.evaluate(equipment, normalized, incident, rules, rights, dates=dates)
     return engine.evaluate(equipment, normalized, incident, rules, rights)
 
 
 def stored_inventory(session: Session) -> tuple[list[Equipment], list[Fact], list[Right]]:
+    document_owners: dict[str, list[str]] = {}
+    for link in session.execute(select(tables.equipment_documents)):
+        document_owners.setdefault(link.document_id, []).append(link.equipment_id)
+    scoped_facts = []
+    for row in session.execute(select(tables.facts)).mappings():
+        fact = Fact.model_validate(dict(row))
+        if fact.equipment_id is not None:
+            scoped_facts.append(fact)
+        else:
+            document_id = fact.document_id or fact.provenance.document_id
+            for owner in document_owners.get(str(document_id), []):
+                scoped_facts.append(
+                    Fact.model_validate({**fact.model_dump(), "equipment_id": owner})
+                )
     return (
         [
             Equipment.model_validate(dict(row))
             for row in session.execute(select(tables.equipment)).mappings()
         ],
-        [
-            Fact.model_validate(dict(row))
-            for row in session.execute(select(tables.facts)).mappings()
-        ],
+        scoped_facts,
         [
             Right.model_validate(dict(row))
             for row in session.execute(select(tables.rights)).mappings()

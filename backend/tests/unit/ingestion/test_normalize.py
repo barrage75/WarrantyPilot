@@ -124,7 +124,7 @@ def test_five_line_invoice_only_uses_the_equipment_serial() -> None:
     assert normalize_facts(facts, other_equipment) == []
 
 
-def test_line_without_serial_matches_by_model() -> None:
+def test_line_without_serial_requires_owned_invoice_before_model_match() -> None:
     document_id = uuid4()
     equipment = Equipment(
         brand="Jabra",
@@ -141,6 +141,8 @@ def test_line_without_serial_matches_by_model() -> None:
         _fact(document_id, invoice_fields.line_field(0, invoice_fields.MODEL), "Evolve2 65"),
     ]
 
+    assert normalize_facts(facts, equipment) == []
+    facts = [fact.model_copy(update={"equipment_id": equipment.id}) for fact in facts]
     normalized = normalize_facts(facts, equipment)
     incident = Incident(
         kind=IncidentKind.FAILURE,
