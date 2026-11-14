@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import re
 import sys
 from datetime import timedelta
 from pathlib import Path
@@ -21,8 +20,10 @@ from app.contracts.enums import (
     RealityBadge,
     RightType,
 )
-from app.contracts.models import Fact, Incident
+from app.contracts.interfaces import RulesEngine
+from app.contracts.models import Equipment, Fact, Incident, Right, Rule, Verdict
 from app.core.tables import purchase_requests
+from app.ingestion.normalize import normalize_facts
 from app.ingestion.registry import ExtractorRegistry
 from app.rules import DeterministicRulesEngine
 
@@ -64,28 +65,21 @@ class ScanStartResponse(BaseModel):
     scan_id: str
 
 
-def _rule_facts(facts: list[Fact]) -> list[Fact]:
-    aliases = {
-        "supplier_name": "reseller_name",
-        "supplier_address": "reseller_address",
-        "customer_name": "buyer_name",
-        "warranty_duration_months": "warranty_term_months",
-    }
-    line_aliases = {
-        "model": ("model_number", "product_type"),
-        "serial": ("serial_number",),
-        "warranty_duration_months": ("warranty_term_months",),
-    }
-    normalized: list[Fact] = []
-    for fact in facts:
-        line_field = re.fullmatch(r"lines\[\d+\]\.([a-z_]+)", fact.field)
-        fields = (
-            line_aliases.get(line_field[1], (fact.field,))
-            if line_field
-            else (aliases.get(fact.field, fact.field),)
-        )
-        normalized.extend(fact.model_copy(update={"field": field}) for field in fields)
-    return normalized
+def _evaluate_equipment(
+    engine: RulesEngine,
+    equipment: Equipment,
+    facts: list[Fact],
+    incident: Incident,
+    rules: list[Rule],
+    rights: list[Right],
+) -> Verdict:
+    return engine.evaluate(
+        equipment,
+        normalize_facts(facts, equipment),
+        incident,
+        rules,
+        rights,
+    )
 
 
 async def _run_scan(application: Any, scan_id: str) -> None:
@@ -114,10 +108,6 @@ async def _run_scan(application: Any, scan_id: str) -> None:
         if engine is None:
             engine = DeterministicRulesEngine(application.state.app_settings.demo_today)
         rules = application.state.services.get("rules", [])
-        facts_by_equipment: dict[UUID, list[Any]] = {}
-        for fact in _rule_facts(extracted_facts):
-            if fact.equipment_id is not None:
-                facts_by_equipment.setdefault(fact.equipment_id, []).append(fact)
         rights_by_equipment: dict[UUID, list[Any]] = {}
         for right in dataset.rights:
             rights_by_equipment.setdefault(right.equipment_id, []).append(right)
@@ -134,9 +124,10 @@ async def _run_scan(application: Any, scan_id: str) -> None:
                 description="Panne matérielle à vérifier",
                 reported_via=IncidentReportedVia.CHAT,
             )
-            verdict = engine.evaluate(
+            verdict = _evaluate_equipment(
+                engine,
                 item,
-                facts_by_equipment.get(item.id, []),
+                extracted_facts,
                 incident,
                 rules,
                 rights_by_equipment.get(item.id, []),

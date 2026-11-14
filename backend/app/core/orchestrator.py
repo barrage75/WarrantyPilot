@@ -74,6 +74,7 @@ from app.core.tables import (
 from app.core.tables import (
     settings as settings_table,
 )
+from app.ingestion.normalize import normalize_facts
 
 
 class Orchestrator:
@@ -94,6 +95,23 @@ class Orchestrator:
         self.follow_up = follow_up
         self.app_settings = app_settings
         self.rules = rules if rules is not None else []
+
+    @staticmethod
+    def _evaluate_verdict(
+        rules_engine: RulesEngine,
+        equipment: Equipment,
+        facts: list[Fact],
+        incident: Incident,
+        rules: list[Rule],
+        rights: list[Right],
+    ) -> Verdict:
+        return rules_engine.evaluate(
+            equipment,
+            normalize_facts(facts, equipment),
+            incident,
+            rules,
+            rights,
+        )
 
     async def run(self, case_id: UUID) -> Case:
         with self.session_factory() as session, session.begin():
@@ -231,7 +249,8 @@ class Orchestrator:
             )
 
             if case.verdict is None:
-                verdict = self.rules_engine.evaluate(
+                verdict = self._evaluate_verdict(
+                    self.rules_engine,
                     equipment_model,
                     case_facts,
                     incident_model,
