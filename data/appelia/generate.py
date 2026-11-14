@@ -1741,7 +1741,8 @@ def _make_support_documents(
             f"Date de livraison : {trap7_delivery_date.strftime('%d/%m/%Y')}.",
             (
                 f"Facture n° {trap7['invoice_number']} du "
-                f"{trap7_delivery_date.strftime('%d/%m/%Y')} (date indiquée sur le bon de livraison)."
+                f"{trap7_delivery_date.strftime('%d/%m/%Y')} "
+                "(date indiquée sur le bon de livraison)."
             ),
         ],
     )
