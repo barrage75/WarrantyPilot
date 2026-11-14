@@ -1,0 +1,1 @@
+{"title":"Home","greeting":"Hello {{name}}","heading":"Your warranties, in hand.","watch":"Watch list","expiring":"Warranties ending soon","viewFleet":"View fleet","expiringError":"Unable to load expiring warranties.","noExpiring":"No warranties are ending soon.","days_one":"{{count}} day remaining","days_other":"{{count}} days remaining","due":"Due: {{date}}"}
