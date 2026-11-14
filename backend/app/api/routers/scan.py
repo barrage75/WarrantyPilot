@@ -21,7 +21,6 @@ from app.contracts.interfaces import RulesEngine
 from app.contracts.models import Equipment, Fact, Incident, Right, Rule, Verdict
 from app.core import tables
 from app.core.warranty import evaluate_equipment, savings_totals
-from app.ingestion.pdf_executor import run_pdf_task
 from app.rules import DeterministicRulesEngine
 
 router = APIRouter(prefix="/scan", tags=["scan"])
@@ -105,23 +104,18 @@ async def _run_scan(application: Any, scan_id: str) -> None:
         repository_root = Path(__file__).resolve().parents[4]
         if str(repository_root) not in sys.path:
             sys.path.insert(0, str(repository_root))
-        from data.appelia.load import load_dataset
-
-        loop = asyncio.get_running_loop()
+        from data.appelia.load import load_dataset_async
 
         def document_loaded(done: int, total: int) -> None:
-            # The loader runs on the PDF worker; publish completed documents on the event loop.
-            loop.call_soon_threadsafe(
-                state.update,
+            state.update(
                 {
                     "documents_total": total,
                     "documents_done": done,
                     "progress": round(done * 100 / max(1, total)),
-                },
+                }
             )
 
-        dataset = await run_pdf_task(
-            load_dataset,
+        dataset = await load_dataset_async(
             facturx_extractor=application.state.services.get("extractor"),
             on_document=document_loaded,
         )
