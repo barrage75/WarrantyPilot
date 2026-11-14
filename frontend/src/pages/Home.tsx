@@ -4,10 +4,11 @@ import { useTranslation } from "react-i18next";
 import { useCases } from "@/api/hooks";
 import { ApiError, client, unwrap } from "@/api/client";
 import { apiErrorKey } from "@/api/errors";
-import { equipmentLabel, useEquipment } from "@/api/resources";
+import { useEquipment } from "@/api/resources";
 import { useOperator } from "@/operator-state";
 import { HumanActions } from "@/components/case/HumanActions";
-import { RealityBadge, StatusBadge, VerdictBadge } from "@/components/Badges";
+import { StatusBadge, VerdictBadge } from "@/components/Badges";
+import { RealityPill } from "@/components/parc/RealityPill";
 import { Tile } from "@/components/bento/Tile";
 import { EmptyState } from "@/components/bento/EmptyState";
 import { EquipmentIcon } from "@/components/bento/EquipmentIcon";
@@ -37,9 +38,10 @@ export function Decisions() {
   {!pending && !query.isError && !checklistError && queue.length === 0 && <Tile><EmptyState title={t("empty")} description={t("emptyHelp")}/></Tile>}
   <div className="space-y-4">{queue.map(item => {
    const device = equipment.data?.find(device => device.id === item.equipment_id), warranty = overview.data?.find(device => device.equipment_id === item.equipment_id);
+   const label = warranty?.label ?? ([device?.brand, device?.model].filter(Boolean).join(" ") || t("common:unknown"));
    return <DecisionBeam key={item.id} active={!!beamId && item.id === beamId}>
     <div className="flex items-start justify-between gap-4"><EquipmentIcon category={device?.category ?? "package"} size={48}/>{warranty && <WarrantyRing daysLeft={warranty.days_left} coverage={warranty.coverage}/>}</div>
-    <div className="flex flex-wrap items-start justify-between gap-3"><Link className="font-semibold text-ink underline underline-offset-4" to={`/cases/${item.id}`}>{t("equipment")} {equipmentLabel(device) ?? item.equipment_id?.slice(0, 8)} · #{item.id?.slice(0, 8)}</Link><div className="flex flex-wrap gap-2"><StatusBadge value={item.status}/><RealityBadge value={item.badge}/></div></div>
+    <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><Link className="font-semibold text-ink underline underline-offset-4" to={`/cases/${item.id}`}>{label}</Link>{device?.serial && <p className="mt-1 break-all text-sm text-muted">{device.serial}</p>}</div><div className="flex flex-wrap gap-2"><StatusBadge value={item.status}/><RealityPill value={item.badge}/></div></div>
     <div className="flex flex-wrap items-center gap-3"><HumanActions item={item} beam={false}/><Link className="inline-block text-sm font-semibold text-ink underline underline-offset-4" to={`/cases/${item.id}`}>{t("detail")}</Link></div>
     {item.verdict && <><VerdictBadge value={item.verdict.value}/><p>{i18n.language.startsWith("fr") ? item.verdict.explanation_fr : item.verdict.explanation_en}</p></>}
     <p className="text-sm text-muted">{t(`enums:Channel.${item.channel}`)}</p>
@@ -56,7 +58,7 @@ export default function Home() {
   <div className="grid items-start gap-5 xl:grid-cols-3"><div className="min-w-0 xl:col-span-2"><Decisions/></div><Tile className="min-w-0"><h2 className="mb-5 text-xl font-semibold tracking-tight">{t("watch")}</h2><NotificationList/></Tile></div>
   <Tile><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-semibold tracking-tight">{t("expiring")}</h2><Link className="text-sm font-medium underline underline-offset-4" to="/parc?coverage=expiring_soon">{t("viewFleet")}</Link></div>
    {expiring.isPending && <p role="status">{t("common:loading")}</p>}{expiring.isError && <p role="alert" className="text-red-800">{t("expiringError")}</p>}{expiring.data?.length === 0 && <EmptyState title={t("noExpiring")}/>}
-   <div className="flex flex-wrap gap-3">{expiring.data?.slice(0, 8).map(item => <Link key={item.equipment_id} to={`/parc?q=${encodeURIComponent(item.serial)}`} className="flex max-w-full items-center gap-3 rounded-full bg-canvas py-2 pl-3 pr-5"><EquipmentIcon category={item.category} size={24}/><span className="min-w-0 text-sm"><span className="block truncate font-semibold">{item.label}</span><span className="text-muted">{t("days", { count: item.days_left ?? 0 })}</span></span></Link>)}</div>
+   <div className="flex flex-wrap gap-3">{expiring.data?.slice(0, 8).map(item => <Link key={item.equipment_id} to={`/parc?q=${encodeURIComponent(item.serial)}`} className="flex max-w-full items-center gap-3 rounded-full bg-canvas py-2 pl-3 pr-5"><EquipmentIcon category={item.category} size={24}/><span className="min-w-0 text-sm"><span className="block truncate font-semibold">{item.label}</span><span className="block truncate text-ink/70">{[item.assigned_to?.name, item.serial].filter(Boolean).join(" · ")}</span><span className="text-ink/70">{t("days", { count: item.days_left ?? 0 })}</span></span></Link>)}</div>
   </Tile>
  </div>;
 }

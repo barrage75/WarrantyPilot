@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { startScan, useScan } from "@/api/resources";
 import { apiErrorKey } from "@/api/errors";
-import { RealityBadge } from "@/components/Badges";
+import { RealityPill } from "@/components/parc/RealityPill";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table } from "@/components/ui/table";
@@ -10,7 +10,6 @@ import { Link } from "react-router-dom";
 import { Download, ShieldCheck } from "lucide-react";
 import { useSavings } from "@/components/parc/data";
 import { Tile } from "@/components/bento/Tile";
-const amounts = ["coveredEquipmentEur", "possibleSavingsEur", "realizedSavingsEur"] as const;
 export default function Dashboard() {
  const { t, i18n } = useTranslation("dashboard");
  const savings = useSavings();
@@ -26,7 +25,7 @@ export default function Dashboard() {
   setDownloading(true); setDownloadError(false);
   try { const response = await fetch("/api/reports/savings.csv", { credentials: "same-origin" }); if (!response.ok) throw new Error(); const url = URL.createObjectURL(await response.blob()); const link = document.createElement("a"); link.href = url; link.download = "warrantypilot-savings.csv"; document.body.append(link); link.click(); link.remove(); window.setTimeout(() => URL.revokeObjectURL(url), 1000); } catch { setDownloadError(true); } finally { setDownloading(false); }
  }
- return <div className="space-y-6"><h1 className="text-4xl font-bold tracking-tight">{t("title")}</h1>{summary && <RealityBadge value={summary.badge}/>}<div className="grid gap-4 md:grid-cols-3">{amounts.map(key => <Card key={key}><h2 className="text-sm text-muted">{t(key)}</h2><p className="mt-3 text-xl font-semibold">{done ? money(done[key]) : "—"}</p><p className="mt-2 text-xs text-muted">{t(key + "Help")}</p></Card>)}</div>
+ return <div className="space-y-6"><h1 className="text-4xl font-bold tracking-tight">{t("title")}</h1>{summary && <RealityPill value={summary.badge}/>}
  <Tile><div className="mb-5 flex flex-wrap items-center justify-between gap-4"><div><h2 className="text-xl font-semibold tracking-tight">{t("report")}</h2>{savings.data && <p className="mt-1 text-sm text-muted">{savings.data.company} · {t("generated", { date: new Date(savings.data.generated_at).toLocaleDateString(i18n.language) })}</p>}</div><Button variant="outline" onClick={() => void download()} disabled={downloading || !savings.data}><Download size={16}/>{t(downloading ? "downloading" : "download")}</Button></div>
  {savings.isPending && <p role="status">{t("common:loading")}</p>}{savings.isError && <p className="text-sm text-red-800">{t("reportError")}</p>}{downloadError && <p role="alert" className="text-red-800">{t("downloadError")}</p>}
  {savings.data && <><div className="mb-6 flex flex-wrap gap-3">{([['covered_equipment_eur','reportCovered'],['possible_savings_eur','reportPossible'],['realized_savings_eur','reportRealized']] as const).map(([key, label]) => <span key={key} className="rounded-full bg-canvas px-4 py-2 text-sm">{t(label)} <strong className="ml-1">{money(savings.data[key])}</strong></span>)}<Link to="/journal" className="inline-flex min-h-10 items-center gap-2 rounded-full bg-canvas px-4 py-2 text-sm underline underline-offset-4"><ShieldCheck size={16}/>{t(savings.data.journal_ok ? "journalOk" : "journalBroken")}</Link></div>

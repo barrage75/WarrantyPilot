@@ -70,7 +70,7 @@ test("home displays real decisions and notifications without horizontal overflow
  expect(item.status).toBe("awaiting_validation");
  await page.goto("/");
  await expect(page.getByRole("heading", { name: "À surveiller", exact: true })).toBeVisible();
- await expect(page.locator("section").filter({ has: page.getByRole("link", { name: new RegExp(item.id.slice(0, 8)) }) }).getByRole("button", { name: "Valider", exact: true })).toBeVisible();
+ await expect(page.locator("section").filter({ has: page.locator(`a[href="/cases/${item.id}"]`) }).getByRole("button", { name: "Valider", exact: true })).toBeVisible();
  await expect(page.getByText("Un dossier attend votre validation.", { exact: true })).toBeVisible();
  for (const width of [360, 390, 768, 1440, 1920]) {
   await page.setViewportSize({ width, height: 900 });
