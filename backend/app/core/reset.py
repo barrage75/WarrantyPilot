@@ -5,6 +5,7 @@ import shutil
 import sys
 from calendar import monthrange
 from datetime import date, timedelta
+from decimal import Decimal
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 from uuid import NAMESPACE_URL, uuid5
@@ -277,7 +278,10 @@ def reset_demo(engine: Engine, settings: AppSettings) -> None:
         )
         write_settings(
             session,
-            PolicySettings(email_allowlist=allowlist),
+            PolicySettings(
+                auto_send_threshold_eur=Decimal("300"),
+                email_allowlist=allowlist,
+            ),
         )
         append_event(
             session,

@@ -1,5 +1,6 @@
 import time
 from datetime import date
+from decimal import Decimal
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -8,6 +9,7 @@ from sqlalchemy import insert, select, update
 from app.api.main import create_app
 from app.contracts.enums import CaseStatus, Channel, EventType, VerdictValue
 from app.contracts.models import Verdict
+from app.core.settings_store import read_settings, write_settings
 from app.core.tables import actions, cases, equipment, events, people, verdicts
 from app.testing.fakes import FakeRulesEngine
 
@@ -29,6 +31,12 @@ def test_chat_discloses_ai_and_creates_deterministic_case(
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
         _reset(client)
+        with session_factory.begin() as session:
+            settings = read_settings(session)
+            write_settings(
+                session,
+                settings.model_copy(update={"auto_send_threshold_eur": Decimal("0")}),
+            )
         conversation = client.post("/api/chat/conversations")
         assert conversation.status_code == 200
         disclosure = conversation.json()["disclosure_text"]

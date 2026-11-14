@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import mailbox
+from decimal import Decimal
 from email import message_from_bytes
 
 import httpx
@@ -15,7 +17,7 @@ from app.actions.email import (
 )
 from app.actions.email.local_smtp_server import LocalSmtpServer
 from app.api.main import create_app
-from app.contracts.enums import CaseStatus, Channel, EventType
+from app.contracts.enums import CaseStatus, Channel, EventType, PolicyOutcome
 from app.contracts.models import Settings
 from app.core.settings import AppSettings
 from app.core.settings_store import read_settings
@@ -26,6 +28,7 @@ from app.core.tables import (
     equipment,
     events,
     people,
+    policy_decisions,
 )
 from app.rules import DEFAULT_RULES_DIR, DeterministicRulesEngine, load_rules
 from app.rules.classifier import KeywordIncidentClassifier
@@ -33,7 +36,7 @@ from app.testing.fakes import FakeExtractor, FakeFollowUp
 
 
 @pytest.mark.asyncio
-async def test_jabra_chat_validation_sends_to_local_maildir_once(
+async def test_paul_case_auto_sends_after_demo_reset_with_message_id_proof(
     db_engine, session_factory, app_settings, tmp_path
 ) -> None:
     maildir_path = tmp_path / "mail"
@@ -90,6 +93,7 @@ async def test_jabra_chat_validation_sends_to_local_maildir_once(
             reset = await client.post("/api/demo/reset")
             assert reset.status_code == 200
             with session_factory() as session:
+                assert read_settings(session).auto_send_threshold_eur == Decimal("300")
                 paul = (
                     session.execute(select(people).where(people.c.name == "Paul Martin"))
                     .mappings()
@@ -117,11 +121,6 @@ async def test_jabra_chat_validation_sends_to_local_maildir_once(
             assert created.status_code == 200, created.text
             case_id = created.json()["case_id"]
             assert case_id
-            sent = await client.post(
-                f"/api/cases/{case_id}/validate",
-                json={"person_id": paul["id"]},
-            )
-            assert sent.status_code == 200, sent.text
             actions_response = await client.get(f"/api/cases/{case_id}/actions")
             assert actions_response.status_code == 200
             action_history = actions_response.json()
@@ -139,18 +138,26 @@ async def test_jabra_chat_validation_sends_to_local_maildir_once(
                 .mappings()
                 .one()
             )
+            policy = (
+                session.execute(
+                    select(policy_decisions)
+                    .join(cases, cases.c.policy_id == policy_decisions.c.id)
+                    .where(cases.c.id == case_id)
+                )
+                .mappings()
+                .one()
+            )
             person_email = session.execute(
                 select(people.c.email).where(people.c.id == paul["id"])
-            ).scalar_one()
-            case_row = session.execute(
-                select(cases.c.status).where(cases.c.id == case_id)
             ).scalar_one()
             types = session.execute(
                 select(events.c.type, events.c.payload)
                 .where(events.c.case_id == case_id)
                 .order_by(events.c.seq)
             ).all()
-        messages = list(mailbox.Maildir(str(maildir_path)))
+        local_maildir = mailbox.Maildir(str(maildir_path))
+        messages = list(local_maildir)
+        sent_messages = list(local_maildir.get_folder("sent"))
         assert action["channel"] == Channel.EMAIL_RESELLER.value
         assert (
             action["idempotency_key"] == f"case:{case_id}:email_reseller:{action['payload']['to']}"
@@ -168,18 +175,25 @@ async def test_jabra_chat_validation_sends_to_local_maildir_once(
             "documents",
         } <= action["payload"].keys()
         assert result["status"] == "success"
-        assert case_row in {
-            CaseStatus.TRACKED.value,
-            CaseStatus.RESOLVED.value,
-            CaseStatus.SENT.value,
-        }
-        assert any(
-            event_type == EventType.STATUS_CHANGED.value
+        assert policy["outcome"] == PolicyOutcome.AUTO_SEND.value
+        assert policy["conditions"]["under_threshold"] is True
+        sent_status_event = next(
+            payload
+            for event_type, payload in types
+            if event_type == EventType.STATUS_CHANGED.value
             and payload.get("to") == CaseStatus.SENT.value
+        )
+        assert sent_status_event["from"] == CaseStatus.SENDING.value
+        assert len(messages) == 1
+        assert len(sent_messages) == 1
+        sent_message = message_from_bytes(sent_messages[0].as_bytes())
+        proof = json.loads(result["proof"])
+        assert proof["message_id"] == sent_message["Message-ID"]
+        assert any(
+            event_type == EventType.ACTION_SUCCEEDED.value
+            and json.loads(payload["proof"])["message_id"] == proof["message_id"]
             for event_type, payload in types
         )
-        assert len(messages) == 1
-        sent_message = message_from_bytes(messages[0].as_bytes())
         assert sent_message["To"] == action["payload"]["to"]
         assert sent_message["To"] != person_email
         assert action_history[0]["action"]["channel"] == Channel.EMAIL_RESELLER.value

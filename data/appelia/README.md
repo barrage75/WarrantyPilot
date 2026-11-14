@@ -39,6 +39,10 @@ L'opérateur informatique de démonstration est Karim Benali
 (`responsable informatique`, `karim.benali.002@appelia.example`), dont l'identifiant
 stable est `97225c38-d686-5d99-a6cf-53e18aa92e8d`.
 
+Le reset de démonstration règle `auto_send_threshold_eur` à 300 € pour montrer
+l'envoi automatique du cas Paul. Le modèle `Settings` conserve son défaut prudent
+de 0 €.
+
 Les factures Dell indiquent la durée de garantie sur chaque ligne et
 `annotations.json` la reprend dans `warranty_term_months`. Le cas de démonstration
 `demo-dell-no-warranty-term` est l'exception sans durée probante : son verdict
