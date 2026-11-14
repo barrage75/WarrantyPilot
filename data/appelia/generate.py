@@ -1783,10 +1783,7 @@ def generate_dataset(output_directory: Path | None = None) -> None:
     )
 
     for index, invoice in enumerate(invoice_records):
-        if index < 49:
-            filename = f"invoice-{index + 1:03d}.pdf"
-        else:
-            filename = f"invoice-{index + 2:03d}.pdf"
+        filename = f"invoice-{index + 1:03d}.pdf" if index < 49 else f"invoice-{index + 2:03d}.pdf"
         invoice_format = (
             "facturx"
             if index >= 49 or paul_equipment_id in invoice["equipment_ids"]
