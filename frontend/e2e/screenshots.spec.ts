@@ -22,7 +22,7 @@ test("capture every screen in French and English with isolated fictional cases",
   for (const [name, path] of surfaces) {
    await page.goto(path);
    await expect(page.locator("main h1")).toBeVisible();
-   if (name === "decisions") await expect(page.locator("main").getByText(waiting.id.slice(0, 8), { exact: false }).first()).toBeVisible();
+   if (name === "decisions") await expect(page.locator(`main a[href="/cases/${waiting.id}"]`).first()).toBeVisible();
    if (name === "dossiers") await expect(page.getByRole("article", { name: data.resolved, exact: true })).toBeVisible();
    if (name.startsWith("detail")) await expect(page.getByText(language === "fr" ? "Actualisation toutes les 2 s" : "Refresh every 2 s", { exact: true })).toBeAttached();
    if (name === "detail-checklist") await page.getByRole("heading", { name: language === "fr" ? "Données du PC — 7 étapes" : "PC data — 7 steps", exact: true }).evaluate(element => element.scrollIntoView({ block: "start" }));
