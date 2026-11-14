@@ -28,7 +28,7 @@ def incident() -> Incident:
     return Incident(kind="failure", reporter_id=uuid4(), description="Panne", reported_via="chat")
 
 
-def fact(field: str, value: Any, confidence: float = 0.95, page: int = 1) -> Fact:
+def fact(field: str, value: Any, confidence: float = 0.95, page: int | None = 1) -> Fact:
     document_id = uuid4()
     return Fact(
         document_id=document_id,
@@ -341,6 +341,22 @@ def test_reference_cases(
         f.field in {"purchase_date", "invoice_date"} for f in facts
     )
     assert (result.target_url is not None) == (channel == "browser_portal")
+
+
+def test_explanation_omits_unknown_invoice_page() -> None:
+    result = DeterministicRulesEngine(TODAY).evaluate(
+        equipment(),
+        [fact("purchase_date", "2025-03-12", page=None)],
+        incident(),
+        RULES,
+        [],
+    )
+
+    assert result.value == "covered"
+    assert "facture p. None" not in result.explanation_fr
+    assert "invoice p. None" not in result.explanation_en
+    assert "facture" in result.explanation_fr
+    assert "invoice" in result.explanation_en
 
 
 def test_uncertainty_conflicts_determinism_and_rights() -> None:

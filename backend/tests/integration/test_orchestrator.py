@@ -1,6 +1,6 @@
 from sqlalchemy import select, update
 
-from app.contracts.enums import CaseStatus, Channel, EventType, VerdictValue
+from app.contracts.enums import CaseStatus, Channel, EventType, RealityBadge, VerdictValue
 from app.contracts.models import Verdict
 from app.core.journal import append_event, verify
 from app.core.orchestrator import Orchestrator
@@ -93,6 +93,39 @@ async def test_case_runs_from_prepared_through_tracked(session_factory, app_sett
     } <= set(step_names)
     assert EventType.ACTION_SUCCEEDED.value in event_types
     assert journal_status["ok"] is True
+
+
+async def test_case_badge_changes_only_after_action_execution(
+    session_factory, app_settings
+) -> None:
+    case, person_id = create_case(
+        session_factory,
+        email="allowed@example.test",
+        allowlist=["warranty@revendeur-test.example"],
+    )
+    adapter = FakeEmailAdapter()
+    adapter.badge = RealityBadge.REPRODUCTION
+    orchestrator = make_orchestrator(session_factory, app_settings, adapter)
+
+    pending = await orchestrator.run(case.id)
+    assert pending.status == CaseStatus.AWAITING_VALIDATION
+    assert pending.badge == RealityBadge.SIMULATED
+    with session_factory() as session:
+        initial_badge = session.execute(
+            select(cases.c.badge).where(cases.c.id == str(case.id))
+        ).scalar_one()
+    assert initial_badge == RealityBadge.SIMULATED.value
+
+    approve(session_factory, case.id, person_id)
+    tracked = await orchestrator.run(case.id)
+
+    assert tracked.status == CaseStatus.TRACKED
+    assert tracked.badge == RealityBadge.REPRODUCTION
+    with session_factory() as session:
+        persisted_badge = session.execute(
+            select(cases.c.badge).where(cases.c.id == str(case.id))
+        ).scalar_one()
+    assert persisted_badge == RealityBadge.REPRODUCTION.value
 
 
 async def test_computer_case_gets_data_checklist_from_orchestrator(

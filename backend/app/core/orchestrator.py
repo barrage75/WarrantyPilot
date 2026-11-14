@@ -817,6 +817,14 @@ class Orchestrator:
                     badge=result.badge.value,
                 )
             )
+            session.execute(
+                update(cases)
+                .where(cases.c.id == str(case.id))
+                .values(
+                    badge=result.badge.value,
+                    updated_at=datetime.now(UTC).isoformat(),
+                )
+            )
             latest_step = session.execute(
                 select(case_steps.c.id, case_steps.c.attempt)
                 .where(
@@ -851,7 +859,7 @@ class Orchestrator:
                         "reason": "prise en main humaine requise",
                     },
                 )
-                return case.model_copy(update={"status": takeover})
+                return case.model_copy(update={"status": takeover, "badge": result.badge})
             if result.status == ActionResultStatus.SUCCESS:
                 current = CaseStatus.SENDING
                 sent = transition(current, CaseStatus.SENT, action_result=result)
@@ -876,7 +884,7 @@ class Orchestrator:
                     payload={"from": current.value, "to": sent.value},
                 )
                 final_status = self._complete_tracking(session, case, sent)
-                return case.model_copy(update={"status": final_status})
+                return case.model_copy(update={"status": final_status, "badge": result.badge})
 
             failed = transition(CaseStatus.SENDING, CaseStatus.FAILED)
             self._set_status(session, case, failed)
@@ -905,8 +913,8 @@ class Orchestrator:
                         "reason": "retry_limit_reached",
                     },
                 )
-                return case.model_copy(update={"status": takeover})
-            return case.model_copy(update={"status": failed})
+                return case.model_copy(update={"status": takeover, "badge": result.badge})
+            return case.model_copy(update={"status": failed, "badge": result.badge})
 
     def _complete_tracking(
         self,

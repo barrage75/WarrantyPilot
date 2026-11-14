@@ -105,7 +105,6 @@ async def test_p0_gate(
                         and item["brand"] == "Jabra"
                         and item["model"] == "Evolve2 65"
                     )
-                    dell = next(item for item in equipment if item["serial"] == "7XK4L93")
 
                     settings_response = _json(await client.get("/api/settings"))
                     allowlist = {
@@ -152,11 +151,8 @@ async def test_p0_gate(
                         await client.post(
                             f"/api/chat/conversations/{dell_conversation['id']}/messages",
                             json={
-                                "text": (
-                                    "Mon Dell Latitude 7440 7XK4L93 ne démarre plus "
-                                    "après une panne."
-                                ),
-                                "reporter_id": dell["assigned_to"],
+                                "text": "Le PC 7XK4L93 de Clément ne démarre plus",
+                                "reporter_id": KARIM_ID,
                             },
                         )
                     )

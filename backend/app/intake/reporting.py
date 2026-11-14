@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from uuid import UUID, uuid4
 
@@ -36,9 +37,18 @@ def _equipment_category(text: str) -> str | None:
         (("imprimante", "laserjet"), "printer"),
     )
     for words, category in terms:
-        if any(word in folded for word in words):
+        if any(_contains_word(folded, word) for word in words):
             return category
     return None
+
+
+def _contains_word(folded_text: str, word: str) -> bool:
+    return re.search(rf"(?<!\w){re.escape(word.casefold())}(?!\w)", folded_text) is not None
+
+
+def _contains_service_tag(folded_text: str, serial: object) -> bool:
+    normalized = str(serial or "").strip()
+    return len(normalized) >= 6 and _contains_word(folded_text, normalized)
 
 
 def report_failure(
@@ -60,24 +70,27 @@ def report_failure(
                 equipment.c.model,
                 equipment.c.serial,
                 equipment.c.category,
-            )
-            .where(equipment.c.assigned_to == str(reporter_id))
-            .order_by(equipment.c.model, equipment.c.serial)
+                equipment.c.assigned_to,
+            ).order_by(equipment.c.model, equipment.c.serial)
         )
         .mappings()
         .all()
     )
-    category = _equipment_category(text)
     folded_text = text.casefold()
+    serial_matches = [row for row in rows if _contains_service_tag(folded_text, row["serial"])]
+    reporter_rows = [row for row in rows if str(row["assigned_to"]) == str(reporter_id)]
     explicit = [
         row
-        for row in rows
-        if str(row["serial"]).casefold() in folded_text
+        for row in reporter_rows
+        if _contains_service_tag(folded_text, row["serial"])
         or str(row["model"]).casefold() in folded_text
     ]
-    candidates = explicit or [
-        row for row in rows if category is None or row["category"] == category
-    ]
+    category = _equipment_category(text)
+    candidates = (
+        serial_matches
+        or explicit
+        or [row for row in reporter_rows if category is None or row["category"] == category]
+    )
     questions: list[str] = []
     identified = None
     incident_id: UUID | None = None
@@ -118,15 +131,22 @@ def report_failure(
                 updated_at=created_at.isoformat(),
             )
         )
+        event_payload: dict[str, str | None] = {
+            "incident_id": str(incident_id),
+            "equipment_id": identified["id"] if identified is not None else None,
+            "reported_via": reported_via.value,
+        }
+        if (
+            identified is not None
+            and identified["assigned_to"] is not None
+            and str(identified["assigned_to"]) != str(reporter_id)
+        ):
+            event_payload["assigned_to"] = str(identified["assigned_to"])
         append_event(
             session,
             EventType.CASE_CREATED,
             case_id=str(case_uuid),
-            payload={
-                "incident_id": str(incident_id),
-                "equipment_id": identified["id"] if identified is not None else None,
-                "reported_via": reported_via.value,
-            },
+            payload=event_payload,
         )
         case_id = str(case_uuid)
         ensure_data_checklist(
