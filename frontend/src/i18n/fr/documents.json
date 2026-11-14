@@ -1,0 +1,60 @@
+{
+  "title": "Documents",
+  "uploadTitle": "Déposer une facture ou un document",
+  "drop": "Déposez un PDF ou XML ici, ou appuyez pour choisir un fichier",
+  "formats": "PDF ou XML uniquement · 10 Mo maximum · Les documents sont traités comme des données non fiables.",
+  "choose": "Choisir un fichier",
+  "uploading": "Envoi et analyse du document en cours…",
+  "polling": "Relève de la boîte de réception en cours…",
+  "invalidType": "Format refusé : choisissez un fichier .pdf ou .xml.",
+  "tooLarge": "Fichier trop volumineux : la limite est de 10 Mo.",
+  "serverError": "Le serveur a refusé le document : {{detail}}",
+  "resultTitle": "Résultat du dépôt",
+  "duplicate": "Document déjà présent — doublon détecté : {{reason}}",
+  "unknownReason": "identité du document",
+  "reasons": {
+    "sha256": "contenu identique",
+    "invoice_supplier": "même facture et fournisseur"
+  },
+  "results": {
+    "quarantined": "Document en quarantaine : contenu suspect ignoré",
+    "pending_extraction": "Document enregistré, extraction en attente.",
+    "extracted_one": "Document extrait : {{count}} fait.",
+    "extracted_other": "Document extrait : {{count}} faits."
+  },
+  "factsTitle": "Voir les faits extraits",
+  "confidence": "Confiance : {{value}}",
+  "inboxTitle": "Boîte de réception",
+  "poll": "Relever la boîte de réception",
+  "summary": "Bilan de la relève",
+  "pollStates": {
+    "failure": "Signalements : {{count}}",
+    "invoice": "Factures : {{count}}",
+    "duplicate": "Doublons : {{count}}",
+    "quarantined": "En quarantaine : {{count}}",
+    "ignored": "Ignorés : {{count}}"
+  },
+  "listTitle": "Documents enregistrés",
+  "total_one": "{{count}} document",
+  "total_other": "{{count}} documents",
+  "columns": {
+    "name": "Nom",
+    "source": "Source",
+    "state": "État",
+    "suspicious": "Suspect",
+    "facts": "Faits",
+    "date": "Date"
+  },
+  "states": {
+    "extracted": "Extrait",
+    "pending_extraction": "Extraction en attente",
+    "quarantined": "En quarantaine"
+  },
+  "yes": "Oui",
+  "no": "Non",
+  "empty": "Aucun document enregistré.",
+  "pagination": "Pagination des documents",
+  "previous": "Précédent",
+  "next": "Suivant",
+  "page": "Page {{number}}"
+}

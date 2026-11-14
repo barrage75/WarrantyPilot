@@ -177,6 +177,8 @@ class EventType(StrEnum):
     JOURNAL_ANCHORED = "journal_anchored"
     DEMO_RESET = "demo_reset"
     FOLLOWUP_RECEIVED = "followup_received"
+    INTAKE_MESSAGE_RECEIVED = "intake_message_received"
+    INTAKE_DOCUMENT_RECEIVED = "intake_document_received"
     REMINDER_DRAFTED = "reminder_drafted"
     CHAT_DISCLOSURE = "chat_disclosure"
 
@@ -320,6 +322,8 @@ _LABELS: dict[type[StrEnum], dict[str, tuple[str, str]]] = {
         "journal_anchored": ("Journal ancré", "Journal anchored"),
         "demo_reset": ("Démo réinitialisée", "Demo reset"),
         "followup_received": ("Suivi reçu", "Follow-up received"),
+        "intake_message_received": ("Message reçu", "Intake message received"),
+        "intake_document_received": ("Document reçu", "Intake document received"),
         "reminder_drafted": ("Rappel préparé", "Reminder drafted"),
         "chat_disclosure": ("Information IA affichée", "AI disclosure shown"),
     },

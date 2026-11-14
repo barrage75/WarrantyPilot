@@ -4,7 +4,7 @@ from email.message import EmailMessage
 from pathlib import Path
 from typing import Any
 from urllib.request import Request
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -13,9 +13,10 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.api.main import create_app
-from app.contracts.enums import RealityBadge
+from app.contracts.enums import EventType, IncidentReportedVia, RealityBadge
+from app.contracts.models import Fact
 from app.core.db import create_schema, make_engine, make_session_factory
-from app.core.journal import verify
+from app.core.journal import append_event, verify
 from app.core.settings import AppSettings
 from app.core.tables import (
     actions,
@@ -30,6 +31,7 @@ from app.core.tables import (
 )
 from app.intake.classifier import Classifier
 from app.intake.documents import MAX_DOCUMENT_BYTES, DocumentIntake
+from app.intake.reporting import report_failure
 from app.intake.service import IntakeService
 from app.intake.transports import READONLY_SCOPE, GmailTransport, MaildirInbox
 from tests.unit.ingestion.fixture_generator import cii, facturx_pdf, invoice_pdf
@@ -525,3 +527,190 @@ def test_simultaneous_pollers_have_one_case(tmp_path: Path, app_settings: AppSet
     with factory() as session:
         assert session.scalar(select(func.count()).select_from(cases)) == 1
     engine.dispose()
+
+
+@pytest.mark.parametrize("via", [IncidentReportedVia.CHAT, IncidentReportedVia.EMAIL])
+@pytest.mark.parametrize("identification", ["identified", "ambiguous", "none", "explicit"])
+def test_reporting_transaction(
+    session_factory: sessionmaker[Session],
+    via: IncidentReportedVia,
+    identification: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seed(session_factory, ambiguous=identification in {"ambiguous", "explicit"})
+    with session_factory() as session:
+        reporter = UUID(session.scalar(select(people.c.id)))
+
+        def forbidden_commit() -> None:
+            raise AssertionError("service must not commit")
+
+        monkeypatch.setattr(session, "commit", forbidden_commit)
+        text = {"none": "Mon imprimante est en panne", "explicit": "TEST-1 en panne"}.get(
+            identification, "Mon casque est en panne"
+        )
+        report = report_failure(
+            session,
+            reporter,
+            text,
+            reported_via=via,
+            create_unidentified=via == IncidentReportedVia.EMAIL,
+            badge=RealityBadge.REPRODUCTION
+            if via == IncidentReportedVia.EMAIL
+            else RealityBadge.SIMULATED,
+        )
+        identified = identification in {"identified", "explicit"}
+        assert bool(report.case_id) == (identified or via == IncidentReportedVia.EMAIL)
+        assert bool(report.equipment_id) == identified
+        assert bool(report.questions) != identified
+        if report.case_id:
+            assert session.scalar(select(incidents.c.reported_via)) == via.value
+            assert session.scalar(select(cases.c.status)) == "prepared"
+            assert session.scalar(select(cases.c.channel)) == "manual"
+        session.rollback()
+    with session_factory() as session:
+        assert session.scalar(select(func.count()).select_from(cases)) == 0
+        assert session.scalar(select(func.count()).select_from(incidents)) == 0
+
+
+@pytest.mark.parametrize("legacy", [True, False])
+async def test_receipt_dedup(
+    session_factory: sessionmaker[Session], intake: IntakeService, legacy: bool
+) -> None:
+    assert isinstance(intake.inbox, MaildirInbox)
+    add(intake.inbox, mail())
+    with session_factory.begin() as session:
+        append_event(
+            session,
+            EventType.FOLLOWUP_RECEIVED if legacy else EventType.INTAKE_MESSAGE_RECEIVED,
+            payload={
+                "intake_message_id": "<intake-1@appelia.example>",
+                **({"component": "intake"} if legacy else {}),
+            },
+        )
+    with session_factory() as session:
+        assert (await intake.poll(session))["messages"] == [
+            {"message_id": "<intake-1@appelia.example>", "state": "duplicate"}
+        ]
+        assert session.scalar(select(func.count()).select_from(events)) == 1
+
+
+async def test_missing_message_id_digest(
+    session_factory: sessionmaker[Session],
+    intake: IntakeService,
+) -> None:
+    message = mail()
+    del message["Message-ID"]
+    assert isinstance(intake.inbox, MaildirInbox)
+    add(intake.inbox, message)
+    with session_factory() as session:
+        first = (await intake.poll(session))["messages"]
+        assert first[0]["message_id"].startswith("sha256:")
+        assert first[0]["state"] == "ignored"
+        assert (await intake.poll(session))["messages"][0]["state"] == "duplicate"
+
+
+def test_document_read_api(
+    db_engine: Engine,
+    session_factory: sessionmaker[Session],
+    app_settings: AppSettings,
+    intake: IntakeService,
+) -> None:
+    with client(db_engine, session_factory, app_settings, intake) as api:
+        assert api.get("/api/documents").json() == {
+            "items": [],
+            "total": 0,
+            "limit": 20,
+            "offset": 0,
+        }
+        assert api.get("/api/documents/unknown").status_code == 404
+        for query in ["limit=0", "limit=101", "offset=-1"]:
+            assert api.get("/api/documents?" + query).status_code == 422
+        uploaded = api.post("/api/documents/upload", files={"file": ("original.xml", ubl())}).json()
+        detail = api.get("/api/documents/" + uploaded["document_id"]).json()
+        assert detail["name"] == "original.xml"
+        assert detail["state"] == "extracted"
+        assert detail["facts_count"] == len(detail["facts"]) > 0
+        assert all(set(f) == {"field", "value", "confidence"} for f in detail["facts"])
+        assert detail["created_at"]
+        with session_factory.begin() as session:
+            session.execute(
+                insert(documents).values(
+                    id="seed",
+                    kind="invoice",
+                    filename="/private/server/seed.pdf",
+                    sha256="a" * 64,
+                    mime="application/pdf",
+                    source="upload",
+                )
+            )
+        page = api.get("/api/documents?limit=1").json()
+        assert page["total"] == 2 and page["items"][0]["id"] == detail["id"]
+        page = api.get("/api/documents?limit=1&offset=1").json()
+        assert page["items"][0]["name"] == "seed.pdf"
+        assert page["items"][0]["state"] == "pending_extraction"
+        assert page["items"][0]["created_at"] is None
+        with session_factory.begin() as session:
+            fact = Fact(
+                document_id=UUID(detail["id"]),
+                field="security.suspicious",
+                value=["test"],
+                confidence=1,
+                source="classifier",
+                provenance={"document_id": detail["id"], "excerpt": "test"},
+            )
+            session.execute(insert(facts).values(**fact.model_dump(mode="json")))
+            append_event(
+                session,
+                EventType.INTAKE_DOCUMENT_RECEIVED,
+                payload={"document_id": detail["id"], "state": "quarantined"},
+            )
+        assert api.get("/api/documents/" + detail["id"]).json()["state"] == "quarantined"
+
+
+@pytest.mark.parametrize("field", [None, "invoice.number", "security.suspicious"])
+def test_seeded_document_state_from_facts(
+    db_engine: Engine,
+    session_factory: sessionmaker[Session],
+    app_settings: AppSettings,
+    intake: IntakeService,
+    field: str | None,
+) -> None:
+    document_id = uuid4()
+    with session_factory.begin() as session:
+        session.execute(
+            insert(documents).values(
+                id=str(document_id),
+                kind="invoice",
+                filename="/private/invoice.pdf",
+                sha256="b" * 64,
+                mime="application/pdf",
+                source="upload",
+            )
+        )
+        if field:
+            fact = Fact(
+                document_id=document_id,
+                field=field,
+                value="test",
+                confidence=1,
+                source="classifier",
+                provenance={"excerpt": "test"},
+            )
+            session.execute(insert(facts).values(**fact.model_dump(mode="json")))
+    with client(db_engine, session_factory, app_settings, intake) as api:
+        detail = api.get(f"/api/documents/{document_id}").json()
+        expected = (
+            "pending_extraction"
+            if field is None
+            else "quarantined"
+            if field == "security.suspicious"
+            else "extracted"
+        )
+        assert detail["state"] == expected
+        assert detail["suspicious"] == (field == "security.suspicious")
+        assert detail["name"] == "invoice.pdf"
+
+
+def test_reporting_rejects_other_channels(session_factory: sessionmaker[Session]) -> None:
+    with session_factory() as session, pytest.raises(ValueError, match="Unsupported"):
+        report_failure(session, uuid4(), "panne", reported_via=IncidentReportedVia.VOICE)

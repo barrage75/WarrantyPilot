@@ -4,17 +4,135 @@ import os
 from email import policy
 from email.parser import BytesParser
 from pathlib import Path
-from typing import cast
+from typing import Any, Literal, cast
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_session
+from app.contracts.enums import DocumentSource, EventType
+from app.core.tables import documents, events, facts
 from app.intake.documents import MAX_DOCUMENT_BYTES, DocumentIntake, InvalidDocument
 from app.intake.service import IntakeService
 from app.intake.transports import MaildirInbox
 
 router = APIRouter(tags=["intake"])
+
+
+class DocumentItem(BaseModel):
+    id: str
+    name: str
+    source: DocumentSource
+    state: Literal["extracted", "pending_extraction", "quarantined"]
+    suspicious: bool
+    facts_count: int
+    created_at: str | None
+
+
+class DocumentFact(BaseModel):
+    field: str
+    value: Any
+    confidence: float
+
+
+class DocumentDetail(DocumentItem):
+    facts: list[DocumentFact]
+
+
+class DocumentPage(BaseModel):
+    items: list[DocumentItem]
+    total: int
+    limit: int
+    offset: int
+
+
+def document_detail(session: Session, document_id: str) -> DocumentDetail:
+    row = session.execute(select(documents).where(documents.c.id == document_id)).mappings().first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+    extracted = (
+        session.execute(
+            select(facts).where(facts.c.document_id == document_id).order_by(facts.c.id)
+        )
+        .mappings()
+        .all()
+    )
+    receipts = (
+        session.execute(
+            select(events)
+            .where(
+                events.c.type == EventType.INTAKE_DOCUMENT_RECEIVED.value,
+                events.c.payload["document_id"].as_string() == document_id,
+            )
+            .order_by(events.c.seq)
+        )
+        .mappings()
+        .all()
+    )
+    payload = receipts[-1]["payload"] if receipts else {}
+    suspicious = any(f["field"] == "security.suspicious" for f in extracted)
+    state = payload.get("state")
+    if state not in {"extracted", "pending_extraction", "quarantined"}:
+        state = "quarantined" if suspicious else "extracted" if extracted else "pending_extraction"
+    name = next(
+        (
+            str(receipt["payload"]["original_filename"])
+            for receipt in reversed(receipts)
+            if receipt["payload"].get("original_filename")
+        ),
+        str(row["filename"]),
+    )
+    return DocumentDetail(
+        id=row["id"],
+        name=Path(name.replace("\\", "/")).name,
+        source=row["source"],
+        state=state,
+        suspicious=suspicious or state == "quarantined",
+        facts_count=len(extracted),
+        created_at=receipts[0]["at"] if receipts else None,
+        facts=[
+            DocumentFact(field=f["field"], value=f["value"], confidence=f["confidence"])
+            for f in extracted
+        ],
+    )
+
+
+@router.get("/documents", response_model=DocumentPage)
+def list_documents(
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    session: Session = Depends(get_session),
+) -> DocumentPage:
+    received_at = (
+        select(func.min(events.c.at))
+        .where(
+            events.c.type == EventType.INTAKE_DOCUMENT_RECEIVED.value,
+            events.c.payload["document_id"].as_string() == documents.c.id,
+        )
+        .correlate(documents)
+        .scalar_subquery()
+    )
+    ids = session.scalars(
+        select(documents.c.id)
+        .order_by(received_at.desc(), documents.c.id.desc())
+        .limit(limit)
+        .offset(offset)
+    ).all()
+    return DocumentPage(
+        items=[
+            DocumentItem.model_validate(document_detail(session, id).model_dump()) for id in ids
+        ],
+        total=session.scalar(select(func.count()).select_from(documents)) or 0,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@router.get("/documents/{document_id}", response_model=DocumentDetail)
+def get_document(document_id: str, session: Session = Depends(get_session)) -> DocumentDetail:
+    return document_detail(session, document_id)
 
 
 def get_intake(request: Request) -> IntakeService:

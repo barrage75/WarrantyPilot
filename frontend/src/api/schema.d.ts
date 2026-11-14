@@ -4,6 +4,40 @@
  */
 
 export interface paths {
+    "/api/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Documents */
+        get: operations["list_documents_api_documents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/documents/{document_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Document */
+        get: operations["get_document_api_documents__document_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/intake/poll": {
         parameters: {
             query?: never;
@@ -847,6 +881,71 @@ export interface components {
                 [key: string]: components["schemas"]["ChecklistStep"];
             };
         };
+        /** DocumentDetail */
+        DocumentDetail: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            source: components["schemas"]["DocumentSource"];
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "extracted" | "pending_extraction" | "quarantined";
+            /** Suspicious */
+            suspicious: boolean;
+            /** Facts Count */
+            facts_count: number;
+            /** Created At */
+            created_at: string | null;
+            /** Facts */
+            facts: components["schemas"]["DocumentFact"][];
+        };
+        /** DocumentFact */
+        DocumentFact: {
+            /** Field */
+            field: string;
+            /** Value */
+            value: unknown;
+            /** Confidence */
+            confidence: number;
+        };
+        /** DocumentItem */
+        DocumentItem: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            source: components["schemas"]["DocumentSource"];
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "extracted" | "pending_extraction" | "quarantined";
+            /** Suspicious */
+            suspicious: boolean;
+            /** Facts Count */
+            facts_count: number;
+            /** Created At */
+            created_at: string | null;
+        };
+        /** DocumentPage */
+        DocumentPage: {
+            /** Items */
+            items: components["schemas"]["DocumentItem"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /**
+         * DocumentSource
+         * @enum {string}
+         */
+        DocumentSource: "upload" | "gmail" | "facturx";
         /** Equipment */
         Equipment: {
             /**
@@ -923,7 +1022,7 @@ export interface components {
          * EventType
          * @enum {string}
          */
-        EventType: "case_created" | "fact_extracted" | "fact_corrected" | "verdict_computed" | "policy_decided" | "validation_requested" | "validated" | "rejected" | "action_started" | "action_step" | "action_succeeded" | "action_failed" | "status_changed" | "checklist_step_done" | "purchase_guard_recommended" | "purchase_guard_decision" | "purchase_guard_suspended" | "purchase_guard_kept" | "purchase_guard_saving_realized" | "purchase_guard_cancelled" | "agent_paused" | "agent_resumed" | "journal_anchored" | "demo_reset" | "followup_received" | "reminder_drafted" | "chat_disclosure";
+        EventType: "case_created" | "fact_extracted" | "fact_corrected" | "verdict_computed" | "policy_decided" | "validation_requested" | "validated" | "rejected" | "action_started" | "action_step" | "action_succeeded" | "action_failed" | "status_changed" | "checklist_step_done" | "purchase_guard_recommended" | "purchase_guard_decision" | "purchase_guard_suspended" | "purchase_guard_kept" | "purchase_guard_saving_realized" | "purchase_guard_cancelled" | "agent_paused" | "agent_resumed" | "journal_anchored" | "demo_reset" | "followup_received" | "intake_message_received" | "intake_document_received" | "reminder_drafted" | "chat_disclosure";
         /** ExpiringRight */
         ExpiringRight: {
             /** Equipment */
@@ -1253,6 +1352,69 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    list_documents_api_documents_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_document_api_documents__document_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     poll_api_intake_poll_post: {
         parameters: {
             query?: never;

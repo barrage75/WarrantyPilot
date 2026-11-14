@@ -132,6 +132,8 @@
     "journal_anchored": "Journal anchored",
     "demo_reset": "Demo reset",
     "followup_received": "Follow-up received",
+    "intake_message_received": "Intake message received",
+    "intake_document_received": "Intake document received",
     "reminder_drafted": "Reminder drafted",
     "action_step": "Browser step"
   }

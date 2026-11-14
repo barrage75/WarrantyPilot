@@ -1,107 +1,31 @@
-"""Temporary reuse of chat pending extraction of a shared incident service.
+from uuid import UUID
 
-The chat route owns equipment identification. A private request state disables
-rephrasing, and a preparation-only orchestrator prevents any external action.
-Its internal commit is contained by the caller's connection transaction.
-"""
-
-from types import SimpleNamespace
-from uuid import UUID, uuid4
-
-from fastapi import Request
-from sqlalchemy import insert, select, update
+from sqlalchemy import insert, update
 from sqlalchemy.orm import Session
 
-from app.api.routers.chat import ChatMessageRequest, send_message
-from app.contracts.enums import (
-    CaseStatus,
-    EventType,
-    IncidentKind,
-    IncidentReportedVia,
-    VerdictValue,
-)
-from app.contracts.models import Case, Incident, Verdict, utc_now
-from app.core.checklists import ensure_data_checklist
+from app.contracts.enums import CaseStatus, EventType, IncidentReportedVia, VerdictValue
+from app.contracts.models import Verdict, utc_now
 from app.core.journal import append_event
-from app.core.orchestrator import Orchestrator
-from app.core.tables import cases, incidents, verdicts
+from app.core.tables import cases, verdicts
+from app.intake.reporting import report_failure
 from app.intake.transports import Inbox
-
-
-class PreparationOnly(Orchestrator):
-    def __init__(self, session: Session) -> None:
-        self.session = session
-
-    async def run(self, case_id: UUID) -> Case:
-        row = self.session.execute(select(cases).where(cases.c.id == str(case_id))).one()
-        return Case(id=case_id, incident_id=UUID(row.incident_id))
 
 
 async def create_failure(
     session: Session, reporter_id: UUID, text: str, inbox: Inbox
 ) -> dict[str, object]:
-    conversation_id = str(uuid4())
-    request = Request(
-        {
-            "type": "http",
-            "app": SimpleNamespace(
-                state=SimpleNamespace(chat_conversations={conversation_id: []}, services={})
-            ),
-        }
+    report = report_failure(
+        session,
+        reporter_id,
+        text[:4000],
+        reported_via=IncidentReportedVia.EMAIL,
+        create_unidentified=True,
+        badge=inbox.badge,
     )
-    # rollback_only means Session.commit() in chat cannot commit the outer unit of work.
-    with Session(bind=session.connection(), join_transaction_mode="rollback_only") as chat_session:
-        reply = await send_message(
-            conversation_id,
-            ChatMessageRequest(text=text[:4000], reporter_id=reporter_id),
-            request,
-            chat_session,
-            PreparationOnly(chat_session),
-        )
-    if reply.case_id is not None:
-        case_id = reply.case_id
-        case_row = session.execute(
-            select(cases.c.incident_id, cases.c.equipment_id).where(cases.c.id == case_id)
-        ).one()
-        incident_id: str = case_row.incident_id
-        session.execute(
-            update(incidents)
-            .where(incidents.c.id == incident_id)
-            .values(reported_via=IncidentReportedVia.EMAIL.value)
-        )
-        ensure_data_checklist(session, case_id, case_row.equipment_id)
-    else:
-        incident = Incident(
-            reporter_id=reporter_id,
-            description=text[:4000],
-            reported_via=IncidentReportedVia.EMAIL,
-            kind=IncidentKind.FAILURE,
-        )
-        case = Case(incident_id=incident.id, badge=inbox.badge)
-        session.execute(insert(incidents).values(**incident.model_dump(mode="json")))
-        session.execute(
-            insert(cases).values(
-                id=str(case.id),
-                incident_id=str(incident.id),
-                equipment_id=None,
-                status=case.status.value,
-                channel=case.channel.value,
-                badge=case.badge.value,
-                created_at=case.created_at.isoformat(),
-                updated_at=case.updated_at.isoformat(),
-            )
-        )
-        case_id = str(case.id)
-        append_event(
-            session,
-            EventType.CASE_CREATED,
-            actor="system",
-            case_id=case_id,
-            payload={"incident_id": str(incident.id), "reported_via": "email"},
-        )
+    case_id = report.case_id
     verdict = Verdict(
         value=VerdictValue.TO_VERIFY,
-        missing=reply.questions or ["Évaluer les preuves de garantie avant toute action"],
+        missing=report.questions or ["Évaluer les preuves de garantie avant toute action"],
         explanation_fr="Signalement reçu par e-mail, à vérifier par une personne.",
         explanation_en="Incoming email report requires human verification.",
     )
@@ -121,6 +45,6 @@ async def create_failure(
         EventType.VERDICT_COMPUTED,
         actor="system",
         case_id=case_id,
-        payload={"value": "to_verify", "reported_via": "email", "questions": reply.questions},
+        payload={"value": "to_verify", "reported_via": "email", "questions": report.questions},
     )
-    return {"case_id": case_id, "verdict": "to_verify", "questions": reply.questions}
+    return {"case_id": case_id, "verdict": "to_verify", "questions": report.questions}
