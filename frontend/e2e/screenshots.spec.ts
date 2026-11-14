@@ -1,4 +1,5 @@
-import { screenshotPath } from "./screenshot-path";
+import { mkdirSync } from "node:fs";
+import { resolve } from "node:path";
 import { expect, test } from "@playwright/test";
 import { fakeCase, openUserMenu, resolveFromUi } from "./helpers";
 test("capture every screen in French and English with isolated fictional cases", async ({ page }) => {
@@ -7,6 +8,8 @@ test("capture every screen in French and English with isolated fictional cases",
  const waiting = await fakeCase(request, data.jabra, data.person);
  expect(waiting.status).toBe("awaiting_validation");
  const dell = await fakeCase(request, data.dell, data.person);
+ const directory = resolve("screenshots");
+ mkdirSync(directory, { recursive: true });
  const surfaces = [
   ["decisions", "/"], ["dossiers", "/cases"], ["detail-resolu", "/cases/" + data.resolved],
   ["detail-checklist", "/cases/" + dell.id], ["chat", "/chat"], ["dashboard", "/dashboard"],
@@ -37,7 +40,7 @@ test("capture every screen in French and English with isolated fictional cases",
    if (name === "parametres") await expect(page.getByLabel(language === "fr" ? "Seuil d’envoi automatique (€)" : "Automatic send threshold (€)", { exact: true })).toBeVisible();
    if (name === "demo") await expect(page.locator("main li").first()).toBeVisible();
    if (name === "journal") await expect(page.locator("main").getByRole("status")).toBeVisible();
-   await page.screenshot({ path: screenshotPath("screenshots", name + "-" + language + ".png"), animations: "disabled" });
+   await page.screenshot({ path: resolve(directory, name + "-" + language + ".png"), animations: "disabled" });
   }
  }
 });
