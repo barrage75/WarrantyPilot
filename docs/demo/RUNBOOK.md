@@ -1,87 +1,126 @@
 # Runbook de démo
 
-Tout tourne en local sur `127.0.0.1`. L'API locale n'a pas d'authentification (`docs/SECURITY.md`) : jamais sur un réseau partagé, jamais exposée. Données fictives uniquement.
+Tout tourne en local sur `127.0.0.1`. L'API exige une session (`/api/auth/login`, SEC1) et refuse un `Host` ou une `Origin` étrangers (constaté : `Host: evil.example` → 400, `Origin: http://evil.example` → 403, sans session → 401). Données fictives uniquement. Ne jamais afficher le mot de passe de démo ni le jeton GitHub.
+
+Repères : API `http://127.0.0.1:8001/api` (`WP_API`), front `http://127.0.0.1:5173`, SMTP `127.0.0.1:2525`, portail Dell reproduit `http://127.0.0.1:8100`. Karim Benali = `admin` (`WP_ADMIN_ID` du `Makefile`), Paul Martin et Claire Dubois = `operator`. Mot de passe : `WP_DEMO_PASSWORD` (défaut `appelia-demo` uniquement en `WP_ENV=dev`, `backend/app/core/settings.py`).
 
 ## J-1
 
-1. Mettre à jour : `git fetch && git checkout integration && git pull`.
-2. Installer : `make setup` (dépendances, migrations, OpenAPI). Si l'erreur `sqlite3.OperationalError: unable to open database file` apparaît : `mkdir -p runtime/anchors` puis relancer `make setup` (observé sur une machine neuve).
-3. Reproduction Dell, une fois :
-   ```sh
-   cd repro/dell
-   uv sync --locked
-   uv run playwright install --with-deps chromium
-   uv run pytest -v
-   cd ../..
-   ```
-4. Vérifications du dépôt, **services de démo arrêtés** (sinon 3 tests échouent en « Address already in use » sur le port de la repro Dell) : `make lint typecheck test` et `make frontend-build`.
-5. **`make p0` n'existe pas** dans le `Makefile` (cibles : `setup dev smtp test lint typecheck openapi reset preflight frontend-build`). Équivalent P0 : `make test` + les tests E2E du parcours principal (`frontend/e2e/README.md`, `frontend/e2e/smoke.spec.ts`), qui demandent d'arrêter `make dev` car ils lancent leur propre API isolée.
-6. Répéter le script complet deux fois, chronométrer.
-7. Enregistrer la **vidéo de secours** (3 min, script complet, écran 1440×900) et la copier sur la machine de démo **et** une clé USB. Copier aussi un jeu de captures Dell (`runtime/browser/screenshots/<action_id>/*.png`) dans un dossier hors `runtime/` (le reset efface `runtime/`).
-8. Désactiver mises à jour, notifications, veille.
+1. `git fetch && git checkout integration && git pull`.
+2. `make setup` (dépendances, migrations, `make seed`, OpenAPI). Sur une machine neuve, si `sqlite3.OperationalError: unable to open database file` : `mkdir -p runtime/anchors` puis relancer.
+3. Reproduction Dell, une fois : `cd repro/dell && uv sync --locked && uv run playwright install --with-deps chromium && uv run pytest -v && cd ../..`.
+4. Vérifications, **tous les services de démo arrêtés** (port 8100 libre, voir § Port 8100) : `make lint typecheck test`, `make p0`, `make frontend-build`.
+   - `make p0` : lance sa propre reproduction Dell sur 8100 (runtime temporaire), attend `GET /__test__/cases`, puis `pytest -m p0 backend/tests/p0/test_p0_gate.py`. Mesuré : `10 passed` en 23 s.
+5. Répéter le script deux fois, chronométrer (référence : 27,8 s de parcours automatisé, voir `SCRIPT_3MIN.md`).
+6. Enregistrer la **vidéo de secours** (3 min, 1440×900) sur la machine **et** une clé USB. Copier les captures Dell (`runtime/browser/screenshots/<action_id>/*.png`) hors de `runtime/`.
+7. Désactiver mises à jour, notifications, veille.
 
 ## H-30
 
-Quatre terminaux, depuis la racine du dépôt.
+Trois terminaux à la racine du dépôt.
 
 | Terminal | Commande | Attendu |
 |---|---|---|
-| 1 | `make smtp` | serveur SMTP local sur `127.0.0.1:2525`, Maildir `runtime/mail` |
-| 2 | `cd repro/dell && uv run python -m dell_repro` | portail fictif sur `http://127.0.0.1:8100` |
-| 3 | `make dev` | API `127.0.0.1:8001`, front `127.0.0.1:5173` |
-| 4 | commandes ci-dessous | — |
-
-Dans le terminal 4 :
+| 1 | `cd repro/dell && uv run python -m dell_repro` | portail fictif sur `127.0.0.1:8100` (`curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8100/` → `302`) |
+| 2 | `WP_FOLLOWUP_INTERVAL_S=5 make dev` | SMTP local `2525` + API `8001` + front `5173` (`make dev` lance aussi le SMTP ; ne pas lancer `make smtp` en plus). Le suivi tourne toutes les 5 s ; sans la variable, il est désactivé (`0`) et il faut appeler `/followup/tick` |
+| 3 | commandes ci-dessous | — |
 
 ```sh
-make reset          # attendu : {"status":"reset"}
-make preflight      # attendu : "ok": true, 5 contrôles verts
-curl -s http://127.0.0.1:8001/api/settings | grep auto_send_threshold_eur   # attendu : "300.00"
-# Dossier Dell (Dell Latitude 7440, Service Tag fictif 7XK4L93)
-curl -s -X POST http://127.0.0.1:8001/api/dev/fake-case \
-  -H 'Content-Type: application/json' \
-  -d '{"equipment_id":"11ab0f7a-5eec-5a06-a08e-d35346207174"}'
-curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8100/   # attendu : 200
+make reset       # connexion admin (cookie runtime/.make-session) puis {"confirm":"RESET"} ; attendu {"status":"reset"}
+make preflight   # attendu "ok": true
+curl -s -X POST http://127.0.0.1:8100/__test__/reset   # vide les dossiers du portail reproduit ; attendu {"reset":true}
+ls runtime/journal-archive/ | tail -1                  # le journal précédent est archivé (events.jsonl, anchors.jsonl)
 ```
 
-Le reset peut aussi se faire dans l'interface : page **Démo** → **« Réinitialiser la démo »** → **« Confirmer la remise à zéro »**. Il efface le dossier Dell : relancer la commande `fake-case` après.
+`make seed` recrée la base sans passer par l'API (`python -m app.core.reset`) : à utiliser **API arrêtée**, par exemple si `make reset` échoue faute de session. Reset par l'interface : connecté en Karim, page **Démo** → **« Réinitialiser la démo »** → **« Confirmer la remise à zéro »** ; message « Démo réinitialisée. Le journal précédent a été archivé… ». Un opérateur (Paul) ne peut pas faire le reset.
+
+## Dossier Dell par le chat (pendant la démo, ~1 s)
+
+Le chat de l'interface parle au nom de l'opérateur connecté ; le PC 7XK4L93 est celui de Clément Faure (sans compte). On poste donc le signalement de Clément sur la **même route de chat**, avec la session de Karim (jamais `/api/dev/fake-case`) :
+
+```sh
+make login
+CONV=$(curl -s -b runtime/.make-session -H 'Content-Type: application/json' -d '{}' \
+  http://127.0.0.1:8001/api/chat/conversations | python3 -c 'import sys,json;print(json.load(sys.stdin)["id"])')
+CASE=$(curl -s -b runtime/.make-session -H 'Content-Type: application/json' \
+  -d '{"text":"Mon PC portable Latitude 7440 ne démarre plus, écran noir.","reporter_id":"2994dff0-15a0-527d-a224-e23315d93c0a"}' \
+  http://127.0.0.1:8001/api/chat/conversations/$CONV/messages | python3 -c 'import sys,json;print(json.load(sys.stdin)["case_id"])')
+echo "http://127.0.0.1:5173/cases/$CASE"
+```
+
+Vérifié : `awaiting_validation`, verdict `covered`, politique `needs_validation`, checklist de 7 étapes créée.
+
+## Avancer le portail local (simule la clôture côté Dell)
+
+```sh
+NUM=$(curl -s http://127.0.0.1:8100/__test__/cases | python3 -c 'import sys,json;d=json.load(sys.stdin);d=d if isinstance(d,list) else d.get("cases",d);print(d[-1]["number"])')
+for i in 1 2 3; do curl -s -X POST http://127.0.0.1:8100/__test__/advance/$NUM; echo; done   # in_progress, part_shipped, closed
+# si WP_FOLLOWUP_INTERVAL_S n'est pas réglé, ou pour ne pas attendre :
+curl -s -b runtime/.make-session -X POST -H 'Content-Type: application/json' -d '{}' http://127.0.0.1:8001/api/followup/tick
+```
+
+Attendu : `{"cases_checked":1,"followups_logged":1,"status_changes":1,…}` puis dossier `resolved`. Un 4ᵉ `advance` renvoie 409 (déjà clos). Le suivi ne résout jamais sans statut `closed` relevé (`backend/app/followup/README.md`).
+
+## Résolution humaine (alternative ou plan B)
+
+Interface : détail du dossier en **Suivi** → **« Note de résolution »** → **« Marquer comme résolu »**. API :
+
+```sh
+curl -s -b runtime/.make-session -X POST -H 'Content-Type: application/json' \
+  -d '{"note":"Remplacement reçu (démo fictive)."}' http://127.0.0.1:8001/api/cases/$CASE/resolve
+```
+
+Note obligatoire (non vide) ; refus `409` si le dossier n'est pas `sent` ou `tracked`. Un opérateur peut résoudre (vérifié avec Paul).
+
+## Port 8100 déjà occupé
+
+Constaté : si la reproduction de démo tourne, `make p0` affiche `[Errno 98] … address already in use` pour **sa** reproduction, mais sa sonde `curl …/__test__/cases` répond via l'instance existante et les tests P0 tournent **contre elle** (ils appellent `/__test__/reset` : les dossiers du portail de démo sont effacés). Donc :
+
+```sh
+ss -ltnp 'sport = :8100'          # qui écoute ?
+# si c'est la repro de démo : Ctrl+C dans le terminal 1 ; sinon :
+fuser -k 8100/tcp                 # ou kill <pid> lu ci-dessus
+ss -ltnp 'sport = :8100'          # doit être vide
+make p0
+```
+
+Ne jamais lancer `make p0` (ni `make test`) pendant la démo. Après, relancer le terminal 1. Le backend vise `http://127.0.0.1:8100` par défaut (`DEFAULT_PORTAL_URL`, `backend/app/actions/browser/settings.py`) et `make p0` code ce port en dur : changer `DELL_REPRO_PORT` ne contourne pas le conflit, il faut libérer 8100.
 
 ## Contrôle avant démo (H-5)
 
-- [ ] Page **Démo** : préflight tout vert ; en-tête « Journal · Intègre ».
-- [ ] Page **Décisions** : une seule carte, Dell Latitude 7440 · 7XK4L93, « Préparé ».
-- [ ] Page **Garde-fou achat** : casque Jabra Evolve2 65, 120 €, état recommandation.
-- [ ] Aucun dossier Jabra existant (sinon `make reset` + `fake-case`).
-- [ ] Les 5 onglets du script ouverts, zoom 100 %, vidéo de secours en pause.
-- [ ] Wi-Fi coupé (rien n'en dépend, voir ci-dessous).
+- [ ] `make preflight` : `"ok": true` ; en-tête « Journal · Intègre » ; `curl -s -b runtime/.make-session http://127.0.0.1:8001/api/journal/verify` → `"ok": true`.
+- [ ] `ss -ltnp | grep -E ':(8001|5173|2525|8100) '` : quatre lignes, toutes sur `127.0.0.1`.
+- [ ] Navigateur sur `http://127.0.0.1:5173/`, écran « Connexion opérateur », déconnecté, zoom 100 %.
+- [ ] **Garde-fou achat** : Jabra Evolve2 65, 120 €, « Recommandation ». Aucun dossier dans **Dossiers**.
+- [ ] Terminal 3 : commandes « Dossier Dell » et « Avancer le portail » prêtes.
+- [ ] Wi-Fi coupé, vidéo de secours en pause.
 
 ## Réseau coupé
 
-Le parcours n'a besoin d'aucun réseau externe : SMTP local, portail Dell local, moteur de navigateur `scripted` par défaut (`backend/app/actions/browser/settings.py`), règles et Factur-X locaux. Ne pas activer les moteurs H Company / Browser Use ni un LLM externe pour la démo. Recommandation : couper le Wi-Fi avant de monter sur scène.
+Aucun réseau externe nécessaire : SMTP local, portail Dell local, moteur navigateur `scripted` (`backend/app/actions/browser/settings.py`), règles et Factur-X locaux, suivi limité aux URL loopback (`backend/app/followup/README.md`). Ne pas activer H Company / Browser Use ni un LLM externe. Couper le Wi-Fi avant la démo.
 
 ## Le navigateur plante
 
-1. Rouvrir Chrome, rouvrir les onglets (adresses dans `SCRIPT_3MIN.md`). L'état est en base SQLite : rien n'est perdu.
-2. Re-sélectionner l'opérateur (Paul ou Karim) dans **« Vous agissez en tant que »**.
-3. Si une action Dell est restée bloquée : `make preflight` (contrôle `no_stuck_sending`). Si rouge : bouton **« Prendre la main »** sur le dossier, ou `make reset` + `fake-case` et reprendre à l'étape en cours.
+1. Rouvrir Chrome sur `http://127.0.0.1:5173/`, se reconnecter (la session est un cookie ; l'état est en base SQLite).
+2. Reprendre à l'étape en cours (`/cases/<id>`).
+3. Action Dell bloquée : `make preflight` (contrôle `no_stuck_sending`) ; si rouge, **« Prendre la main »** sur le dossier.
 
 ## Plan B Dell (boutons inutilisables)
 
 ```sh
-CASE=$(curl -s http://127.0.0.1:8001/api/cases | python3 -c "import json,sys;print([c['id'] for c in json.load(sys.stdin) if c['verdict'] and c['verdict']['channel']=='browser_portal'][0])")
-K=97225c38-d686-5d99-a6cf-53e18aa92e8d   # Karim Benali (fictif)
 for s in repair_type backup_verified disk_encryption disk_handling accounts_and_mdm shipping_label return_inspection; do
-  curl -s -X POST http://127.0.0.1:8001/api/cases/$CASE/checklist/$s -H 'Content-Type: application/json' -d "{\"person_id\":\"$K\"}" >/dev/null
-done
-curl -s -X POST http://127.0.0.1:8001/api/cases/$CASE/validate -H 'Content-Type: application/json' -d "{\"person_id\":\"$K\"}"
+  curl -s -o /dev/null -w '%{http_code} ' -b runtime/.make-session -X POST -H 'Content-Type: application/json' -d '{}' \
+    http://127.0.0.1:8001/api/cases/$CASE/checklist/$s
+done; echo
+curl -s -b runtime/.make-session -X POST -H 'Content-Type: application/json' -d '{}' http://127.0.0.1:8001/api/cases/$CASE/validate
 ```
 
-Commandes vérifiées le 14/11/2026 : statut final `resolved`, numéro de dossier et 4 captures.
+Vérifié le 14/11/2026 : sept `200`, puis `tracked` en 1,7 s. Ne pas passer un `person_id` différent de la session : `403`.
 
 ## Bascule vidéo de secours
 
-Critère : deux échecs de suite, ou plus de 20 s perdues. Dire : « Pour respecter le temps, je vous montre l'enregistrement de ce même parcours, fait hier sur cette machine. » Lancer la vidéo au segment en cours, commenter avec les mêmes phrases. Ne jamais présenter la vidéo comme du direct.
+Critère : deux échecs de suite ou plus de 20 s perdues. Dire : « Pour tenir le temps, voici l'enregistrement de ce même parcours, fait hier sur cette machine. » Ne jamais présenter la vidéo comme du direct.
 
 ## Après la démo
 
-`Ctrl+C` dans les 4 terminaux. `make reset` si la machine est réutilisée.
+`Ctrl+C` dans les terminaux 1 et 2. `make reset` (ou `make seed`, API arrêtée) si la machine est réutilisée.
