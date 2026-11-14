@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { cleanup, screen } from "@testing-library/react";
+import { cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Chat from "./Chat";
 import i18n from "@/i18n";
@@ -22,6 +22,22 @@ beforeEach(async () => {
  });
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+it("prefills a URL message without sending until the operator submits", async () => {
+ renderWithApi(<Chat/>, "/chat?message=" + encodeURIComponent("Mon Dell ne s’allume plus & chauffe"));
+ await screen.findByRole("note");
+ expect(screen.getByLabelText("Décrivez votre panne")).toHaveValue("Mon Dell ne s’allume plus & chauffe");
+ expect(calls.some(call => call.path.endsWith("/messages"))).toBe(false);
+ await userEvent.click(screen.getByRole("button", { name: "Envoyer" }));
+ await waitFor(() => expect(calls).toContainEqual({ method: "POST", path: "/api/chat/conversations/c1/messages", body: { text: "Mon Dell ne s’allume plus & chauffe", reporter_id: person } }));
+});
+it("fills a suggestion as an editable draft without sending", async () => {
+ renderWithApi(<Chat/>);
+ await screen.findByRole("note");
+ await userEvent.click(screen.getByRole("button", { name: "Ne charge plus" }));
+ expect(screen.getByLabelText("Décrivez votre panne")).toHaveValue("Mon équipement ne charge plus.");
+ expect(screen.getByLabelText("Décrivez votre panne")).toHaveFocus();
+ expect(calls.some(call => call.path.endsWith("/messages"))).toBe(false);
+});
 it("shows the server AI disclosure before the first message, clarifying questions, and links the created case", async () => {
  localStorage.setItem("wp-person-id", person); renderWithApi(<Chat/>);
  expect(await screen.findByRole("note", { name: "Mention IA" })).toHaveTextContent(disclosure);

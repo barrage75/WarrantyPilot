@@ -10,5 +10,19 @@
   "message": "Décrivez votre panne",
   "sending": "Envoi…",
   "send": "Envoyer",
-  "title": "Signalement"
+  "title": "Signalement",
+  "subtitle": "Décrivez la panne. L’agent cherche la garantie, vous gardez la main.",
+  "suggestions": "Suggestions de panne",
+  "suggestionLabels": {
+    "power": "Ne s’allume plus",
+    "charging": "Ne charge plus",
+    "connection": "Ne se connecte plus"
+  },
+  "prompts": {
+    "power": "Mon équipement ne s’allume plus.",
+    "charging": "Mon équipement ne charge plus.",
+    "connection": "Mon équipement ne se connecte plus."
+  },
+  "placeholder": "Indiquez l’équipement, son numéro de série si possible, et ce qui ne fonctionne plus…",
+  "messageHelp": "Précisez le modèle et les symptômes. Ne partagez aucun mot de passe."
 }

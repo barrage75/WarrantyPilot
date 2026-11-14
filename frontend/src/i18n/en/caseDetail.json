@@ -10,6 +10,8 @@
   "liveSse": "Live (SSE)",
   "title": "Case details",
   "validate": "Validate",
+  "validationPending": "Sending in 5 s",
+  "validationQueued": "Send queued…",
   "reject": "Reject",
   "reason": "Reason",
   "reasonRequired": "A reason is required to reject the case.",
@@ -19,6 +21,13 @@
   "submitProof": "Save proof",
   "resolveCase": "Mark as resolved",
   "resolutionNote": "Resolution note",
+  "resolution": "Resolution",
+  "yourDecision": "Your decision",
+  "reality": {
+    "real": "Real",
+    "reproduction": "Local reproduction",
+    "simulated": "Simulated"
+  },
   "actionSuccess": "Action saved.",
   "evidence": "Evidence",
   "document": "Document",
@@ -125,5 +134,13 @@
     "email_message_id": "E-mail Message-ID",
     "portal_screenshot": "Portal screenshot",
     "carrier_tracking": "Carrier tracking"
+  },
+  "journey": {
+    "title": "Agent journey",
+    "invoice": "Invoice",
+    "rules": "Rules",
+    "approval": "Your approval",
+    "manufacturer": "Manufacturer",
+    "tracking": "Follow-up"
   }
 }

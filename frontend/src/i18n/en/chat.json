@@ -10,5 +10,19 @@
   "message": "Describe the fault",
   "sending": "Sending…",
   "send": "Send",
-  "title": "Report an issue"
+  "title": "Report an issue",
+  "subtitle": "Describe the fault. The agent checks the warranty; you stay in control.",
+  "suggestions": "Fault suggestions",
+  "suggestionLabels": {
+    "power": "Will not turn on",
+    "charging": "Will not charge",
+    "connection": "Will not connect"
+  },
+  "prompts": {
+    "power": "My device will not turn on.",
+    "charging": "My device will not charge.",
+    "connection": "My device will not connect."
+  },
+  "placeholder": "Include the device, its serial number if possible, and what stopped working…",
+  "messageHelp": "Include the model and symptoms. Never share passwords."
 }

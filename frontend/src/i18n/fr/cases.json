@@ -1,6 +1,5 @@
 {
-  "title": "Dossiers"
-,
+  "title": "Dossiers",
   "search": "Rechercher un ID",
   "status": "Statut",
   "verdict": "Verdict",
@@ -9,5 +8,13 @@
   "all": "Tous",
   "id": "Dossier",
   "updated": "Mise à jour",
-  "empty": "Aucun dossier ne correspond aux filtres."
+  "empty": "Aucun dossier ne correspond aux filtres.",
+  "subtitle": "Chaque panne, son dossier. Chaque étape, une preuve.",
+  "filters": "Filtres",
+  "searchPlaceholder": "Rechercher un dossier ou un équipement",
+  "caseCount_one": "dossier",
+  "caseCount_other": "dossiers",
+  "clearFilters": "Effacer les filtres",
+  "equipmentUnknown": "Équipement non identifié",
+  "emptyHelp": "Essayez un autre équipement ou effacez les filtres."
 }

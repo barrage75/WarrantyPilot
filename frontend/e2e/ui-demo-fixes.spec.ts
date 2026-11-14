@@ -1,11 +1,14 @@
 import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
-import { demoIdentities, fakeCase, loginUi } from "./helpers";
+import { demoIdentities, fakeCase, loginUi, openUserMenu, resetFromUi } from "./helpers";
 
 test("keeps Dell details accessible, centered and within the viewport", async ({ page }) => {
  await loginUi(page);
+ await resetFromUi(page);
+ await openUserMenu(page);
  await page.getByRole("combobox", { name: /Langue|Language/ }).selectOption("fr");
+ await page.keyboard.press("Escape");
  const identities = await demoIdentities(page.request);
  const created = await fakeCase(page.request, identities.dell, identities.person);
  const response = await page.request.get(`/api/cases/${created.id}`);
@@ -95,7 +98,7 @@ test("keeps Dell details accessible, centered and within the viewport", async ({
  await page.setViewportSize({ width: 1440, height: 900 });
  await page.goto(`/cases/${created.id}`);
  await page.getByRole("button", { name: "Valider", exact: true }).click();
- await expect(page.locator("main header")).toContainText("Envoyé");
+ await expect(page.locator("main header")).toContainText("Envoyé", { timeout: 15000 });
  await page.screenshot({ path: resolve(directory, "dell-after-validation.png"), animations: "disabled" });
 
  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));

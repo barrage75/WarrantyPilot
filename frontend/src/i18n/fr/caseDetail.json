@@ -10,6 +10,8 @@
   "liveSse": "En direct (SSE)",
   "title": "Détail du dossier",
   "validate": "Valider",
+  "validationPending": "Envoi dans 5 s",
+  "validationQueued": "Envoi prévu…",
   "reject": "Rejeter",
   "reason": "Motif",
   "reasonRequired": "Un motif est obligatoire pour rejeter le dossier.",
@@ -19,6 +21,13 @@
   "submitProof": "Enregistrer la preuve",
   "resolveCase": "Marquer comme résolu",
   "resolutionNote": "Note de résolution",
+  "resolution": "Résolution",
+  "yourDecision": "Votre décision",
+  "reality": {
+    "real": "Réel",
+    "reproduction": "Reproduction locale",
+    "simulated": "Simulé"
+  },
   "actionSuccess": "Action enregistrée.",
   "evidence": "Preuves",
   "document": "Document",
@@ -125,5 +134,13 @@
     "email_message_id": "Message-ID d’e-mail",
     "portal_screenshot": "Capture du portail",
     "carrier_tracking": "Suivi transporteur"
+  },
+  "journey": {
+    "title": "Parcours de l’agent",
+    "invoice": "Facture",
+    "rules": "Règles",
+    "approval": "Votre accord",
+    "manufacturer": "Fabricant",
+    "tracking": "Suivi"
   }
 }

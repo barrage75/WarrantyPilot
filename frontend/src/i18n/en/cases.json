@@ -1,6 +1,5 @@
 {
-  "title": "Cases"
-,
+  "title": "Cases",
   "search": "Search by ID",
   "status": "Status",
   "verdict": "Verdict",
@@ -9,5 +8,13 @@
   "all": "All",
   "id": "Case",
   "updated": "Updated",
-  "empty": "No cases match the filters."
+  "empty": "No cases match the filters.",
+  "subtitle": "Every fault has a case. Every step has evidence.",
+  "filters": "Filters",
+  "searchPlaceholder": "Search cases or equipment",
+  "caseCount_one": "case",
+  "caseCount_other": "cases",
+  "clearFilters": "Clear filters",
+  "equipmentUnknown": "Unidentified equipment",
+  "emptyHelp": "Try another device or clear your filters."
 }

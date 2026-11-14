@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, test } from "@playwright/test";
-import { fakeCase, resolveFromUi } from "./helpers";
+import { fakeCase, openUserMenu, resolveFromUi } from "./helpers";
 test("capture every screen in French and English with isolated fictional cases", async ({ page }) => {
  const request = page.request;
  const data = await resolveFromUi(page, request);
@@ -16,12 +16,14 @@ test("capture every screen in French and English with isolated fictional cases",
   ["garde-fou", "/purchase-guard"], ["parametres", "/settings"], ["demo", "/demo"], ["journal", "/journal"],
  ] as const;
  for (const language of ["fr", "en"]) {
+  await openUserMenu(page);
   await page.getByRole("combobox", { name: /Langue|Language/ }).selectOption(language);
+  await page.keyboard.press("Escape");
   for (const [name, path] of surfaces) {
    await page.goto(path);
    await expect(page.locator("main h1")).toBeVisible();
    if (name === "decisions") await expect(page.locator("main").getByText(waiting.id.slice(0, 8), { exact: false }).first()).toBeVisible();
-   if (name === "dossiers") await expect(page.getByRole("row", { name: data.resolved, exact: true })).toBeVisible();
+   if (name === "dossiers") await expect(page.getByRole("article", { name: data.resolved, exact: true })).toBeVisible();
    if (name.startsWith("detail")) await expect(page.getByText(language === "fr" ? "Actualisation toutes les 2 s" : "Refresh every 2 s", { exact: true })).toBeAttached();
    if (name === "detail-checklist") await page.getByRole("heading", { name: language === "fr" ? "Données du PC — 7 étapes" : "PC data — 7 steps", exact: true }).evaluate(element => element.scrollIntoView({ block: "start" }));
    if (name === "chat") {
