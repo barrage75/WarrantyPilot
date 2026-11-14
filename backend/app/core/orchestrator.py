@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta
@@ -121,6 +122,49 @@ class Orchestrator:
         )
 
     async def run(self, case_id: UUID) -> Case:
+        prepared = await asyncio.to_thread(self._prepare_run, case_id)
+        if isinstance(prepared, Case):
+            return prepared
+        case, action, adapter = prepared
+
+        if adapter is None:
+            return await asyncio.to_thread(
+                self._finish_action,
+                action,
+                case,
+                ActionResult(
+                    action_id=action.id,
+                    status=ActionResultStatus.FAILURE,
+                    error="no_adapter_for_channel",
+                    badge=action.badge,
+                ),
+            )
+
+        try:
+            await asyncio.to_thread(self._assert_action_allowed, action)
+        except SecurityViolation as error:
+            return await asyncio.to_thread(
+                self._finish_action,
+                action,
+                case,
+                ActionResult(
+                    action_id=action.id,
+                    status=ActionResultStatus.FAILURE,
+                    error=str(error),
+                    badge=action.badge,
+                ),
+            )
+        action_result = await adapter.execute(action)
+        if action_result.action_id != action.id:
+            action_result = ActionResult(
+                action_id=action.id,
+                status=ActionResultStatus.FAILURE,
+                error="adapter returned a result for a different action",
+                badge=action.badge,
+            )
+        return await asyncio.to_thread(self._finish_action, action, case, action_result)
+
+    def _prepare_run(self, case_id: UUID) -> Case | tuple[Case, Action, ActionAdapter | None]:
         with self.session_factory() as session, session.begin():
             case_row = (
                 session.execute(select(cases).where(cases.c.id == str(case_id))).mappings().first()
@@ -460,40 +504,7 @@ class Orchestrator:
                 payload={"from": case.status.value, "to": CaseStatus.SENDING.value},
             )
 
-        if adapter is None:
-            return self._finish_action(
-                action,
-                case,
-                ActionResult(
-                    action_id=action.id,
-                    status=ActionResultStatus.FAILURE,
-                    error="no_adapter_for_channel",
-                    badge=action.badge,
-                ),
-            )
-
-        try:
-            self._assert_action_allowed(action)
-        except SecurityViolation as error:
-            return self._finish_action(
-                action,
-                case,
-                ActionResult(
-                    action_id=action.id,
-                    status=ActionResultStatus.FAILURE,
-                    error=str(error),
-                    badge=action.badge,
-                ),
-            )
-        action_result = await adapter.execute(action)
-        if action_result.action_id != action.id:
-            action_result = ActionResult(
-                action_id=action.id,
-                status=ActionResultStatus.FAILURE,
-                error="adapter returned a result for a different action",
-                badge=action.badge,
-            )
-        return self._finish_action(action, case, action_result)
+        return case, action, adapter
 
     def _prepare_action(
         self, session: Session, case: Case

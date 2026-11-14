@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
-from starlette.concurrency import run_in_threadpool
 
 from app.api.dependencies import (
     get_app_settings,
@@ -29,6 +28,7 @@ from app.core.preflight import preflight_payload, run_checks
 from app.core.reset import reset_demo
 from app.core.settings import AppSettings
 from app.core.tables import cases, equipment, incidents, people
+from app.ingestion.pdf_executor import run_pdf_task
 
 router = APIRouter()
 
@@ -57,7 +57,7 @@ async def demo_reset(
     token = session_token(request)
     with request.app.state.session_factory() as session:
         kept_session = export_session(session, token) if token else None
-    await run_in_threadpool(reset_demo, request.app.state.engine, settings, actor=operator.actor)
+    await run_pdf_task(reset_demo, request.app.state.engine, settings, actor=operator.actor)
     if kept_session is not None:
         with request.app.state.session_factory.begin() as session:
             restore_session(session, kept_session)

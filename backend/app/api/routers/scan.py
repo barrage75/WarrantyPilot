@@ -24,6 +24,7 @@ from app.contracts.interfaces import RulesEngine
 from app.contracts.models import Equipment, Fact, Incident, Right, Rule, Verdict
 from app.core.tables import purchase_requests
 from app.ingestion.normalize import normalize_facts
+from app.ingestion.pdf_executor import run_pdf_task
 from app.ingestion.registry import ExtractorRegistry
 from app.rules import DeterministicRulesEngine
 
@@ -91,7 +92,7 @@ async def _run_scan(application: Any, scan_id: str) -> None:
             sys.path.insert(0, str(repository_root))
         from data.appelia.load import load_dataset
 
-        dataset = load_dataset()
+        dataset = await run_pdf_task(load_dataset)
         data_directory = repository_root / "data" / "appelia"
         state["documents_total"] = len(dataset.documents)
         extractor = application.state.services.get("extractor") or ExtractorRegistry()
@@ -99,9 +100,7 @@ async def _run_scan(application: Any, scan_id: str) -> None:
         for index, document in enumerate(dataset.documents, start=1):
             if document.source == DocumentSource.FACTURX:
                 content = (data_directory / document.filename).read_bytes()
-                extracted_facts.extend(
-                    await asyncio.to_thread(extractor.extract, document, content)
-                )
+                extracted_facts.extend(await run_pdf_task(extractor.extract, document, content))
             state["documents_done"] = index
             state["progress"] = round(index * 100 / max(1, len(dataset.documents)))
 
