@@ -1,9 +1,21 @@
 {
   "serverDetails": "Technical server details (original message)",
-  "checkNames": { "database": "Database", "journal": "Journal integrity", "anchor_file": "Anchor file", "no_stuck_sending": "Ongoing sends", "feature_flags": "Feature configuration" },
-  "checkDetails": { "database": "Database accessible.", "journal": "Journal integrity check passed.", "anchor_file": "Anchor directory accessible.", "no_stuck_sending": "No case stuck while sending.", "feature_flags": "Feature configuration valid." },
-  "identityReset": "Demo reset. Local identity was cleared: enter a UUID from the new demo database.",
-  "identityWarning": "UUIDs change during reset. Your operator identity will be cleared automatically.",
+  "checkNames": {
+    "database": "Database",
+    "journal": "Journal integrity",
+    "anchor_file": "Anchor file",
+    "no_stuck_sending": "Ongoing sends",
+    "feature_flags": "Feature configuration"
+  },
+  "checkDetails": {
+    "database": "Database accessible.",
+    "journal": "Journal integrity check passed.",
+    "anchor_file": "Anchor directory accessible.",
+    "no_stuck_sending": "No case stuck while sending.",
+    "feature_flags": "Feature configuration valid."
+  },
+  "identityReset": "Demo reset. The previous journal was archived and your session is kept.",
+  "identityWarning": "Reset archives the journal to runtime/journal-archive/ and recreates the demo database.",
   "confirmReset": "Confirm reset",
   "title": "Demo",
   "reset": "Reset demo",

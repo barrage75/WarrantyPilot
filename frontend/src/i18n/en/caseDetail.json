@@ -97,5 +97,15 @@
   "dellCase": "Dell case number: {{number}}",
   "result": "Result",
   "proofLabel": "Proof",
-  "equipmentLabel": "Equipment"
+  "equipmentLabel": "Equipment",
+  "proofType": "Proof type",
+  "proofReference": "Reference",
+  "proofDate": "Proof date",
+  "proofNote": "Note (max. 500 characters)",
+  "proofTypes": {
+    "case_number": "Case number",
+    "email_message_id": "E-mail Message-ID",
+    "portal_screenshot": "Portal screenshot",
+    "carrier_tracking": "Carrier tracking"
+  }
 }

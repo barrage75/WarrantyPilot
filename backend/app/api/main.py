@@ -7,10 +7,12 @@ from pathlib import Path
 from threading import Lock
 from urllib.parse import quote
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.actions.browser.adapter import (
     BrowserPortalAdapter,
@@ -28,8 +30,10 @@ from app.actions.email.transports import (
     refresh_token_provider,
 )
 from app.actions.manual import ManualAdapter
+from app.api.dependencies import require_session
 from app.api.routers import (
     agent,
+    auth,
     cases,
     chat,
     demo,
@@ -42,12 +46,13 @@ from app.api.routers import (
     settings,
 )
 from app.api.routers.followup import run_followup_tick
+from app.api.security import origin_guard_and_anchor
 from app.contracts.enums import ActionResultStatus, Channel, EventType
 from app.contracts.interfaces import ActionAdapter
 from app.contracts.models import Case, Settings
 from app.core.db import SessionLocal, create_schema, engine, make_session_factory
-from app.core.journal import append_event
-from app.core.settings import AppSettings, get_settings
+from app.core.journal import append_event, configure_journal_key
+from app.core.settings import AppSettings, assert_secure_configuration, get_settings
 from app.core.settings_store import read_settings
 from app.core.status import recover_interrupted_sends
 from app.core.tables import action_results, actions, events
@@ -230,6 +235,8 @@ def create_app(
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
         active_settings = app_settings or get_settings()
+        assert_secure_configuration(active_settings)
+        configure_journal_key(active_settings.journal_anchor_key)
         active_settings.anchor_file.parent.mkdir(parents=True, exist_ok=True)
         create_schema(active_engine)
         recover_interrupted_sends(active_session_factory)
@@ -291,12 +298,36 @@ def create_app(
             if app_engine is None:
                 active_engine.dispose()
 
-    application = FastAPI(title="WarrantyPilot API", version="0.1.0", lifespan=lifespan)
+    configured_settings = app_settings or get_settings()
+    assert_secure_configuration(configured_settings)
+    docs_enabled = configured_settings.environment == "dev"
+    application = FastAPI(
+        title="WarrantyPilot API",
+        version="0.1.0",
+        lifespan=lifespan,
+        docs_url="/docs" if docs_enabled else None,
+        redoc_url="/redoc" if docs_enabled else None,
+        openapi_url="/openapi.json" if docs_enabled else None,
+    )
+    application.state.app_settings = configured_settings
+    application.state.session_factory = active_session_factory
     application.state.chat_conversations = {}
     application.state.scans = {}
+    application.middleware("http")(origin_guard_and_anchor)
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=configured_settings.cors_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
+    application.add_middleware(
+        TrustedHostMiddleware, allowed_hosts=configured_settings.trusted_hosts
+    )
+    for public_router in (health.router, auth.router):
+        application.include_router(public_router, prefix="/api")
     for api_router in (
         intake.router,
-        health.router,
         cases.router,
         followup.router,
         chat.router,
@@ -307,7 +338,9 @@ def create_app(
         settings.router,
         demo.router,
     ):
-        application.include_router(api_router, prefix="/api")
+        application.include_router(
+            api_router, prefix="/api", dependencies=[Depends(require_session)]
+        )
     return application
 
 

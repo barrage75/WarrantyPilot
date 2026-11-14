@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import type { components } from "@/api/schema";
 import { useSettings, useUpdateSettings, useAgentStatus, useToggleAgent } from "@/api/hooks";
 import { apiErrorKey } from "@/api/errors";
-import { OperatorSelector } from "@/operator";
 import { useSseEnabled, setSseEnabled } from "@/preferences";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,5 +36,5 @@ export default function Settings() {
  const { t } = useTranslation("settings"), query = useSettings(), agent = useAgentStatus(), toggle = useToggleAgent(), sse = useSseEnabled();
  return <div className="space-y-5"><h1 className="text-3xl font-semibold">{t("title")}</h1><Card><h2 className="mb-4 text-xl font-semibold">{t("apiSettings")}</h2>{query.isPending && <p>{t("common:loading")}</p>}{query.isError && <p role="alert">{t(apiErrorKey(query.error))}</p>}{query.data && <SettingsForm key={JSON.stringify(query.data)} initial={query.data}/>}</Card>
  <Card className="space-y-4"><h2 className="text-xl font-semibold">{t("agent")}</h2><p>{t("agentHint")}</p><p>{agent.isError ? t("common:unknown") : agent.data ? t(agent.data.paused ? "common:paused" : "common:running") : t("common:loading")}</p><Button disabled={!agent.data || agent.isError || toggle.isPending} onClick={() => toggle.mutate(!!agent.data?.paused, { onError: error => toast.error(t(apiErrorKey(error))) })}>{t(agent.data?.paused ? "common:resume" : "common:pause")}</Button></Card>
- <Card className="space-y-4"><h2 className="text-xl font-semibold">{t("local")}</h2><OperatorSelector/><label className="flex items-center gap-3"><Switch checked={sse} onChange={e => setSseEnabled(e.target.checked)}/>{t("sse")}</label><p className="text-sm text-slate-600">{t("sseHint")}</p></Card></div>;
+ <Card className="space-y-4"><h2 className="text-xl font-semibold">{t("local")}</h2><label className="flex items-center gap-3"><Switch checked={sse} onChange={e => setSseEnabled(e.target.checked)}/>{t("sse")}</label><p className="text-sm text-slate-600">{t("sseHint")}</p></Card></div>;
 }

@@ -23,12 +23,14 @@ from app.core.tables import (
     rights,
     suppliers,
 )
+from tests.auth_helpers import KARIM_ID, login
 from tests.integration.helpers import create_case
 
 
 def test_reset_preflight_and_health_endpoints(db_engine, app_settings) -> None:
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
+        login(client, person_id=KARIM_ID)
         adapters = application.state.services["action_adapters"]
         assert isinstance(adapters[Channel.EMAIL_RESELLER], EmailActionAdapter)
         assert adapters[Channel.EMAIL_RESELLER].transport.name == "smtp-local"
@@ -37,7 +39,7 @@ def test_reset_preflight_and_health_endpoints(db_engine, app_settings) -> None:
         stale_message = app_settings.maildir_path / "stale-message"
         stale_message.write_text("synthetic", encoding="utf-8")
         app_settings.email_sent_ledger_path.write_text("synthetic\n", encoding="utf-8")
-        reset = client.post("/api/demo/reset")
+        reset = client.post("/api/demo/reset", json={"confirm": "RESET"})
         assert reset.status_code == 200
         assert not stale_message.exists()
         assert not app_settings.email_sent_ledger_path.exists()
@@ -68,16 +70,21 @@ def test_manual_takeover_requires_human_proof(db_engine, session_factory, app_se
         )
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
+        operator = login(client, person_id=KARIM_ID)
         takeover = client.post(
             f"/api/cases/{case.id}/manual-takeover",
-            json={"person_id": str(person_id)},
+            json={},
         )
         assert takeover.status_code == 200
         assert takeover.json()["status"] == CaseStatus.MANUAL_TAKEOVER.value
 
         proof = client.post(
             f"/api/cases/{case.id}/manual-proof",
-            json={"person_id": str(person_id), "proof": "ticket-human-123"},
+            json={
+                "proof_type": "case_number",
+                "reference": "TICKET-HUMAN-123",
+                "proof_date": "2026-11-14",
+            },
         )
         assert proof.status_code == 200
         assert proof.json()["status"] == CaseStatus.SENT.value
@@ -95,8 +102,8 @@ def test_manual_takeover_requires_human_proof(db_engine, session_factory, app_se
             .one()
         )
     assert result["status"] == "success"
-    assert result["proof"] == "ticket-human-123"
-    assert event["actor"] == f"human:{person_id}"
+    assert result["proof"] == "case_number:TICKET-HUMAN-123 (2026-11-14)"
+    assert event["actor"] == operator.actor
 
 
 @pytest.mark.parametrize(
@@ -129,6 +136,7 @@ def test_startup_recovers_interrupted_send(
     application = create_app(app_settings=app_settings, app_engine=db_engine)
 
     with TestClient(application) as client:
+        login(client, person_id=KARIM_ID)
         recovered = client.get(f"/api/cases/{case.id}")
 
     assert recovered.status_code == 200

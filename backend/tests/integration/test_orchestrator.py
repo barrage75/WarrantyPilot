@@ -263,7 +263,7 @@ async def test_browser_adapter_uses_verdict_channel_and_url(session_factory, app
     verdict = Verdict(
         value=VerdictValue.COVERED,
         channel=Channel.BROWSER_PORTAL,
-        target_url="http://localhost:8001/claim",
+        target_url="http://localhost:8100/claim",
         explanation_fr="Couvert",
         explanation_en="Covered",
     )
@@ -284,7 +284,7 @@ async def test_browser_adapter_uses_verdict_channel_and_url(session_factory, app
         action = session.execute(select(actions)).mappings().one()
     assert action["channel"] == Channel.BROWSER_PORTAL.value
     assert action["kind"] == "portal_claim"
-    assert action["payload"]["url"] == "http://localhost:8001/claim"
+    assert action["payload"]["url"] == "http://localhost:8100/claim"
 
 
 async def test_case_channel_is_used_when_verdict_channel_is_missing(

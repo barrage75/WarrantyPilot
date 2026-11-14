@@ -28,6 +28,7 @@ from app.core.tables import (
 )
 from app.followup.clock import utc_now as followup_now
 from app.followup.reminders import ReminderOutbox, ReminderPlanner, ReminderScheduler
+from tests.auth_helpers import KARIM_ID, login
 
 
 class StaticFollowUp:
@@ -39,7 +40,8 @@ class StaticFollowUp:
 
 
 def _reset(client: TestClient) -> None:
-    assert client.post("/api/demo/reset").status_code == 200
+    login(client, person_id=KARIM_ID)
+    assert client.post("/api/demo/reset", json={"confirm": "RESET"}).status_code == 200
 
 
 def _seed_case(session_factory, status: CaseStatus) -> UUID:
@@ -257,7 +259,7 @@ def test_human_case_resolution_requires_person_and_note_and_realizes_cancelled_s
             f"/api/cases/{case_id}/resolve",
             json={"person_id": operator["id"], "note": "  "},
         )
-        assert unknown_person.status_code == 404
+        assert unknown_person.status_code == 403
         assert missing_case.status_code == 404
         assert conflict.status_code == 409
         assert blank_note.status_code == 422

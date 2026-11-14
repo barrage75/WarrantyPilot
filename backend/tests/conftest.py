@@ -20,6 +20,7 @@ def app_settings(tmp_path: Path) -> AppSettings:
         email_sent_ledger_path=tmp_path / "email_sent.jsonl",
         followup_interval_s=0,
         followup_outbox_path=tmp_path / "followup.sqlite3",
+        journal_archive_dir=tmp_path / "journal-archive",
     )
 
 

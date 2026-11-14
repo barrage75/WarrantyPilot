@@ -15,12 +15,14 @@ def test_email_allowlist_is_exact() -> None:
         assert_email_allowed("outside@example.test", settings)
 
 
-def test_url_allowlist_defaults_to_localhost_only() -> None:
+def test_url_allowlist_defaults_to_local_repro_portal_only() -> None:
     settings = Settings()
-    assert_url_allowed("http://localhost:5173/forms/claim", settings)
-    assert_url_allowed("http://127.0.0.1:8000/api", settings)
+    assert_url_allowed("http://localhost:8100/forms/claim", settings)
+    assert_url_allowed("http://127.0.0.1:8100/support", settings)
     with pytest.raises(SecurityViolation):
-        assert_url_allowed("https://localhost:5173/", settings)
+        assert_url_allowed("http://127.0.0.1:8001/api/settings", settings)
+    with pytest.raises(SecurityViolation):
+        assert_url_allowed("https://localhost:8100/", settings)
     with pytest.raises(SecurityViolation):
         assert_url_allowed("http://example.com/", settings)
 

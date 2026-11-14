@@ -6,8 +6,8 @@ import type { ReactNode } from "react";
 import Settings from "./Settings";
 import Demo from "./Demo";
 import Journal from "./Journal";
-import { OperatorProvider, OperatorSelector } from "@/operator";
 import i18n from "@/i18n";
+import { TestSession } from "@/test/http";
 const person = "10000000-0000-4000-8000-000000000001";
 const original = { id: person, auto_send_threshold_eur: "25.00", agent_paused: true, email_allowlist: ["camille@example.test"], browser_allowed_origins: ["http://127.0.0.1:*"], feature_flags: { p1_chat: true, p2_voice: false, scan: false }, future_field: { preserved: true } };
 let settings: typeof original, requests: { path: string; method: string; body?: unknown }[], status: number;
@@ -38,7 +38,7 @@ beforeEach(async () => {
 afterEach(() => { cleanup(); caches.forEach(cache => cache.clear()); vi.unstubAllGlobals(); });
 function show(children: ReactNode) {
  const cache = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } }); caches.push(cache);
- const result = render(<QueryClientProvider client={cache}><OperatorProvider>{children}</OperatorProvider></QueryClientProvider>);
+ const result = render(<QueryClientProvider client={cache}><TestSession>{children}</TestSession></QueryClientProvider>);
  return { ...result, cache };
 }
 it("preserves other settings fields during PUT and validates editable lists", async () => {
@@ -78,8 +78,8 @@ it("renders an empty intact journal and request errors", async () => {
  verification.checked = 0; const view = show(<Journal/>); await screen.findByText("0 événements vérifiés"); view.unmount();
  status = 500; show(<Journal/>); expect(await screen.findByRole("alert")).toHaveTextContent("API indisponible");
 });
-it("requires reset confirmation, clears identity, and invalidates the entire cache", async () => {
- localStorage.setItem("wp-person-id", person); const { cache } = show(<><OperatorSelector/><Demo/></>);
+it("requires reset confirmation, sends confirm RESET, and invalidates the entire cache", async () => {
+ const { cache } = show(<Demo/>);
  cache.setQueryData(["sentinel"], "old"); cache.setQueryData(["events", "old-case"], []);
  await screen.findByText("Fictional fix"); expect(screen.getByText("Fictional diagnostic")).toBeInTheDocument();
  await userEvent.click(screen.getByRole("button", { name: "Réinitialiser la démo" }));
@@ -87,13 +87,12 @@ it("requires reset confirmation, clears identity, and invalidates the entire cac
  await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Annuler" })); expect(requests.some(r => r.path === "/api/demo/reset")).toBe(false);
  await userEvent.click(screen.getByRole("button", { name: "Réinitialiser la démo" }));
  await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Confirmer la remise à zéro" }));
- await screen.findByText(/Démo réinitialisée. L’identité locale/);
- expect(localStorage.getItem("wp-person-id")).toBe(""); expect(screen.getByLabelText("Vous agissez en tant que")).toHaveValue("");
+ await screen.findByText(/Démo réinitialisée. Le journal précédent a été archivé/);
  expect(cache.getQueryState(["sentinel"])?.isInvalidated).toBe(true); expect(cache.getQueryData(["events", "old-case"])).toBeUndefined();
 });
-it("keeps identity when reset fails", async () => {
- localStorage.setItem("wp-person-id", person); show(<Demo/>); await screen.findByText("Fictional fix");
+it("reports a failed reset", async () => {
+ show(<Demo/>); await screen.findByText("Fictional fix");
  status = 500; await userEvent.click(screen.getByRole("button", { name: "Réinitialiser la démo" }));
  await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Confirmer la remise à zéro" }));
- expect(await screen.findByRole("alert")).toHaveTextContent("API indisponible"); expect(localStorage.getItem("wp-person-id")).toBe(person);
+ expect(await screen.findByRole("alert")).toHaveTextContent("API indisponible");
 });

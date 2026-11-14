@@ -2,20 +2,21 @@ import asyncio
 import json
 import re
 from collections.abc import AsyncIterator
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
+from enum import StrEnum
 from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from sqlalchemy import insert, select, update
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
 
 from app.actions.browser.settings import BrowserSettings
-from app.api.dependencies import _require_person, get_orchestrator, get_session
+from app.api.dependencies import actor_for, get_orchestrator, get_session, require_session
 from app.contracts.enums import (
     ActionResultStatus,
     CaseStatus,
@@ -37,6 +38,8 @@ from app.contracts.models import (
     Verdict,
     utc_now,
 )
+from app.core.auth import Operator
+from app.core.checklist_rules import ChecklistRuleError, ensure_step_allowed
 from app.core.journal import append_event
 from app.core.orchestrator import Orchestrator
 from app.core.status import InvalidTransition, transition
@@ -59,34 +62,65 @@ _SCREENSHOT_NAME = re.compile(r"^[A-Za-z0-9_.-]+\.png$")
 
 class ValidationRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    person_id: UUID
+    person_id: UUID | None = None
 
 
 class RejectionRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    person_id: UUID
-    reason: str
+    person_id: UUID | None = None
+    reason: str = Field(min_length=1, max_length=1000)
 
 
 class ChecklistStepUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    person_id: UUID
+    person_id: UUID | None = None
 
 
 class ManualTakeoverRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    person_id: UUID
+    person_id: UUID | None = None
+
+
+class ManualProofType(StrEnum):
+    CASE_NUMBER = "case_number"
+    EMAIL_MESSAGE_ID = "email_message_id"
+    PORTAL_SCREENSHOT = "portal_screenshot"
+    CARRIER_TRACKING = "carrier_tracking"
+
+
+_PROOF_REFERENCE_PATTERNS: dict[ManualProofType, re.Pattern[str]] = {
+    ManualProofType.CASE_NUMBER: re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{3,63}$"),
+    ManualProofType.EMAIL_MESSAGE_ID: re.compile(r"^<?[^<>@\s]{1,128}@[^<>@\s]{1,128}>?$"),
+    ManualProofType.PORTAL_SCREENSHOT: re.compile(r"^[A-Za-z0-9_.-]{1,96}\.png$"),
+    ManualProofType.CARRIER_TRACKING: re.compile(r"^[A-Za-z0-9-]{8,40}$"),
+}
 
 
 class ManualProofRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    person_id: UUID
-    proof: str = Field(min_length=1)
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    person_id: UUID | None = None
+    proof_type: ManualProofType
+    reference: str = Field(min_length=4, max_length=128)
+    proof_date: date
+    note: str | None = Field(default=None, max_length=500)
+
+    @model_validator(mode="after")
+    def _validate_reference(self) -> "ManualProofRequest":
+        if not _PROOF_REFERENCE_PATTERNS[self.proof_type].fullmatch(self.reference):
+            raise ValueError(f"reference is not a valid {self.proof_type.value}")
+        if self.proof_date > date.today() + timedelta(days=1):
+            raise ValueError("proof_date cannot be in the future")
+        if self.proof_date < date(2000, 1, 1):
+            raise ValueError("proof_date is too old")
+        return self
+
+    def summary(self) -> str:
+        return f"{self.proof_type.value}:{self.reference} ({self.proof_date.isoformat()})"
 
 
 class CaseResolveRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    person_id: UUID
+    person_id: UUID | None = None
     note: str = Field(min_length=1)
 
     @field_validator("note")
@@ -429,15 +463,16 @@ async def validate_case(
     request_body: ValidationRequest,
     session: Session = Depends(get_session),
     orchestrator: Orchestrator = Depends(get_orchestrator),
+    operator: Operator = Depends(require_session),
 ) -> Case:
+    actor = actor_for(operator, request_body.person_id)
     case = _load_case(session, case_id)
-    _require_person(session, request_body.person_id)
     if case.status != CaseStatus.AWAITING_VALIDATION:
         raise HTTPException(status_code=409, detail="Case is not awaiting validation")
     append_event(
         session,
         EventType.VALIDATED,
-        actor=f"human:{request_body.person_id}",
+        actor=actor,
         case_id=str(case_id),
         payload={"approved": True},
     )
@@ -450,9 +485,10 @@ def reject_case(
     case_id: UUID,
     request_body: RejectionRequest,
     session: Session = Depends(get_session),
+    operator: Operator = Depends(require_session),
 ) -> Case:
+    actor = actor_for(operator, request_body.person_id)
     case = _load_case(session, case_id)
-    _require_person(session, request_body.person_id)
     if case.status != CaseStatus.AWAITING_VALIDATION:
         raise HTTPException(status_code=409, detail="Case is not awaiting validation")
     try:
@@ -467,7 +503,7 @@ def reject_case(
     append_event(
         session,
         EventType.REJECTED,
-        actor=f"human:{request_body.person_id}",
+        actor=actor,
         case_id=str(case_id),
         payload={"reason": request_body.reason},
     )
@@ -486,13 +522,12 @@ def request_manual_takeover(
     case_id: UUID,
     request_body: ManualTakeoverRequest,
     session: Session = Depends(get_session),
+    operator: Operator = Depends(require_session),
 ) -> Case:
+    actor = actor_for(operator, request_body.person_id)
     case = _load_case(session, case_id)
     if case.status != CaseStatus.FAILED:
         raise HTTPException(status_code=409, detail="Case is not failed")
-    person = session.execute(select(people.c.id).where(people.c.id == str(request_body.person_id)))
-    if person.first() is None:
-        raise HTTPException(status_code=404, detail="Human approver not found")
     try:
         new_status = transition(case.status, CaseStatus.MANUAL_TAKEOVER)
     except InvalidTransition as error:
@@ -506,7 +541,7 @@ def request_manual_takeover(
     append_event(
         session,
         EventType.STATUS_CHANGED,
-        actor=f"human:{request_body.person_id}",
+        actor=actor,
         case_id=str(case_id),
         payload={"from": case.status.value, "to": new_status.value},
     )
@@ -519,29 +554,31 @@ def submit_manual_proof(
     case_id: UUID,
     request_body: ManualProofRequest,
     session: Session = Depends(get_session),
+    operator: Operator = Depends(require_session),
 ) -> Case:
+    actor = actor_for(operator, request_body.person_id)
     case = _load_case(session, case_id)
     if case.status != CaseStatus.MANUAL_TAKEOVER:
         raise HTTPException(status_code=409, detail="Case is not awaiting manual proof")
-    if not request_body.proof.strip():
-        raise HTTPException(status_code=422, detail="Proof must not be blank")
-    person = session.execute(select(people.c.id).where(people.c.id == str(request_body.person_id)))
-    if person.first() is None:
-        raise HTTPException(status_code=404, detail="Human approver not found")
-
-    actor = f"human:{request_body.person_id}"
+    proof = request_body.summary()
     action = Action(
         case_id=case_id,
         channel=Channel.MANUAL,
         kind="manual_claim",
         idempotency_key=f"case:{case_id}:manual-proof:{uuid4()}",
-        payload={"proof": request_body.proof},
+        payload={
+            "proof": proof,
+            "proof_type": request_body.proof_type.value,
+            "reference": request_body.reference,
+            "proof_date": request_body.proof_date.isoformat(),
+            "note": request_body.note,
+        },
         badge=case.badge,
     )
     result = ActionResult(
         action_id=action.id,
         status=ActionResultStatus.SUCCESS,
-        proof=request_body.proof,
+        proof=proof,
         badge=case.badge,
     )
     try:
@@ -605,16 +642,16 @@ def resolve_case(
     case_id: UUID,
     request_body: CaseResolveRequest,
     session: Session = Depends(get_session),
+    operator: Operator = Depends(require_session),
 ) -> Case:
+    actor = actor_for(operator, request_body.person_id)
     case = _load_case(session, case_id)
-    _require_person(session, request_body.person_id)
     if case.status not in {CaseStatus.SENT, CaseStatus.TRACKED}:
         raise HTTPException(status_code=409, detail="Case is not sent or tracked")
     try:
         new_status = transition(case.status, CaseStatus.RESOLVED)
     except InvalidTransition as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
-    actor = f"human:{request_body.person_id}"
     updated_at = utc_now()
     session.execute(
         update(cases)
@@ -684,13 +721,10 @@ async def complete_checklist_step(
     request_body: ChecklistStepUpdate,
     session: Session = Depends(get_session),
     orchestrator: Orchestrator = Depends(get_orchestrator),
+    operator: Operator = Depends(require_session),
 ) -> DataChecklist:
+    actor = actor_for(operator, request_body.person_id)
     case = _load_case(session, case_id)
-    human_exists = session.execute(
-        select(people.c.id).where(people.c.id == str(request_body.person_id))
-    ).first()
-    if human_exists is None:
-        raise HTTPException(status_code=404, detail="Human approver not found")
     row = (
         session.execute(select(data_checklists).where(data_checklists.c.case_id == str(case_id)))
         .mappings()
@@ -701,33 +735,42 @@ async def complete_checklist_step(
         if row is not None
         else DataChecklist(case_id=case_id)
     )
-    step = ChecklistStep(
-        done=True,
-        by_person_id=request_body.person_id,
-        at=utc_now(),
-    )
-    checklist.steps[step_name] = step
-    if row is None:
-        session.execute(
-            data_checklists.insert().values(
-                id=str(checklist.id),
-                case_id=str(case_id),
-                steps=checklist.model_dump(mode="json")["steps"],
+    try:
+        changed = ensure_step_allowed(checklist, step_name, operator)
+    except ChecklistRuleError as error:
+        raise HTTPException(status_code=error.status_code, detail=error.detail) from error
+    if changed:
+        step = ChecklistStep(
+            done=True,
+            by_person_id=UUID(operator.person_id),
+            at=utc_now(),
+        )
+        checklist.steps[step_name] = step
+        if row is None:
+            session.execute(
+                data_checklists.insert().values(
+                    id=str(checklist.id),
+                    case_id=str(case_id),
+                    steps=checklist.model_dump(mode="json")["steps"],
+                )
             )
+        else:
+            session.execute(
+                data_checklists.update()
+                .where(data_checklists.c.case_id == str(case_id))
+                .values(steps=checklist.model_dump(mode="json")["steps"])
+            )
+        append_event(
+            session,
+            EventType.CHECKLIST_STEP_DONE,
+            actor=actor,
+            case_id=str(case_id),
+            payload={
+                "step": step_name.value,
+                "by_person_id": operator.person_id,
+                "role": operator.role,
+            },
         )
-    else:
-        session.execute(
-            data_checklists.update()
-            .where(data_checklists.c.case_id == str(case_id))
-            .values(steps=checklist.model_dump(mode="json")["steps"])
-        )
-    append_event(
-        session,
-        EventType.CHECKLIST_STEP_DONE,
-        actor=f"human:{request_body.person_id}",
-        case_id=str(case_id),
-        payload={"step": step_name.value, "by_person_id": str(request_body.person_id)},
-    )
     session.commit()
     if checklist.complete() and case.status in {
         CaseStatus.PREPARED,

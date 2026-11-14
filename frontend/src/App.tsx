@@ -6,7 +6,8 @@ import { Toaster, toast } from "sonner";
 import { useAgentStatus, useToggleAgent, useJournal } from "@/api/hooks";
 import { Button } from "@/components/ui/button";
 import "./i18n";
-import { OperatorProvider, OperatorSelector } from "./operator";
+import { OperatorProvider, SessionBadge } from "./operator";
+import { useOperator } from "./operator-state";
 const Decisions = lazy(() => import("./pages/Cases").then(module => ({ default: module.Decisions })));
 const CasesPage = lazy(() => import("./pages/Cases").then(module => ({ default: module.CasesPage })));
 const CaseDetail = lazy(() => import("./pages/Cases").then(module => ({ default: module.CaseDetail })));
@@ -18,13 +19,14 @@ const Settings = lazy(() => import("./pages/Settings"));
 const Demo = lazy(() => import("./pages/Demo"));
 const Journal = lazy(() => import("./pages/Journal"));
 const pages = [["decisions", "/"], ["cases", "/cases"], ["chat", "/chat"], ["documents", "/documents"], ["dashboard", "/dashboard"], ["purchaseGuard", "/purchase-guard"], ["settings", "/settings"], ["demo", "/demo"], ["journal", "/journal"]] as const;
+const adminPages = new Set<string>(["/settings", "/demo"]);
 function Header() {
  const { t, i18n } = useTranslation();
  const agent = useAgentStatus(), toggle = useToggleAgent(), journal = useJournal();
  const known = !!agent.data && !agent.isError;
  const paused = agent.data?.paused;
  return <header className="grid items-center gap-4 border-b border-slate-200 bg-white px-6 py-4 xl:grid-cols-[minmax(0,1fr)_auto]">
-  <p className="text-sm font-medium text-slate-600 xl:col-span-2">{t("workspace")}</p><OperatorSelector/>
+  <p className="text-sm font-medium text-slate-600 xl:col-span-2">{t("workspace")}</p><SessionBadge/>
   <div className="flex flex-wrap items-center gap-4">
    <span className="flex items-center gap-2 text-sm" role="status"><ShieldCheck size={18}/>{t("journal")} · {journal.isError ? t("unknown") : journal.data ? t(journal.data.ok ? "intact" : "broken") : t("loading")}</span>
    <label className="text-sm">{t("language")} <select className="rounded-md border border-slate-300 p-2" value={i18n.language} onChange={event => void i18n.changeLanguage(event.target.value)}><option value="fr">{t("fr")}</option><option value="en">{t("en")}</option></select></label>
@@ -36,12 +38,16 @@ function Header() {
  </header>;
 }
 export default function App() {
+ return <OperatorProvider><Shell/></OperatorProvider>;
+}
+function Shell() {
  const { t } = useTranslation();
- return <OperatorProvider><BrowserRouter><div className="min-h-screen lg:grid lg:grid-cols-[240px_1fr]">
- <aside className="bg-slate-950 p-5 text-slate-100"><div className="mb-8 flex items-center gap-3 text-lg font-bold"><ShieldCheck className="text-teal-300"/>{t("product")}</div><nav aria-label={t("navigation")} className="flex flex-wrap gap-1 lg:flex-col">{pages.map(([ns, path]) => <NavLink key={path} to={path} end={path === "/"} className={({ isActive }) => "rounded-lg px-4 py-3 text-sm font-medium " + (isActive ? "bg-teal-800 text-white" : "text-slate-300 hover:bg-slate-800")}>{t(ns + ":title")}</NavLink>)}</nav></aside>
+ const { isAdmin } = useOperator();
+ return <BrowserRouter><div className="min-h-screen lg:grid lg:grid-cols-[240px_1fr]">
+ <aside className="bg-slate-950 p-5 text-slate-100"><div className="mb-8 flex items-center gap-3 text-lg font-bold"><ShieldCheck className="text-teal-300"/>{t("product")}</div><nav aria-label={t("navigation")} className="flex flex-wrap gap-1 lg:flex-col">{pages.filter(([, path]) => isAdmin || !adminPages.has(path)).map(([ns, path]) => <NavLink key={path} to={path} end={path === "/"} className={({ isActive }) => "rounded-lg px-4 py-3 text-sm font-medium " + (isActive ? "bg-teal-800 text-white" : "text-slate-300 hover:bg-slate-800")}>{t(ns + ":title")}</NavLink>)}</nav></aside>
  <div className="min-w-0"><Header/><main className="mx-auto max-w-7xl p-6 lg:p-10"><Suspense fallback={<p role="status">{t("loading")}</p>}><Routes>
  <Route path="/" element={<Decisions/>}/><Route path="/cases" element={<CasesPage/>}/><Route path="/cases/:id" element={<CaseDetail/>}/>
  <Route path="/chat" element={<Chat/>}/><Route path="/documents" element={<Documents/>}/><Route path="/dashboard" element={<Dashboard/>}/><Route path="/purchase-guard" element={<PurchaseGuard/>}/>
- <Route path="/settings" element={<Settings/>}/><Route path="/demo" element={<Demo/>}/><Route path="/journal" element={<Journal/>}/>
- <Route path="*" element={<h1>{t("notFound")}</h1>}/></Routes></Suspense></main></div></div><Toaster richColors/></BrowserRouter></OperatorProvider>;
+ {isAdmin && <><Route path="/settings" element={<Settings/>}/><Route path="/demo" element={<Demo/>}/></>}<Route path="/journal" element={<Journal/>}/>
+ <Route path="*" element={<h1>{t("notFound")}</h1>}/></Routes></Suspense></main></div></div><Toaster richColors/></BrowserRouter>;
 }

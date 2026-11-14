@@ -18,6 +18,7 @@ from app.actions.email.local_smtp_server import LocalSmtpServer
 from app.api.main import create_app
 from app.contracts.enums import CaseStatus, EventType
 from app.core.settings import AppSettings
+from tests.auth_helpers import KARIM_ID, open_test_session
 
 
 def _json(response: httpx.Response) -> Any:
@@ -77,12 +78,18 @@ async def test_p0_gate(
                 session_factory=session_factory,
             )
             async with application.router.lifespan_context(application):
+                _, token = open_test_session(application, person_id=KARIM_ID)
                 transport = httpx.ASGITransport(app=application)
                 async with httpx.AsyncClient(
                     transport=transport,
-                    base_url="http://test",
+                    base_url="http://testserver",
+                    headers={"Authorization": f"Bearer {token}"},
                 ) as client:
-                    reset = await client.post("/api/demo/reset")
+                    unauthenticated = await client.post(
+                        "/api/followup/tick", headers={"Authorization": ""}
+                    )
+                    assert unauthenticated.status_code == 401
+                    reset = await client.post("/api/demo/reset", json={"confirm": "RESET"})
                     assert reset.status_code == 200, reset.text
 
                     people = _json(await client.get("/api/people"))

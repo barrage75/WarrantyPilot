@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import mailbox
 import shutil
 import sys
@@ -12,12 +13,13 @@ from uuid import NAMESPACE_URL, uuid5
 
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import Engine, text
+from sqlalchemy import Engine, inspect, select, text
 from sqlalchemy.orm import Session
 
 from app.contracts.enums import EventType, PurchaseGuardState, RightType
-from app.contracts.models import Provenance
+from app.contracts.models import Provenance, utc_now
 from app.contracts.models import Settings as PolicySettings
+from app.core.auth import access_role_for_job
 from app.core.journal import append_event
 from app.core.settings import AppSettings
 from app.core.settings_store import write_settings
@@ -27,6 +29,7 @@ from app.core.tables import (
     equipment,
     equipment_documents,
     equipment_suppliers,
+    events,
     facts,
     people,
     purchase_requests,
@@ -56,9 +59,35 @@ def _add_months(value: date, months: int) -> date:
     return date(year, month, day)
 
 
-def reset_demo(engine: Engine, settings: AppSettings) -> None:
+def archive_journal(engine: Engine, settings: AppSettings) -> dict[str, Any]:
+    stamp = utc_now().strftime("%Y%m%dT%H%M%S%fZ")
+    archive_dir = settings.journal_archive_dir.expanduser() / stamp
+    archive_dir.mkdir(parents=True, exist_ok=False)
+    rows: list[dict[str, Any]] = []
+    if inspect(engine).has_table(events.name):
+        with engine.connect() as connection:
+            rows = [
+                dict(row)
+                for row in connection.execute(select(events).order_by(events.c.seq)).mappings()
+            ]
+    journal_path = archive_dir / "events.jsonl"
+    with journal_path.open("w", encoding="utf-8") as stream:
+        for row in rows:
+            stream.write(json.dumps(row, ensure_ascii=False, sort_keys=True, default=str) + "\n")
+    anchor_file = settings.anchor_file.expanduser()
+    if anchor_file.exists():
+        shutil.copy2(anchor_file, archive_dir / anchor_file.name)
+    return {
+        "archive": str(archive_dir),
+        "archived_events": len(rows),
+        "archived_last_hash": str(rows[-1]["hash"]) if rows else None,
+    }
+
+
+def reset_demo(engine: Engine, settings: AppSettings, *, actor: str = "system") -> None:
     if engine.dialect.name != "sqlite":
         raise ValueError("demo reset is restricted to the local SQLite database")
+    archive = archive_journal(engine, settings)
     ReminderOutbox(settings.followup_outbox_path).clear()
     maildir_path = settings.maildir_path.expanduser()
     if maildir_path.is_symlink():
@@ -97,6 +126,7 @@ def reset_demo(engine: Engine, settings: AppSettings) -> None:
                     "name": person.name,
                     "email": person.email,
                     "role": person.role,
+                    "access_role": access_role_for_job(person.role),
                 }
                 for person in dataset.people
             ],
@@ -288,7 +318,9 @@ def reset_demo(engine: Engine, settings: AppSettings) -> None:
         append_event(
             session,
             EventType.DEMO_RESET,
+            actor=actor,
             payload={
+                **archive,
                 "records_loaded": (
                     len(dataset.people)
                     + len(dataset.equipment)
@@ -298,6 +330,57 @@ def reset_demo(engine: Engine, settings: AppSettings) -> None:
                     + len(dataset.suppliers)
                     + len(document_links)
                     + 1
-                )
+                ),
             },
         )
+
+
+def seed_operators(engine: Engine) -> int:
+    """Create the schema and the Appelia people only, so operators can sign in."""
+    alembic_config = Config(str(Path(__file__).parents[2] / "alembic.ini"))
+    alembic_config.set_main_option("sqlalchemy.url", str(engine.url).replace("%", "%%"))
+    with engine.connect() as connection:
+        alembic_config.attributes["connection"] = connection
+        command.upgrade(alembic_config, "head")
+    with Session(engine) as session, session.begin():
+        if session.execute(select(people.c.id).limit(1)).first() is not None:
+            return 0
+        rows = [
+            {
+                "id": str(person.id),
+                "name": person.name,
+                "email": person.email,
+                "role": person.role,
+                "access_role": access_role_for_job(person.role),
+            }
+            for person in _load_appelia_dataset().people
+        ]
+        session.execute(people.insert(), rows)
+        return len(rows)
+
+
+def main(argv: list[str] | None = None) -> int:
+    from app.core.db import make_engine
+    from app.core.journal import configure_journal_key
+    from app.core.settings import get_settings
+
+    people_only = "--people-only" in (sys.argv[1:] if argv is None else argv)
+
+    settings = get_settings()
+    if settings.environment != "dev" or not settings.demo_mode:
+        print("demo seed is restricted to WP_ENV=dev with demo_mode", file=sys.stderr)
+        return 2
+    configure_journal_key(settings.journal_anchor_key)
+    engine = make_engine(settings.database_url)
+    try:
+        if people_only:
+            seed_operators(engine)
+        else:
+            reset_demo(engine, settings, actor="system")
+    finally:
+        engine.dispose()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

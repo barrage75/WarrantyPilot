@@ -17,10 +17,10 @@
   "error": "API indisponible ou action échouée.",
   "notFound": "Page introuvable",
   "refresh": "Actualiser",
-  "operator": "Vous agissez en tant que",
-  "operatorHelp": "Personne de la base de démo Appelia (GET /api/people).",
+  "operator": "Personne",
+  "operatorHelp": "Personne autorisée de la base de démo Appelia.",
   "operatorActive": "Opérateur actif : {{name}}",
-  "identityRequired": "Définissez votre identité dans l’en-tête pour activer les actions humaines.",
+  "identityRequired": "Connectez-vous pour activer les actions humaines.",
   "cancel": "Annuler",
   "conflict": "Le statut ne permet plus cette action. Actualisez le dossier.",
   "unknownPerson": "Personne inconnue dans la base de démo. Choisissez une personne dans la liste.",
@@ -29,5 +29,15 @@
   "choosePerson": "Choisir une personne…",
   "peopleError": "Impossible de charger les personnes.",
   "save": "Enregistrer",
-  "simulated": "Simulation — aucune action réelle n’est exécutée."
+  "simulated": "Simulation — aucune action réelle n’est exécutée.",
+  "loginTitle": "Connexion opérateur",
+  "loginHelp": "Choisissez votre nom puis saisissez le mot de passe de démonstration (WP_DEMO_PASSWORD).",
+  "password": "Mot de passe",
+  "login": "Se connecter",
+  "logout": "Se déconnecter",
+  "loginFailed": "Identifiants invalides.",
+  "roles": {
+    "admin": "administrateur",
+    "operator": "opérateur"
+  }
 }

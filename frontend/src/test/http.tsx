@@ -3,7 +3,7 @@ import { render } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import type { ReactNode } from "react";
-import { OperatorProvider } from "@/operator";
+import { OperatorContext, type SessionUser } from "@/operator-state";
 export const person = "10000000-0000-4000-8000-000000000001";
 export const people = [{ id: person, name: "Camille Martin", email: "camille@example.test", role: "IT" }, { id: "10000000-0000-4000-8000-000000000009", name: "Alex Dupont", email: "alex@example.test", role: null }];
 export type Call = { method: string; path: string; body?: unknown };
@@ -22,7 +22,11 @@ export function stubHttp(handler: Handler) {
  }));
  return calls;
 }
-export function renderWithApi(children: ReactNode, path = "/") {
+export const sessionUser: SessionUser = { person_id: "10000000-0000-4000-8000-000000000001", name: "Camille Martin", role: "admin" };
+export function TestSession({ children, user = sessionUser }: { children: ReactNode; user?: SessionUser | null }) {
+ return <OperatorContext.Provider value={{ user, personId: user?.person_id ?? "", isAdmin: user?.role === "admin", logout: () => undefined }}>{children}</OperatorContext.Provider>;
+}
+export function renderWithApi(children: ReactNode, path = "/", user: SessionUser | null = sessionUser) {
  const cache = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
- return { cache, ...render(<QueryClientProvider client={cache}><OperatorProvider><MemoryRouter initialEntries={[path]}>{children}</MemoryRouter></OperatorProvider></QueryClientProvider>) };
+ return { cache, ...render(<QueryClientProvider client={cache}><TestSession user={user}><MemoryRouter initialEntries={[path]}>{children}</MemoryRouter></TestSession></QueryClientProvider>) };
 }

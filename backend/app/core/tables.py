@@ -32,6 +32,22 @@ people = Table(
     Column("name", Text, nullable=False),
     Column("email", Text),
     Column("role", Text),
+    Column("access_role", String(16)),
+    CheckConstraint(
+        "access_role IS NULL OR access_role IN ('admin', 'operator')",
+        name="ck_people_access_role",
+    ),
+)
+
+auth_sessions = Table(
+    "auth_sessions",
+    Base.metadata,
+    Column("token_hash", String(64), primary_key=True),
+    Column("person_id", String(36), ForeignKey("people.id"), nullable=False),
+    Column("role", String(16), nullable=False),
+    Column("created_at", String(40), nullable=False),
+    Column("expires_at", String(40), nullable=False),
+    CheckConstraint("role IN ('admin', 'operator')", name="ck_auth_sessions_role"),
 )
 
 suppliers = Table(

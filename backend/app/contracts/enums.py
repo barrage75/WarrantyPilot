@@ -181,6 +181,7 @@ class EventType(StrEnum):
     INTAKE_DOCUMENT_RECEIVED = "intake_document_received"
     REMINDER_DRAFTED = "reminder_drafted"
     CHAT_DISCLOSURE = "chat_disclosure"
+    SETTINGS_CHANGED = "settings_changed"
 
 
 _LABELS: dict[type[StrEnum], dict[str, tuple[str, str]]] = {
@@ -326,6 +327,7 @@ _LABELS: dict[type[StrEnum], dict[str, tuple[str, str]]] = {
         "intake_document_received": ("Document reçu", "Intake document received"),
         "reminder_drafted": ("Rappel préparé", "Reminder drafted"),
         "chat_disclosure": ("Information IA affichée", "AI disclosure shown"),
+        "settings_changed": ("Réglages modifiés", "Settings changed"),
     },
 }
 

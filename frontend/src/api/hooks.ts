@@ -20,7 +20,7 @@ export const useJournal = () => useQuery({ queryKey: ["journal"], queryFn: () =>
 export const usePreflight = () => useQuery({ queryKey: ["preflight"], queryFn: () => localRequest<PreflightLocal>("/demo/preflight") });
 export function useResetDemo() {
  const cache = useQueryClient();
- return useMutation({ mutationFn: () => localRequest<ResetLocal>("/demo/reset", "POST"), onSuccess: async () => { await cache.cancelQueries(); cache.removeQueries({ queryKey: ["events"] }); await cache.invalidateQueries(); } });
+ return useMutation({ mutationFn: () => localRequest<ResetLocal>("/demo/reset", "POST", { confirm: "RESET" }), onSuccess: async () => { await cache.cancelQueries(); cache.removeQueries({ queryKey: ["events"] }); await cache.invalidateQueries(); } });
 }
 export function useAnchorJournal() {
  const cache = useQueryClient();

@@ -11,8 +11,9 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_session
+from app.api.dependencies import get_session, require_session
 from app.contracts.enums import DocumentSource, EventType
+from app.core.auth import Operator
 from app.core.tables import documents, events, facts
 from app.intake.documents import MAX_DOCUMENT_BYTES, DocumentIntake, InvalidDocument
 from app.intake.service import IntakeService
@@ -148,7 +149,9 @@ def get_intake(request: Request) -> IntakeService:
 
 @router.post("/intake/poll")
 async def poll(
-    intake: IntakeService = Depends(get_intake), session: Session = Depends(get_session)
+    intake: IntakeService = Depends(get_intake),
+    session: Session = Depends(get_session),
+    _operator: Operator = Depends(require_session),
 ) -> dict[str, object]:
     try:
         return await intake.poll(session)
@@ -178,6 +181,7 @@ async def upload(
     request: Request,
     intake: IntakeService = Depends(get_intake),
     session: Session = Depends(get_session),
+    _operator: Operator = Depends(require_session),
 ) -> dict[str, object]:
     content_type = request.headers.get("content-type", "")
     if not content_type.lower().startswith("multipart/form-data;"):

@@ -1,4 +1,5 @@
 import { createContext, useContext } from "react";
-export const validUuid = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
-export const OperatorContext = createContext({ personId: "", save: (_value: string) => { void _value; } });
+export type SessionUser = { person_id: string; name: string; role: "admin" | "operator"; expires_at?: string | null };
+export type SessionState = { user: SessionUser | null; personId: string; isAdmin: boolean; logout: () => void };
+export const OperatorContext = createContext<SessionState>({ user: null, personId: "", isAdmin: false, logout: () => undefined });
 export const useOperator = () => useContext(OperatorContext);

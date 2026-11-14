@@ -20,7 +20,7 @@ from app.core.tables import events
 def test_intake_event_migration(tmp_path: Path, event_type: EventType) -> None:
     backend = Path(__file__).resolve().parents[3]
     config = Config(str(backend / "alembic.ini"))
-    assert ScriptDirectory.from_config(config).get_heads() == ["0008_intake_events"]
+    assert ScriptDirectory.from_config(config).get_heads() == ["0009_auth_sessions"]
     engine = create_engine(f"sqlite:///{tmp_path / 'legacy.db'}")
     legacy_types = tuple(
         value

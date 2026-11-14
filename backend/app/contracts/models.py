@@ -416,5 +416,5 @@ class Settings(ContractModel):
     feature_flags: dict[str, bool] = Field(default_factory=dict)
     email_allowlist: list[str] = Field(default_factory=list)
     browser_allowed_origins: list[str] = Field(
-        default_factory=lambda: ["http://localhost:*", "http://127.0.0.1:*"]
+        default_factory=lambda: ["http://127.0.0.1:8100", "http://localhost:8100"]
     )

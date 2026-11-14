@@ -97,5 +97,15 @@
   "dellCase": "Numéro de dossier Dell : {{number}}",
   "result": "Résultat",
   "proofLabel": "Preuve",
-  "equipmentLabel": "Équipement"
+  "equipmentLabel": "Équipement",
+  "proofType": "Type de preuve",
+  "proofReference": "Référence",
+  "proofDate": "Date de la preuve",
+  "proofNote": "Note (500 caractères max.)",
+  "proofTypes": {
+    "case_number": "Numéro de dossier",
+    "email_message_id": "Message-ID d’e-mail",
+    "portal_screenshot": "Capture du portail",
+    "carrier_tracking": "Suivi transporteur"
+  }
 }

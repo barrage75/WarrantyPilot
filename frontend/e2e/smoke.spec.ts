@@ -1,12 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { demoIdentities, resetFromUi, resolveFromUi, selectOperator } from "./helpers";
-test("reset, identity, one-click approval and resolved timeline against the isolated API", async ({ page, request }) => {
- await resolveFromUi(page, request);
+import { demoIdentities, expectSignedIn, resetFromUi, resolveFromUi } from "./helpers";
+test("login, reset, one-click approval and resolved timeline against the isolated API", async ({ page }) => {
+ await resolveFromUi(page);
 });
-test("real chat, scan and purchase guard endpoints without manual UUID entry", async ({ page, request }) => {
+test("real chat, scan and purchase guard endpoints as the signed-in operator", async ({ page }) => {
  await resetFromUi(page);
- const { person } = await demoIdentities(request);
- await selectOperator(page, person);
+ await demoIdentities(page.request);
+ await expectSignedIn(page);
  await page.goto("/chat");
  await expect(page.getByRole("note", { name: "Mention IA" })).toContainText("intelligence artificielle");
  await page.getByLabel("Décrivez votre panne", { exact: true }).fill("Mon casque Jabra Evolve2 65 ne fonctionne plus.");

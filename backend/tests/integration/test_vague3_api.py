@@ -12,10 +12,11 @@ from app.contracts.models import Verdict
 from app.core.settings_store import read_settings, write_settings
 from app.core.tables import actions, cases, equipment, events, people, verdicts
 from app.testing.fakes import FakeRulesEngine
+from tests.auth_helpers import KARIM_ID, login
 
 
 def _reset(client: TestClient) -> None:
-    assert client.post("/api/demo/reset").status_code == 200
+    assert client.post("/api/demo/reset", json={"confirm": "RESET"}).status_code == 200
 
 
 def _paul_id(session_factory) -> str:
@@ -30,6 +31,7 @@ def test_chat_discloses_ai_and_creates_deterministic_case(
 ) -> None:
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
+        login(client, person_id=KARIM_ID)
         _reset(client)
         with session_factory.begin() as session:
             settings = read_settings(session)
@@ -72,6 +74,7 @@ def test_chat_asks_when_reporter_has_multiple_matching_assets(
 ) -> None:
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
+        login(client, person_id=KARIM_ID)
         _reset(client)
         paul_id = _paul_id(session_factory)
         with session_factory.begin() as session:
@@ -107,6 +110,7 @@ def test_scan_runs_in_background_and_reports_document_progress(db_engine, app_se
     app_settings.demo_today = date(2026, 12, 20)
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
+        login(client, person_id=KARIM_ID)
         _reset(client)
         started = client.post("/api/scan")
         assert started.status_code == 202
@@ -140,6 +144,7 @@ def test_purchase_guard_requires_reason_and_realizes_savings_after_both_conditio
 ) -> None:
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
+        login(client, person_id=KARIM_ID)
         _reset(client)
         recommendations = client.get("/api/purchase-requests").json()
         assert len(recommendations) == 1
@@ -162,10 +167,9 @@ def test_purchase_guard_requires_reason_and_realizes_savings_after_both_conditio
         case_id = suspended.json()["caseId"]
         assert suspended.json()["state"] == "purchase_suspended"
 
-        paul_id = _paul_id(session_factory)
         cancelled = client.post(
             f"/api/purchase-requests/{purchase['id']}/confirm-cancellation",
-            json={"person_id": paul_id},
+            json={},
         )
         assert cancelled.status_code == 200
         assert cancelled.json()["state"] == "cancelled"
@@ -177,7 +181,7 @@ def test_purchase_guard_requires_reason_and_realizes_savings_after_both_conditio
                 .mappings()
                 .one()
             )
-        assert cancellation_event["actor"] == f"human:{paul_id}"
+        assert cancellation_event["actor"] == f"human:{KARIM_ID}"
 
         with session_factory.begin() as session:
             session.execute(
@@ -196,6 +200,7 @@ def test_purchase_cancellation_requires_existing_person(
 ) -> None:
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
+        login(client, person_id=KARIM_ID)
         _reset(client)
         purchase = client.get("/api/purchase-requests").json()[0]
         suspended = client.post(
@@ -208,12 +213,13 @@ def test_purchase_cancellation_requires_existing_person(
             json={"person_id": str(uuid4())},
         )
 
-    assert cancelled.status_code == 404
+    assert cancelled.status_code == 403
 
 
 def test_purchase_guard_allows_keep_only_with_reason(db_engine, app_settings) -> None:
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
+        login(client, person_id=KARIM_ID)
         _reset(client)
         purchase = client.get("/api/purchase-requests").json()[0]
         kept = client.post(
@@ -239,6 +245,7 @@ def test_manual_verdict_requires_human_takeover_and_proof(
         explanation_en="Human verification is required.",
     )
     with TestClient(application) as client:
+        operator = login(client, person_id=KARIM_ID)
         _reset(client)
         application.state.services["rules_engine"] = FakeRulesEngine(verdict)
         person_id = _paul_id(session_factory)
@@ -256,7 +263,7 @@ def test_manual_verdict_requires_human_takeover_and_proof(
 
         validated = client.post(
             f"/api/cases/{case_id}/validate",
-            json={"person_id": person_id},
+            json={},
         )
         assert validated.status_code == 200, validated.text
         assert validated.json()["status"] == CaseStatus.MANUAL_TAKEOVER.value
@@ -290,7 +297,11 @@ def test_manual_verdict_requires_human_takeover_and_proof(
 
         proof = client.post(
             f"/api/cases/{case_id}/manual-proof",
-            json={"person_id": person_id, "proof": "ticket humain confirmé"},
+            json={
+                "proof_type": "case_number",
+                "reference": "TICKET-HUMAN-123",
+                "proof_date": "2026-11-14",
+            },
         )
         assert proof.status_code == 200, proof.text
         assert proof.json()["status"] == CaseStatus.SENT.value
@@ -319,4 +330,4 @@ def test_manual_verdict_requires_human_takeover_and_proof(
     assert any(
         payload.get("reason") == "prise en main humaine requise" for payload in status_events
     )
-    assert success_event["actor"] == f"human:{person_id}"
+    assert success_event["actor"] == operator.actor

@@ -4,6 +4,91 @@
  */
 
 export interface paths {
+    "/api/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Health */
+        get: operations["health_api_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/people": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Login People */
+        get: operations["login_people_api_auth_people_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Login */
+        post: operations["login_api_auth_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Logout */
+        post: operations["logout_api_auth_logout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Me */
+        get: operations["me_api_auth_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/documents": {
         parameters: {
             query?: never;
@@ -66,23 +151,6 @@ export interface paths {
         put?: never;
         /** Upload */
         post: operations["upload_api_documents_upload_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Health */
-        get: operations["health_api_health_get"];
-        put?: never;
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -765,11 +833,8 @@ export interface components {
         };
         /** CaseResolveRequest */
         CaseResolveRequest: {
-            /**
-             * Person Id
-             * Format: uuid
-             */
-            person_id: string;
+            /** Person Id */
+            person_id?: string | null;
             /** Note */
             note: string;
         };
@@ -858,11 +923,8 @@ export interface components {
         ChecklistStepName: "repair_type" | "backup_verified" | "disk_encryption" | "disk_handling" | "accounts_and_mdm" | "shipping_label" | "return_inspection";
         /** ChecklistStepUpdate */
         ChecklistStepUpdate: {
-            /**
-             * Person Id
-             * Format: uuid
-             */
-            person_id: string;
+            /** Person Id */
+            person_id?: string | null;
         };
         /** DataChecklist */
         DataChecklist: {
@@ -1022,7 +1084,7 @@ export interface components {
          * EventType
          * @enum {string}
          */
-        EventType: "case_created" | "fact_extracted" | "fact_corrected" | "verdict_computed" | "policy_decided" | "validation_requested" | "validated" | "rejected" | "action_started" | "action_step" | "action_succeeded" | "action_failed" | "status_changed" | "checklist_step_done" | "purchase_guard_recommended" | "purchase_guard_decision" | "purchase_guard_suspended" | "purchase_guard_kept" | "purchase_guard_saving_realized" | "purchase_guard_cancelled" | "agent_paused" | "agent_resumed" | "journal_anchored" | "demo_reset" | "followup_received" | "intake_message_received" | "intake_document_received" | "reminder_drafted" | "chat_disclosure";
+        EventType: "case_created" | "fact_extracted" | "fact_corrected" | "verdict_computed" | "policy_decided" | "validation_requested" | "validated" | "rejected" | "action_started" | "action_step" | "action_succeeded" | "action_failed" | "status_changed" | "checklist_step_done" | "purchase_guard_recommended" | "purchase_guard_decision" | "purchase_guard_suspended" | "purchase_guard_kept" | "purchase_guard_saving_realized" | "purchase_guard_cancelled" | "agent_paused" | "agent_resumed" | "journal_anchored" | "demo_reset" | "followup_received" | "intake_message_received" | "intake_document_received" | "reminder_drafted" | "chat_disclosure" | "settings_changed";
         /** ExpiringRight */
         ExpiringRight: {
             /** Equipment */
@@ -1052,29 +1114,58 @@ export interface components {
         };
         /** HumanActionRequest */
         HumanActionRequest: {
+            /** Person Id */
+            person_id?: string | null;
+        };
+        /** LoginPerson */
+        LoginPerson: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "admin" | "operator";
+        };
+        /** LoginRequest */
+        LoginRequest: {
             /**
              * Person Id
              * Format: uuid
              */
             person_id: string;
+            /** Password */
+            password: string;
         };
         /** ManualProofRequest */
         ManualProofRequest: {
+            /** Person Id */
+            person_id?: string | null;
+            proof_type: components["schemas"]["ManualProofType"];
+            /** Reference */
+            reference: string;
             /**
-             * Person Id
-             * Format: uuid
+             * Proof Date
+             * Format: date
              */
-            person_id: string;
-            /** Proof */
-            proof: string;
+            proof_date: string;
+            /** Note */
+            note?: string | null;
         };
+        /**
+         * ManualProofType
+         * @enum {string}
+         */
+        ManualProofType: "case_number" | "email_message_id" | "portal_screenshot" | "carrier_tracking";
         /** ManualTakeoverRequest */
         ManualTakeoverRequest: {
-            /**
-             * Person Id
-             * Format: uuid
-             */
-            person_id: string;
+            /** Person Id */
+            person_id?: string | null;
         };
         /** Person */
         Person: {
@@ -1176,11 +1267,8 @@ export interface components {
         RealityBadge: "real" | "reproduction" | "simulated";
         /** RejectionRequest */
         RejectionRequest: {
-            /**
-             * Person Id
-             * Format: uuid
-             */
-            person_id: string;
+            /** Person Id */
+            person_id?: string | null;
             /** Reason */
             reason: string;
         };
@@ -1236,6 +1324,23 @@ export interface components {
             badge: components["schemas"]["RealityBadge"];
             /** Error */
             error?: string | null;
+        };
+        /** SessionInfo */
+        SessionInfo: {
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            person_id: string;
+            /** Name */
+            name: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "admin" | "operator";
+            /** Expires At */
+            expires_at?: string | null;
         };
         /** Settings */
         "Settings-Input": {
@@ -1304,11 +1409,8 @@ export interface components {
         };
         /** ValidationRequest */
         ValidationRequest: {
-            /**
-             * Person Id
-             * Format: uuid
-             */
-            person_id: string;
+            /** Person Id */
+            person_id?: string | null;
         };
         /** Verdict */
         Verdict: {
@@ -1352,6 +1454,119 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    health_api_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+        };
+    };
+    login_people_api_auth_people_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginPerson"][];
+                };
+            };
+        };
+    };
+    login_api_auth_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    logout_api_auth_logout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    me_api_auth_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionInfo"];
+                };
+            };
+        };
+    };
     list_documents_api_documents_get: {
         parameters: {
             query?: {
@@ -1461,28 +1676,6 @@ export interface operations {
                 content: {
                     "application/json": {
                         [key: string]: unknown;
-                    };
-                };
-            };
-        };
-    };
-    health_api_health_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: string;
                     };
                 };
             };

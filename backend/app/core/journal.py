@@ -1,14 +1,16 @@
 import hashlib
 import hmac
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 from threading import RLock
 from typing import Any
 from uuid import uuid4
 
-from sqlalchemy import Engine, select
-from sqlalchemy.orm import Session
+from pydantic import SecretStr
+from sqlalchemy import Engine, func, select
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.contracts.enums import EventType
 from app.contracts.models import Event, utc_now
@@ -17,24 +19,57 @@ from app.core.settings import AppSettings, get_settings
 from app.core.tables import events
 
 ZERO_HASH = "0" * 64
-_SECRET_KEY_PARTS = ("key", "token", "secret", "password")
+_SECRET_KEY_PARTS = ("key", "token", "secret", "password", "authorization", "cookie")
+_PUBLIC_KEYS = frozenset({"idempotency_key"})
+_SECRET_VALUE_PATTERNS = (
+    re.compile(r"\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}"),
+    re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}"),
+    re.compile(r"\bsk-[A-Za-z0-9_-]{16,}"),
+    re.compile(r"\bBearer\s+[A-Za-z0-9._~+/=-]+", re.IGNORECASE),
+    re.compile(r"\beyJ[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}"),
+)
+_ANCHOR_TRIGGER_STATUSES = frozenset({"sent", "resolved"})
 _APPEND_LOCK = RLock()
+_EVENT_KEY: SecretStr | None = None
+
+
+def configure_journal_key(key: SecretStr) -> None:
+    global _EVENT_KEY
+    _EVENT_KEY = key
+
+
+def _event_key() -> bytes:
+    key = _EVENT_KEY or get_settings().journal_anchor_key
+    return key.get_secret_value().encode("utf-8")
+
+
+def _event_hash(previous_hash: str, canonical: str) -> str:
+    return hmac.new(
+        _event_key(), (previous_hash + canonical).encode("utf-8"), hashlib.sha256
+    ).hexdigest()
+
+
+def _redact_text(value: str) -> str:
+    for pattern in _SECRET_VALUE_PATTERNS:
+        value = pattern.sub("***", value)
+    return value
+
+
+def _is_secret_key(key: object) -> bool:
+    name = str(key).casefold()
+    return name not in _PUBLIC_KEYS and any(part in name for part in _SECRET_KEY_PARTS)
 
 
 def redact_secrets(value: Any) -> Any:
     if isinstance(value, dict):
         return {
-            key: (
-                "***"
-                if any(part in str(key).casefold() for part in _SECRET_KEY_PARTS)
-                else redact_secrets(item)
-            )
+            key: "***" if _is_secret_key(key) else redact_secrets(item)
             for key, item in value.items()
         }
-    if isinstance(value, list):
+    if isinstance(value, list | tuple):
         return [redact_secrets(item) for item in value]
-    if isinstance(value, tuple):
-        return [redact_secrets(item) for item in value]
+    if isinstance(value, str):
+        return _redact_text(value)
     return value
 
 
@@ -102,7 +137,7 @@ def _append_event_locked(
     canonical = _canonical_payload(
         next_seq, timestamp, actor, event_type.value, case_id_string, safe_payload
     )
-    current_hash = hashlib.sha256((previous_hash + canonical).encode("utf-8")).hexdigest()
+    current_hash = _event_hash(previous_hash, canonical)
     event_id = uuid4()
     session.execute(
         events.insert().values(
@@ -137,7 +172,11 @@ def anchor(
     session: Session,
     settings: AppSettings | None = None,
 ) -> dict[str, Any]:
-    active_settings = settings or get_settings()
+    with _APPEND_LOCK:
+        return _anchor_locked(session, settings or get_settings())
+
+
+def _anchor_locked(session: Session, active_settings: AppSettings) -> dict[str, Any]:
     last = session.execute(
         select(events.c.seq, events.c.hash).order_by(events.c.seq.desc()).limit(1)
     ).first()
@@ -181,7 +220,7 @@ def verify(
             str(row["case_id"]) if row["case_id"] is not None else None,
             row["payload"],
         )
-        expected_hash = hashlib.sha256((previous_hash + canonical).encode("utf-8")).hexdigest()
+        expected_hash = _event_hash(previous_hash, canonical)
         if row["prev_hash"] != previous_hash or row["hash"] != expected_hash:
             first_bad_seq = seq
             break
@@ -195,7 +234,8 @@ def verify(
         if first_bad_seq is None:
             first_bad_seq = int(anchor_events[0]["payload"].get("seq", anchor_events[0]["seq"]))
     elif anchor_file.exists():
-        known_hashes = {int(row["seq"]): str(row["hash"]) for row in rows}
+        rows_by_seq = {int(row["seq"]): row for row in rows}
+        known_hashes = {seq: str(row["hash"]) for seq, row in rows_by_seq.items()}
         known_hashes[0] = ZERO_HASH
         valid_anchor_count = 0
         try:
@@ -208,17 +248,25 @@ def verify(
                 expected_hmac = _anchor_hmac(
                     active_settings.journal_anchor_key.get_secret_value(), event_hash
                 )
-                if known_hashes.get(seq) != event_hash or not hmac.compare_digest(
-                    str(anchor_row["hmac"]), expected_hmac
+                anchor_event = rows_by_seq.get(seq + 1)
+                anchor_event_ok = (
+                    anchor_event is not None
+                    and anchor_event["type"] == EventType.JOURNAL_ANCHORED.value
+                    and anchor_event["payload"].get("seq") == seq
+                )
+                if (
+                    known_hashes.get(seq) != event_hash
+                    or not anchor_event_ok
+                    or not hmac.compare_digest(str(anchor_row["hmac"]), expected_hmac)
                 ):
                     anchors_ok = False
                     if first_bad_seq is None:
                         first_bad_seq = seq
                     break
                 valid_anchor_count += 1
-        except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+        except (OSError, ValueError, KeyError, TypeError, AttributeError, json.JSONDecodeError):
             anchors_ok = False
-        if valid_anchor_count < len(anchor_events):
+        if anchors_ok and valid_anchor_count < len(anchor_events):
             anchors_ok = False
             if first_bad_seq is None:
                 missing = anchor_events[valid_anchor_count]
@@ -248,3 +296,49 @@ def verify_with_engine(engine: Engine, settings: AppSettings | None = None) -> d
 
 def anchor_path(settings: AppSettings | None = None) -> Path:
     return (settings or get_settings()).anchor_file
+
+
+def anchor_due(session: Session, settings: AppSettings) -> bool:
+    last_anchor_seq = session.execute(
+        select(func.max(events.c.seq)).where(events.c.type == EventType.JOURNAL_ANCHORED.value)
+    ).scalar()
+    pending = (
+        session.execute(
+            select(events.c.type, events.c.payload)
+            .where(events.c.seq > (last_anchor_seq or 0))
+            .order_by(events.c.seq)
+        )
+        .mappings()
+        .all()
+    )
+    if not pending:
+        return False
+    if len(pending) >= settings.auto_anchor_every:
+        return True
+    return any(
+        row["type"] in {EventType.DEMO_RESET.value, EventType.SETTINGS_CHANGED.value}
+        or (
+            row["type"] == EventType.STATUS_CHANGED.value
+            and str((row["payload"] or {}).get("to")) in _ANCHOR_TRIGGER_STATUSES
+        )
+        for row in pending
+    )
+
+
+def auto_anchor(session_factory: sessionmaker[Session], settings: AppSettings) -> bool:
+    # Writers take the database lock and _APPEND_LOCK in either order; never wait on
+    # _APPEND_LOCK while holding the database write lock, skip and retry later instead.
+    with session_factory() as session:
+        session.connection()
+        if not _APPEND_LOCK.acquire(timeout=0.2):
+            session.rollback()
+            return False
+        try:
+            if not anchor_due(session, settings):
+                session.rollback()
+                return False
+            _anchor_locked(session, settings)
+            session.commit()
+            return True
+        finally:
+            _APPEND_LOCK.release()

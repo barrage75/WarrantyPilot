@@ -1,10 +1,14 @@
-.PHONY: setup dev smtp test p0 lint typecheck openapi reset preflight frontend-build
+.PHONY: setup seed dev smtp test p0 lint typecheck openapi login reset preflight frontend-build
 
 setup:
 	uv sync --project backend
 	cd frontend && npm ci
 	uv run --project backend alembic -c backend/alembic.ini upgrade head
+	$(MAKE) seed
 	$(MAKE) openapi
+
+seed:
+	uv run --project backend python -m app.core.reset
 
 dev:
 	uv run --project backend python -m app.actions.email.local_smtp_server --port "$${WP_SMTP_PORT:-2525}" --maildir runtime/mail & \
@@ -57,11 +61,21 @@ openapi:
 	uv run --project backend python -c 'from app.api.main import app; import json; from pathlib import Path; Path("backend/app/contracts/openapi.json").write_text(json.dumps(app.openapi(), indent=2) + "\n", encoding="utf-8")'
 	cd frontend && npm run openapi
 
-reset:
-	curl --fail --silent --show-error -X POST http://127.0.0.1:8001/api/demo/reset
+WP_ADMIN_ID ?= 97225c38-d686-5d99-a6cf-53e18aa92e8d
+WP_API ?= http://127.0.0.1:8001/api
+WP_COOKIES := runtime/.make-session
 
-preflight:
-	curl --fail --silent --show-error http://127.0.0.1:8001/api/demo/preflight
+login:
+	@mkdir -p runtime
+	@curl --fail --silent --show-error -o /dev/null -c $(WP_COOKIES) -H 'Content-Type: application/json' \
+		-d "{\"person_id\":\"$(WP_ADMIN_ID)\",\"password\":\"$${WP_DEMO_PASSWORD:-appelia-demo}\"}" $(WP_API)/auth/login
+
+reset: login
+	curl --fail --silent --show-error -b $(WP_COOKIES) -H 'Content-Type: application/json' \
+		-d '{"confirm":"RESET"}' $(WP_API)/demo/reset
+
+preflight: login
+	curl --fail --silent --show-error -b $(WP_COOKIES) $(WP_API)/demo/preflight
 
 frontend-build:
 	cd frontend && npm run build

@@ -1,8 +1,10 @@
 import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, test } from "@playwright/test";
+import { loginUi } from "./helpers";
 
 test("upload an Appelia Factur-X invoice and check the inbox against the real API", async ({ page }) => {
+ await loginUi(page);
  await page.goto("/documents");
  await page.getByRole("combobox", { name: /Langue|Language/ }).selectOption("fr");
  await expect(page.getByRole("heading", { name: "Documents enregistrés" })).toBeVisible();
