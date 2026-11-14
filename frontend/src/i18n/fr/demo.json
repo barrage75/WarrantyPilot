@@ -1,0 +1,13 @@
+{
+  "serverDetails": "Détails techniques du serveur (message original)",
+  "checkNames": { "database": "Base de données", "journal": "Intégrité du journal", "anchor_file": "Fichier d’ancrage", "no_stuck_sending": "Envois en cours", "feature_flags": "Configuration des fonctionnalités" },
+  "checkDetails": { "database": "Base de données accessible.", "journal": "Vérification d’intégrité du journal réussie.", "anchor_file": "Dossier d’ancrage accessible.", "no_stuck_sending": "Aucun dossier bloqué pendant l’envoi.", "feature_flags": "Configuration des fonctionnalités valide." },
+  "identityReset": "Démo réinitialisée. L’identité locale a été effacée : ressaisissez un UUID de la nouvelle base de démo.",
+  "identityWarning": "Les UUID changent lors du reset. Votre identité opérateur sera automatiquement effacée.",
+  "confirmReset": "Confirmer la remise à zéro",
+  "title": "Démo",
+  "reset": "Réinitialiser la démo",
+  "confirm": "Effacer les données de démo et recommencer ?",
+  "preflight": "Contrôle de préparation",
+  "success": "Démo réinitialisée."
+}

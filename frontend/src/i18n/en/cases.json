@@ -1,0 +1,13 @@
+{
+  "title": "Cases"
+,
+  "search": "Search by ID",
+  "status": "Status",
+  "verdict": "Verdict",
+  "channel": "Channel",
+  "badge": "Reality",
+  "all": "All",
+  "id": "Case",
+  "updated": "Updated",
+  "empty": "No cases match the filters."
+}

@@ -1,0 +1,16 @@
+{
+  "coveredEquipmentEur": "Covered equipment value",
+  "possibleSavingsEur": "Possible savings",
+  "realizedSavingsEur": "Realized savings",
+  "scan": "Run scan",
+  "fictional": "Simulated local scan of fictional Appelia data.",
+  "progress": "Progress: {{percent}}%",
+  "complete": "Scan complete: {{count}} fictional invoices.",
+  "expiring": "Expiring soon",
+  "equipment": "Equipment",
+  "right": "Right",
+  "end": "End date",
+  "days": "Days left",
+  "empty": "Run the scan to display demo coverage.",
+  "title": "Dashboard"
+}

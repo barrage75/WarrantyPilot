@@ -1,0 +1,137 @@
+{
+  "CaseStatus": {
+    "prepared": "Prepared",
+    "awaiting_validation": "Awaiting validation",
+    "sending": "Sending",
+    "sent": "Sent",
+    "failed": "Failed",
+    "manual_takeover": "Handed to a human",
+    "tracked": "Tracked",
+    "resolved": "Resolved",
+    "cancelled": "Cancelled"
+  },
+  "VerdictValue": {
+    "covered": "Covered",
+    "likely_covered": "Likely covered",
+    "to_verify": "To verify",
+    "not_covered": "Not covered",
+    "out_of_manufacturer": "Out of manufacturer warranty"
+  },
+  "RealityBadge": {
+    "real": "Real",
+    "reproduction": "Reproduction",
+    "simulated": "Simulated"
+  },
+  "RightType": {
+    "manufacturer_warranty": "Manufacturer warranty",
+    "extension": "Warranty extension",
+    "lease_contract": "Lease contract",
+    "maintenance_contract": "Maintenance contract",
+    "seller_recourse": "Seller recourse"
+  },
+  "Channel": {
+    "api": "API",
+    "email_reseller": "Reseller email",
+    "email_manufacturer_support": "Manufacturer support email",
+    "browser_portal": "Browser portal",
+    "email_lessor": "Lessor email",
+    "manual": "Manual handling"
+  },
+  "IncidentKind": {
+    "failure": "Failure",
+    "purchase_request": "Purchase request"
+  },
+  "FactSource": {
+    "llm": "Language model",
+    "structured": "Structured document",
+    "human": "Human",
+    "inventory": "Inventory"
+  },
+  "PolicyOutcome": {
+    "auto_send": "Automatic send",
+    "needs_validation": "Validation required",
+    "blocked": "Blocked"
+  },
+  "PurchaseGuardState": {
+    "recommendation": "Recommendation",
+    "awaiting_decision": "Awaiting decision",
+    "purchase_suspended": "Purchase suspended",
+    "purchase_kept": "Purchase kept",
+    "saving_realized": "Saving realized",
+    "cancelled": "Cancelled"
+  },
+  "ActionResultStatus": {
+    "success": "Success",
+    "failure": "Failure"
+  },
+  "Priority": {
+    "P0": "Priority P0",
+    "P1": "Priority P1",
+    "P2": "Priority P2",
+    "P3": "Priority P3"
+  },
+  "DocumentKind": {
+    "invoice": "Invoice",
+    "delivery_note": "Delivery note",
+    "contract": "Contract",
+    "email": "Email",
+    "warranty_certificate": "Warranty certificate"
+  },
+  "DocumentSource": {
+    "upload": "Upload",
+    "gmail": "Gmail",
+    "facturx": "Factur-X"
+  },
+  "IncidentReportedVia": {
+    "chat": "Chat",
+    "email": "Email",
+    "voice": "Voice",
+    "purchase_form": "Purchase form"
+  },
+  "RuleStartEvent": {
+    "purchase_date": "Purchase date",
+    "delivery_date": "Delivery date",
+    "ship_date": "Ship date",
+    "standard_warranty_end": "Standard warranty end"
+  },
+  "ContactDelayStart": {
+    "known": "Known delay",
+    "unspecified": "Unspecified delay"
+  },
+  "ChecklistStepName": {
+    "repair_type": "Repair type",
+    "backup_verified": "Backup verified",
+    "disk_encryption": "Disk encryption",
+    "disk_handling": "Disk handling",
+    "accounts_and_mdm": "Accounts and MDM",
+    "shipping_label": "Shipping label",
+    "return_inspection": "Return inspection"
+  },
+  "EventType": {
+    "case_created": "Case created",
+    "fact_extracted": "Fact extracted",
+    "fact_corrected": "Fact corrected",
+    "verdict_computed": "Verdict computed",
+    "policy_decided": "Policy decided",
+    "validation_requested": "Validation requested",
+    "validated": "Validated",
+    "rejected": "Rejected",
+    "action_started": "Action started",
+    "action_succeeded": "Action succeeded",
+    "action_failed": "Action failed",
+    "status_changed": "Status changed",
+    "checklist_step_done": "Checklist step completed",
+    "purchase_guard_recommended": "Purchase recommended",
+    "purchase_guard_decision": "Purchase decision",
+    "purchase_guard_suspended": "Purchase suspended",
+    "purchase_guard_kept": "Purchase kept",
+    "purchase_guard_saving_realized": "Saving realized",
+    "purchase_guard_cancelled": "Purchase cancelled",
+    "agent_paused": "Agent paused",
+    "agent_resumed": "Agent resumed",
+    "journal_anchored": "Journal anchored",
+    "demo_reset": "Demo reset",
+    "followup_received": "Follow-up received",
+    "reminder_drafted": "Reminder drafted"
+  }
+}

@@ -1,0 +1,137 @@
+{
+  "CaseStatus": {
+    "prepared": "Préparé",
+    "awaiting_validation": "En attente de validation",
+    "sending": "Envoi en cours",
+    "sent": "Envoyé",
+    "failed": "Échec",
+    "manual_takeover": "Pris en main par un humain",
+    "tracked": "Suivi",
+    "resolved": "Résolu",
+    "cancelled": "Annulé"
+  },
+  "VerdictValue": {
+    "covered": "Couvert",
+    "likely_covered": "Probablement couvert",
+    "to_verify": "À vérifier",
+    "not_covered": "Non couvert",
+    "out_of_manufacturer": "Hors garantie fabricant"
+  },
+  "RealityBadge": {
+    "real": "Réel",
+    "reproduction": "Reproduction",
+    "simulated": "Simulé"
+  },
+  "RightType": {
+    "manufacturer_warranty": "Garantie fabricant",
+    "extension": "Extension de garantie",
+    "lease_contract": "Contrat de location",
+    "maintenance_contract": "Contrat de maintenance",
+    "seller_recourse": "Recours vendeur"
+  },
+  "Channel": {
+    "api": "API",
+    "email_reseller": "E-mail revendeur",
+    "email_manufacturer_support": "E-mail support fabricant",
+    "browser_portal": "Portail web",
+    "email_lessor": "E-mail bailleur",
+    "manual": "Traitement manuel"
+  },
+  "IncidentKind": {
+    "failure": "Panne",
+    "purchase_request": "Demande d'achat"
+  },
+  "FactSource": {
+    "llm": "Modèle de langage",
+    "structured": "Document structuré",
+    "human": "Personne",
+    "inventory": "Inventaire"
+  },
+  "PolicyOutcome": {
+    "auto_send": "Envoi automatique",
+    "needs_validation": "Validation requise",
+    "blocked": "Bloqué"
+  },
+  "PurchaseGuardState": {
+    "recommendation": "Recommandation",
+    "awaiting_decision": "En attente de décision",
+    "purchase_suspended": "Achat suspendu",
+    "purchase_kept": "Achat maintenu",
+    "saving_realized": "Économie réalisée",
+    "cancelled": "Annulé"
+  },
+  "ActionResultStatus": {
+    "success": "Réussi",
+    "failure": "Échec"
+  },
+  "Priority": {
+    "P0": "Priorité P0",
+    "P1": "Priorité P1",
+    "P2": "Priorité P2",
+    "P3": "Priorité P3"
+  },
+  "DocumentKind": {
+    "invoice": "Facture",
+    "delivery_note": "Bon de livraison",
+    "contract": "Contrat",
+    "email": "E-mail",
+    "warranty_certificate": "Certificat de garantie"
+  },
+  "DocumentSource": {
+    "upload": "Téléversement",
+    "gmail": "Gmail",
+    "facturx": "Factur-X"
+  },
+  "IncidentReportedVia": {
+    "chat": "Discussion",
+    "email": "E-mail",
+    "voice": "Voix",
+    "purchase_form": "Formulaire d'achat"
+  },
+  "RuleStartEvent": {
+    "purchase_date": "Date d'achat",
+    "delivery_date": "Date de livraison",
+    "ship_date": "Date d'expédition",
+    "standard_warranty_end": "Fin de garantie standard"
+  },
+  "ContactDelayStart": {
+    "known": "Délai connu",
+    "unspecified": "Délai non précisé"
+  },
+  "ChecklistStepName": {
+    "repair_type": "Type de réparation",
+    "backup_verified": "Sauvegarde vérifiée",
+    "disk_encryption": "Chiffrement du disque",
+    "disk_handling": "Traitement du disque",
+    "accounts_and_mdm": "Comptes et MDM",
+    "shipping_label": "Étiquette d'expédition",
+    "return_inspection": "Inspection au retour"
+  },
+  "EventType": {
+    "case_created": "Dossier créé",
+    "fact_extracted": "Fait extrait",
+    "fact_corrected": "Fait corrigé",
+    "verdict_computed": "Verdict calculé",
+    "policy_decided": "Politique décidée",
+    "validation_requested": "Validation demandée",
+    "validated": "Validé",
+    "rejected": "Rejeté",
+    "action_started": "Action démarrée",
+    "action_succeeded": "Action réussie",
+    "action_failed": "Échec de l'action",
+    "status_changed": "Statut modifié",
+    "checklist_step_done": "Étape de contrôle terminée",
+    "purchase_guard_recommended": "Achat recommandé",
+    "purchase_guard_decision": "Décision d'achat",
+    "purchase_guard_suspended": "Achat suspendu",
+    "purchase_guard_kept": "Achat maintenu",
+    "purchase_guard_saving_realized": "Économie réalisée",
+    "purchase_guard_cancelled": "Achat annulé",
+    "agent_paused": "Agent mis en pause",
+    "agent_resumed": "Agent repris",
+    "journal_anchored": "Journal ancré",
+    "demo_reset": "Démo réinitialisée",
+    "followup_received": "Suivi reçu",
+    "reminder_drafted": "Rappel préparé"
+  }
+}
