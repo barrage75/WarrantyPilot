@@ -1,3 +1,5 @@
+from typing import Any
+
 from app.contracts.enums import (
     ActionResultStatus,
     Channel,
@@ -10,8 +12,12 @@ from app.contracts.models import (
     ActionResult,
     Case,
     Document,
+    Equipment,
     Fact,
+    Incident,
     Provenance,
+    Right,
+    Rule,
     RuleCheck,
     Verdict,
 )
@@ -42,7 +48,14 @@ class FakeRulesEngine:
         self.verdict = verdict
         self.calls = 0
 
-    def evaluate(self, equipment, facts, incident, rules, rights) -> Verdict:
+    def evaluate(
+        self,
+        equipment: Equipment,
+        facts: list[Fact],
+        incident: Incident,
+        rules: list[Rule],
+        rights: list[Right],
+    ) -> Verdict:
         self.calls += 1
         if self.verdict is not None:
             return self.verdict.model_copy(deep=True)
@@ -105,8 +118,8 @@ class CrashingActionAdapter(FakeEmailAdapter):
 
 
 class FakeFollowUp:
-    def __init__(self, events: list[dict] | None = None) -> None:
+    def __init__(self, events: list[dict[str, Any]] | None = None) -> None:
         self.events = events if events is not None else [{"status": "resolved"}]
 
-    def check(self, case: Case) -> list[dict]:
+    def check(self, case: Case) -> list[dict[str, Any]]:
         return [event.copy() for event in self.events]

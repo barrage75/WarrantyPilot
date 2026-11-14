@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from datetime import datetime
+from collections.abc import Sequence
+from datetime import date, datetime
 from typing import Literal
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, model_validator
 from sqlalchemy import insert, select, update
+from sqlalchemy.engine import RowMapping
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import actor_for, get_orchestrator, get_session, require_session
@@ -72,7 +74,7 @@ class HumanActionRequest(BaseModel):
     person_id: UUID | None = None
 
 
-def _row(session: Session, purchase_id: UUID):
+def _row(session: Session, purchase_id: UUID) -> RowMapping:
     row = (
         session.execute(
             select(
@@ -94,7 +96,7 @@ def _row(session: Session, purchase_id: UUID):
     return row
 
 
-def _serialize(row, today) -> PurchaseRecommendation:
+def _serialize(row: RowMapping, today: date) -> PurchaseRecommendation:
     covered = row["end_date"] is not None and row["end_date"] >= today
     verdict = VerdictValue.COVERED if covered else VerdictValue.TO_VERIFY
     explanation_fr = (
@@ -123,7 +125,7 @@ def _serialize(row, today) -> PurchaseRecommendation:
     )
 
 
-def _ensure_linked_case(session: Session, row) -> UUID:
+def _ensure_linked_case(session: Session, row: RowMapping) -> UUID:
     if row["case_id"]:
         return UUID(row["case_id"])
     existing_case_id = session.execute(
@@ -209,7 +211,7 @@ def list_recommendations(
     session: Session = Depends(get_session),
 ) -> list[PurchaseRecommendation]:
     today = request.app.state.app_settings.demo_today
-    ids = session.execute(select(purchase_requests.c.id)).scalars().all()
+    ids: Sequence[str] = session.execute(select(purchase_requests.c.id)).scalars().all()
     return [_serialize(_row(session, UUID(purchase_id)), today) for purchase_id in ids]
 
 

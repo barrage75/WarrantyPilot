@@ -55,7 +55,7 @@ lint:
 	cd frontend && npm run lint
 
 typecheck:
-	cd backend && MYPYPATH=.:../data uv run --project . mypy --strict --explicit-package-bases app/contracts app/core app/ingestion app/rules app/api/routers/overview.py app/api/routers/reports.py app/api/routers/notifications.py ../data/appelia
+	cd backend && MYPYPATH=.:../data uv run --project . mypy --strict --explicit-package-bases app/contracts app/core app/ingestion app/rules app/api/routers/overview.py app/api/routers/reports.py app/api/routers/notifications.py ../data/appelia app/actions app/followup app/intake app/testing
 	cd frontend && npm run typecheck
 
 openapi:

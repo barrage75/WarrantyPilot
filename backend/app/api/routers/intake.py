@@ -1,6 +1,7 @@
 """Local intake endpoints; bounded multipart parsing uses Python's MIME parser."""
 
 import os
+from collections.abc import Sequence
 from email import policy
 from email.parser import BytesParser
 from pathlib import Path
@@ -115,7 +116,7 @@ def list_documents(
         .correlate(documents)
         .scalar_subquery()
     )
-    ids = session.scalars(
+    ids: Sequence[str] = session.scalars(
         select(documents.c.id)
         .order_by(received_at.desc(), documents.c.id.desc())
         .limit(limit)
