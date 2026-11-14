@@ -46,13 +46,16 @@ def _csv_rows(client):
 
 def _assert_reconciles(client):
     report = client.get("/api/reports/savings").json()
-    lines = report["lines"]
+    lines = report["lines"] + report["purchase_guard_lines"]
     realized = sum(line["amount_eur"] for line in lines if line["realized"])
     possible = sum(line["amount_eur"] for line in lines if not line["realized"])
     assert round(realized, 2) == report["realized_savings_eur"]
     assert round(possible, 2) == report["possible_savings_eur"]
     rows = _csv_rows(client)
     assert len(rows) == len(lines)
+    assert [row["Dossier"] for row in rows[: len(report["lines"])]] == [
+        line["case_id"] for line in report["lines"]
+    ]
     assert (
         round(sum(float(row["Montant EUR"]) for row in rows if row["Réalisé"] == "oui"), 2)
         == (report["realized_savings_eur"])
@@ -102,19 +105,31 @@ def test_report_lines_reconcile_with_totals_for_every_purchase_shape(client, ses
     by_case = {}
     for line in report["lines"]:
         by_case.setdefault(line["case_id"], []).append(line)
+    assert set(by_case) == {str(mixed.id), str(kept_only.id), str(bare.id)}
+    assert all(line["channel"] and line["status"] for line in report["lines"])
     assert sorted((line["amount_eur"], line["realized"]) for line in by_case[str(mixed.id)]) == [
         (15.5, False),
         (40, True),
     ]
     assert [line["amount_eur"] for line in by_case[str(kept_only.id)]] == [0]
     assert [line["amount_eur"] for line in by_case[str(bare.id)]] == [0]
-    (guard,) = by_case[None]
-    assert guard["purchase_request_id"] == unlinked
-    assert guard["amount_eur"] == 120 and guard["channel"] is None and guard["status"] is None
-    guard_row = next(row for row in rows if row["Montant EUR"] == "120.00")
-    assert guard_row["Dossier"] == guard_row["Canal"] == guard_row["Statut"] == ""
-    assert guard_row["Équipement"] == "Jabra Evolve2 65"
-    assert all(line["purchase_request_id"] is None for line in report["lines"] if line["case_id"])
+    assert report["purchase_guard_lines"] == [
+        {
+            "purchase_request_id": unlinked,
+            "equipment_label": "Jabra Evolve2 65",
+            "manufacturer": "Jabra",
+            "state": "awaiting_decision",
+            "amount_eur": 120,
+            "realized": False,
+            "resolved_at": None,
+        }
+    ]
+    assert len(rows) == len(report["lines"]) + 1
+    guard_row = rows[-1]
+    assert guard_row["Montant EUR"] == "120.00"
+    assert guard_row["Dossier"] == guard_row["Canal"] == guard_row["Référence"] == ""
+    assert guard_row["Statut"] and guard_row["Équipement"] == "Jabra Evolve2 65"
+    assert all(row["Dossier"] for row in rows[:-1])
 
 
 def test_demo_report_shows_purchase_guard_line_and_reconciles(client):
@@ -122,5 +137,5 @@ def test_demo_report_shows_purchase_guard_line_and_reconciles(client):
     assert client.post("/api/demo/reset", json={"confirm": "RESET"}).status_code == 200
     report, _ = _assert_reconciles(client)
     assert report["possible_savings_eur"] == 120
-    guard = [line for line in report["lines"] if line["purchase_request_id"]]
-    assert [line["amount_eur"] for line in guard] == [120]
+    assert [line["amount_eur"] for line in report["purchase_guard_lines"]] == [120]
+    assert sum(line["amount_eur"] for line in report["lines"]) == 0

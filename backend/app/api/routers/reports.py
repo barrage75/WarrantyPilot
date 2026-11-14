@@ -17,22 +17,25 @@ router = APIRouter(prefix="/reports", tags=["reports"])
 
 
 class SavingsLine(BaseModel):
-    """One report line; amounts follow the same rules as the report totals.
-
-    A purchase request with no case gets its own line: ``case_id``, ``channel``
-    and ``status`` are then ``None`` and ``purchase_request_id`` is set.
-    """
-
-    case_id: str | None
+    case_id: str
     equipment_label: str
     manufacturer: str
-    channel: Channel | None
-    status: CaseStatus | None
+    channel: Channel
+    status: CaseStatus
     amount_eur: float
     realized: bool
     resolved_at: str | None
     reference: str | None
-    purchase_request_id: str | None = None
+
+
+class PurchaseGuardSavingsLine(BaseModel):
+    purchase_request_id: str
+    equipment_label: str
+    manufacturer: str
+    state: PurchaseGuardState
+    amount_eur: float
+    realized: bool
+    resolved_at: str | None
 
 
 class SavingsReport(BaseModel):
@@ -44,6 +47,8 @@ class SavingsReport(BaseModel):
     journal_ok: bool
     journal_head: str | None
     lines: list[SavingsLine]
+    # Totals = case lines + purchase-guard lines (purchases with no case).
+    purchase_guard_lines: list[PurchaseGuardSavingsLine] = []
 
 
 @router.get("/savings", response_model=SavingsReport)
@@ -128,20 +133,18 @@ def savings(request: Request) -> SavingsReport:
                         reference=references.get(row.id),
                     )
                 )
+        guard_lines = []
         for purchase in unlinked:
             item = equipment.get(purchase.equipment_id)
-            lines.append(
-                SavingsLine(
-                    case_id=None,
+            guard_lines.append(
+                PurchaseGuardSavingsLine(
+                    purchase_request_id=purchase.id,
                     equipment_label=f"{item.brand} {item.model}" if item else "",
                     manufacturer=item.brand if item else "",
-                    channel=None,
-                    status=None,
+                    state=purchase.state,
                     amount_eur=round(float(purchase.amount), 2),
                     realized=purchase.state == PurchaseGuardState.SAVING_REALIZED.value,
                     resolved_at=purchase.resolved_at,
-                    reference=None,
-                    purchase_request_id=purchase.id,
                 )
             )
     return SavingsReport(
@@ -151,6 +154,7 @@ def savings(request: Request) -> SavingsReport:
         journal_ok=journal_ok,
         journal_head=head,
         lines=lines,
+        purchase_guard_lines=guard_lines,
     )
 
 
@@ -183,15 +187,32 @@ def savings_csv(request: Request) -> Response:
             [
                 _csv_cell(value)
                 for value in (
-                    line.case_id or "",
+                    line.case_id,
                     line.equipment_label,
                     line.manufacturer,
-                    enum_label(line.channel) if line.channel else "",
-                    enum_label(line.status) if line.status else "",
+                    enum_label(line.channel),
+                    enum_label(line.status),
                     f"{line.amount_eur:.2f}",
                     "oui" if line.realized else "non",
                     line.resolved_at or "",
                     line.reference or "",
+                )
+            ]
+        )
+    for guard in report.purchase_guard_lines:
+        writer.writerow(
+            [
+                _csv_cell(value)
+                for value in (
+                    "",
+                    guard.equipment_label,
+                    guard.manufacturer,
+                    "",
+                    enum_label(guard.state),
+                    f"{guard.amount_eur:.2f}",
+                    "oui" if guard.realized else "non",
+                    guard.resolved_at or "",
+                    "",
                 )
             ]
         )

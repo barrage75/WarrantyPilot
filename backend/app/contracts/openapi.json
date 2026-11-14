@@ -3256,6 +3256,55 @@
         ],
         "title": "PurchaseDecision"
       },
+      "PurchaseGuardSavingsLine": {
+        "properties": {
+          "purchase_request_id": {
+            "type": "string",
+            "title": "Purchase Request Id"
+          },
+          "equipment_label": {
+            "type": "string",
+            "title": "Equipment Label"
+          },
+          "manufacturer": {
+            "type": "string",
+            "title": "Manufacturer"
+          },
+          "state": {
+            "$ref": "#/components/schemas/PurchaseGuardState"
+          },
+          "amount_eur": {
+            "type": "number",
+            "title": "Amount Eur"
+          },
+          "realized": {
+            "type": "boolean",
+            "title": "Realized"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "purchase_request_id",
+          "equipment_label",
+          "manufacturer",
+          "state",
+          "amount_eur",
+          "realized",
+          "resolved_at"
+        ],
+        "title": "PurchaseGuardSavingsLine"
+      },
       "PurchaseGuardState": {
         "type": "string",
         "enum": [
@@ -3447,14 +3496,7 @@
       "SavingsLine": {
         "properties": {
           "case_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
             "title": "Case Id"
           },
           "equipment_label": {
@@ -3466,24 +3508,10 @@
             "title": "Manufacturer"
           },
           "channel": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/Channel"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/Channel"
           },
           "status": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/CaseStatus"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/CaseStatus"
           },
           "amount_eur": {
             "type": "number",
@@ -3514,17 +3542,6 @@
               }
             ],
             "title": "Reference"
-          },
-          "purchase_request_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Purchase Request Id"
           }
         },
         "type": "object",
@@ -3539,8 +3556,7 @@
           "resolved_at",
           "reference"
         ],
-        "title": "SavingsLine",
-        "description": "One report line; amounts follow the same rules as the report totals.\n\nA purchase request with no case gets its own line: ``case_id``, ``channel``\nand ``status`` are then ``None`` and ``purchase_request_id`` is set."
+        "title": "SavingsLine"
       },
       "SavingsReport": {
         "properties": {
@@ -3586,6 +3602,14 @@
             },
             "type": "array",
             "title": "Lines"
+          },
+          "purchase_guard_lines": {
+            "items": {
+              "$ref": "#/components/schemas/PurchaseGuardSavingsLine"
+            },
+            "type": "array",
+            "title": "Purchase Guard Lines",
+            "default": []
           }
         },
         "type": "object",
