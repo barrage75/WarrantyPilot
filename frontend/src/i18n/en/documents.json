@@ -23,6 +23,7 @@
     "extracted_other": "Document extracted: {{count}} facts."
   },
   "factsTitle": "View extracted facts",
+  "technicalDetails": "Technical details",
   "confidence": "Confidence: {{value}}",
   "inboxTitle": "Inbox",
   "poll": "Check the inbox",

@@ -23,6 +23,7 @@
     "extracted_other": "Document extrait : {{count}} faits."
   },
   "factsTitle": "Voir les faits extraits",
+  "technicalDetails": "Détails techniques",
   "confidence": "Confiance : {{value}}",
   "inboxTitle": "Boîte de réception",
   "poll": "Relever la boîte de réception",

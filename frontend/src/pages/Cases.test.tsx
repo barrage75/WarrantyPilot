@@ -16,20 +16,25 @@ let data: components["schemas"]["Case"][];
 let posts: { url: string; body: Record<string, string> }[];
 let postStatus: number;
 let events: unknown[], actions: unknown[];
+let checklistDone: Set<string>;
 beforeEach(async () => {
  localStorage.clear(); await i18n.changeLanguage("fr");
- data = [structuredClone(item)]; posts = []; postStatus = 200; events = []; actions = [];
+ data = [structuredClone(item)]; posts = []; postStatus = 200; events = []; actions = []; checklistDone = new Set(["backup_verified"]);
  vi.stubGlobal("EventSource", class { close() {} addEventListener() {} });
  vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
   const request = input instanceof Request ? input : new Request(new URL(String(input), window.location.origin), init);
   const url = new URL(request.url).pathname;
   if (request.method === "POST") {
    posts.push({ url, body: await request.json() as Record<string, string> });
+   if (url.includes("/checklist/")) {
+    checklistDone.add(url.split("/").at(-1)!);
+    return Response.json({ done: true, by_person_id: person, at: "2026-01-01T12:00:00Z" });
+   }
    if (postStatus !== 200) return new Response(JSON.stringify({ detail: postStatus === 404 ? "Human approver not found" : "Case is not awaiting validation" }), { status: postStatus });
    data[0] = { ...data[0], status: url.endsWith("/reject") ? "cancelled" : url.endsWith("/resolve") ? "resolved" : "sent" };
    return Response.json(data[0]);
   }
-  if (url.endsWith("/checklist")) return Response.json({ case_id: caseId, steps: { backup_verified: { done: true, by_person_id: person, at: "2026-01-01T12:00:00Z" } } });
+  if (url.endsWith("/checklist")) return Response.json({ case_id: caseId, steps: Object.fromEntries(["repair_type", "backup_verified", "disk_encryption", "disk_handling", "accounts_and_mdm", "shipping_label", "return_inspection"].map(step => [step, { done: checklistDone.has(step), by_person_id: checklistDone.has(step) ? person : null, at: checklistDone.has(step) ? "2026-01-01T12:00:00Z" : null }])) });
   if (url.endsWith("/events")) return Response.json(events);
   if (url.endsWith("/actions")) return Response.json(actions);
   if (url === "/api/people") return Response.json([{ id: person, name: "Camille Martin", email: "camille@example.test", role: "IT" }]);
@@ -48,7 +53,8 @@ it("shows the queue and validates in one click with the session as actor", async
  expect(screen.getByText("Achat fictif")).toBeInTheDocument();
  await userEvent.click(screen.getByRole("button", { name: "Valider" }));
  await waitFor(() => expect(posts).toEqual([{ url: "/api/cases/" + caseId + "/validate", body: {} }]));
- await screen.findByText("Rien à décider");
+ expect(await screen.findByText("Envoyé", { exact: true })).toBeInTheDocument();
+ expect(screen.queryByRole("button", { name: "Valider" })).not.toBeInTheDocument();
 });
 it("requires a note to resolve a sent case as the active person", async () => {
  data = [{ ...item, status: "tracked" }];
@@ -90,6 +96,15 @@ it("renders policy conditions, nullable checks and seven checklist steps", async
  expect(screen.getByText("Aucune exclusion possible")).toBeInTheDocument();
  expect(await screen.findByRole("heading", { name: "Données du PC — 7 étapes" })).toBeInTheDocument();
  expect(await screen.findAllByRole("button", { name: "Compléter" })).toHaveLength(6);
+});
+it("updates the PC return banner as checklist steps are completed", async () => {
+ show("detail");
+ expect(await screen.findByText(/Renvoi du PC bloqué : terminez la protection des données \(1\/7\)/)).toBeInTheDocument();
+ for (let completed = 2; completed <= 7; completed += 1) {
+  await userEvent.click(screen.getAllByRole("button", { name: "Compléter" })[0]);
+  if (completed < 7) await waitFor(() => expect(screen.getByText(new RegExp(`\\(${completed}/7\\)`))).toBeInTheDocument());
+ }
+ expect(await screen.findByText("Protection des données terminée : le PC peut être renvoyé.")).toBeInTheDocument();
 });
 it("filters cases by status and ID", async () => {
  data.push({ ...item, id: "30000000-0000-4000-8000-000000000003", status: "failed" });
