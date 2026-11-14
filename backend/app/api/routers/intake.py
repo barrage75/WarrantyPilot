@@ -12,9 +12,10 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_session, require_session
+from app.api.dependencies import get_orchestrator, get_session, require_session
 from app.contracts.enums import DocumentSource, EventType
 from app.core.auth import Operator
+from app.core.orchestrator import Orchestrator
 from app.core.tables import documents, events, facts
 from app.intake.documents import MAX_DOCUMENT_BYTES, DocumentIntake, InvalidDocument
 from app.intake.service import IntakeService
@@ -153,9 +154,10 @@ async def poll(
     intake: IntakeService = Depends(get_intake),
     session: Session = Depends(get_session),
     _operator: Operator = Depends(require_session),
+    orchestrator: Orchestrator = Depends(get_orchestrator),
 ) -> dict[str, object]:
     try:
-        return await intake.poll(session)
+        return await intake.poll(session, orchestrator=orchestrator)
     except Exception:
         session.rollback()
         raise

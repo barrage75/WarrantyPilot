@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import hashlib
 import logging
 from email.message import EmailMessage
 from email.utils import getaddresses
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import and_, func, or_, select
@@ -9,11 +12,14 @@ from sqlalchemy.orm import Session
 
 from app.contracts.enums import DocumentSource, EventType
 from app.core.journal import append_event
-from app.core.tables import events, people
+from app.core.tables import cases, events, people
 from app.intake.chat_bridge import create_failure
 from app.intake.classifier import Classifier
 from app.intake.documents import DocumentIntake, InvalidDocument, inspect_document_async
 from app.intake.transports import Inbox
+
+if TYPE_CHECKING:
+    from app.core.orchestrator import Orchestrator
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +35,11 @@ class IntakeService:
         self.documents = documents
         self.classifier = classifier or Classifier()
 
-    async def poll(self, session: Session) -> dict[str, object]:
+    async def poll(
+        self, session: Session, *, orchestrator: Orchestrator | None = None
+    ) -> dict[str, object]:
         results: list[dict[str, object]] = []
+        case_ids: set[str] = set()
         # The repository's SQLite engine starts BEGIN IMMEDIATE on first use.
         # Receipt and all domain changes commit together, serializing other pollers.
         session.connection()
@@ -41,7 +50,7 @@ class IntakeService:
             # Missing/ambiguous headers still get a durable receipt by content digest.
             identity = message_id if message_id else "sha256:" + hashlib.sha256(raw).hexdigest()
             previous = session.execute(
-                select(events.c.id).where(
+                select(events.c.case_id).where(
                     events.c.actor == "system",
                     or_(
                         events.c.type == EventType.INTAKE_MESSAGE_RECEIVED.value,
@@ -54,6 +63,8 @@ class IntakeService:
                 )
             ).first()
             if previous is not None:
+                if previous.case_id is not None:
+                    case_ids.add(previous.case_id)
                 results.append({"message_id": identity, "state": "duplicate"})
                 continue
             result = (
@@ -74,8 +85,29 @@ class IntakeService:
             )
             if result.get("state") in {"ignored", "quarantined"}:
                 logger.info("intake %s reason=%s", result["state"], result.get("reason", ""))
+            if result.get("case_id"):
+                case_ids.add(str(result["case_id"]))
             results.append({"message_id": identity, **result})
+        pending: list[str] = (
+            list(
+                session.scalars(
+                    select(cases.c.id).where(
+                        cases.c.id.in_(case_ids),
+                        cases.c.equipment_id.is_not(None),
+                        cases.c.verdict_id.is_(None),
+                    )
+                )
+            )
+            if orchestrator is not None and case_ids
+            else []
+        )
         session.commit()
+        if orchestrator is not None:
+            for case_id in pending:
+                case = await orchestrator.run(UUID(case_id))
+                for result in results:
+                    if result.get("case_id") == case_id and case.verdict is not None:
+                        result["verdict"] = case.verdict.value.value
         return {"messages": results}
 
     async def _process(self, session: Session, message: EmailMessage) -> dict[str, object]:
