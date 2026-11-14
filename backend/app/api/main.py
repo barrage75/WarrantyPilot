@@ -316,6 +316,7 @@ def create_app(
     application.state.session_factory = active_session_factory
     application.state.chat_conversations = {}
     application.state.scans = {}
+    application.state.scan_tasks = set()
     application.middleware("http")(origin_guard_and_anchor)
     application.add_middleware(
         CORSMiddleware,

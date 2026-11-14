@@ -68,6 +68,7 @@ def open_session(
     token = secrets.token_urlsafe(32)
     created = now or utc_now()
     expires = created + timedelta(hours=settings.session_ttl_hours)
+    session.execute(delete(auth_sessions).where(auth_sessions.c.expires_at <= created.isoformat()))
     session.execute(
         insert(auth_sessions).values(
             token_hash=hash_token(token),

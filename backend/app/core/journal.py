@@ -9,7 +9,7 @@ from typing import Any
 from uuid import uuid4
 
 from pydantic import SecretStr
-from sqlalchemy import Engine, func, select
+from sqlalchemy import Engine, event, func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.contracts.enums import EventType
@@ -188,15 +188,22 @@ def _anchor_locked(session: Session, active_settings: AppSettings) -> dict[str, 
         "hmac": _anchor_hmac(active_settings.journal_anchor_key.get_secret_value(), event_hash),
         "at": utc_now().isoformat(),
     }
-    anchor_file = active_settings.anchor_file
-    anchor_file.parent.mkdir(parents=True, exist_ok=True)
-    with anchor_file.open("a", encoding="utf-8") as stream:
-        stream.write(json.dumps(anchor_row, sort_keys=True, separators=(",", ":")) + "\n")
     append_event(
         session,
         EventType.JOURNAL_ANCHORED,
         payload={"seq": seq, "hash": event_hash},
     )
+    transaction = session.get_transaction()
+
+    def write_anchor(committed_session: Session) -> None:
+        if committed_session.get_transaction() is not transaction:
+            return
+        anchor_file = active_settings.anchor_file
+        anchor_file.parent.mkdir(parents=True, exist_ok=True)
+        with anchor_file.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(anchor_row, sort_keys=True, separators=(",", ":")) + "\n")
+
+    event.listen(session, "after_commit", write_anchor, once=True)
     return anchor_row
 
 

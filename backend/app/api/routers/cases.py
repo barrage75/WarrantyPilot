@@ -1,7 +1,7 @@
 import asyncio
 import json
 import re
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Sequence
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from enum import StrEnum
@@ -305,19 +305,22 @@ async def stream_case_events(
     _load_case(session, case_id)
     session.rollback()
 
+    def load_events(cursor: int) -> Any:
+        with request.app.state.session_factory() as current:
+            return (
+                current.execute(
+                    select(events)
+                    .where(events.c.case_id == str(case_id), events.c.seq > cursor)
+                    .order_by(events.c.seq)
+                )
+                .mappings()
+                .all()
+            )
+
     async def event_stream() -> AsyncIterator[dict[str, str]]:
         cursor = after
         while not await request.is_disconnected():
-            with request.app.state.session_factory() as current:
-                rows = (
-                    current.execute(
-                        select(events)
-                        .where(events.c.case_id == str(case_id), events.c.seq > cursor)
-                        .order_by(events.c.seq)
-                    )
-                    .mappings()
-                    .all()
-                )
+            rows = await asyncio.to_thread(load_events, cursor)
             for row in rows:
                 cursor = int(row["seq"])
                 yield {
@@ -424,7 +427,7 @@ def get_case_screenshot(
     )
     if action_row is None:
         raise HTTPException(status_code=404, detail="Screenshot not found")
-    step_payloads: list[Any] = list(
+    step_payloads: Sequence[Any] = (
         session.execute(
             select(events.c.payload).where(
                 events.c.case_id == str(case_id),

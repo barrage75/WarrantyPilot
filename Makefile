@@ -22,7 +22,7 @@ smtp:
 	uv run --project backend python -m app.actions.email.local_smtp_server --port "$${WP_SMTP_PORT:-2525}" --maildir runtime/mail
 
 test:
-	uv run --project backend pytest -m "not p0" backend/tests
+	uv run --project backend pytest -m "not p0" backend/tests data/appelia/tests
 
 p0:
 	uv run --project backend python -m app.core.port_check
