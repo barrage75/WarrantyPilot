@@ -127,6 +127,20 @@ it("filters cases by status and ID", async () => {
  expect(screen.getByText("Aucun dossier ne correspond aux filtres.")).toBeInTheDocument();
 });
 it("handles an empty decision queue", async () => { data = []; show("decisions"); expect(await screen.findByText("Rien à décider")).toBeInTheDocument(); });
+it("uses the verdict channel consistently in case tiles and channel filters", async () => {
+ const otherId = "30000000-0000-4000-8000-000000000003";
+ data = [{ ...structuredClone(item), channel: "manual", verdict: { ...item.verdict!, channel: "browser_portal" } }, { ...structuredClone(item), id: otherId, verdict: null }];
+ show("cases");
+ const tile = await screen.findByRole("article", { name: caseId });
+ expect(within(tile).getByText("Portail web")).toBeInTheDocument();
+ expect(within(tile).queryByText("Traitement manuel")).not.toBeInTheDocument();
+ await userEvent.selectOptions(screen.getByLabelText("Canal"), "browser_portal");
+ expect(screen.getByRole("article", { name: caseId })).toBeInTheDocument();
+ expect(screen.queryByRole("article", { name: otherId })).not.toBeInTheDocument();
+ await userEvent.selectOptions(screen.getByLabelText("Canal"), "email_reseller");
+ expect(screen.queryByRole("article", { name: caseId })).not.toBeInTheDocument();
+ expect(screen.getByRole("article", { name: otherId })).toBeInTheDocument();
+});
 it("shows the decision channel in the case detail header", async () => {
  data = [{ ...structuredClone(item), verdict: { ...item.verdict!, channel: "browser_portal" } }];
  show("detail");

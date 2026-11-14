@@ -1,8 +1,14 @@
 import { expect, it } from "vitest";
 import type { components } from "@/api/schema";
 import type { StreamEventLocal } from "@/api/untyped";
-import { caseTone, journeyStep } from "./caseState";
+import { caseChannel, caseTone, journeyStep } from "./caseState";
 const item: components["schemas"]["Case"] = { id: "case", incident_id: "incident", status: "prepared", badge: "real", channel: "manual" };
+it.each(["email_reseller", "browser_portal"] as const)("prefers the real verdict channel %s", channel => {
+ expect(caseChannel({ ...item, verdict: { value: "covered", channel, explanation_fr: "Couvert", explanation_en: "Covered" } })).toBe(channel);
+});
+it("falls back to the case channel before a route is decided", () => {
+ expect(caseChannel(item)).toBe("manual");
+});
 it.each([
  ["prepared", 0, "active"], ["awaiting_validation", 2, "waiting"], ["sending", 3, "active"],
  ["sent", 4, "waiting"], ["failed", 3, "bad"], ["manual_takeover", 3, "idle"],

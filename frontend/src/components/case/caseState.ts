@@ -4,6 +4,7 @@ import type { components } from "@/api/schema";
 import type { StreamEventLocal } from "@/api/untyped";
 type Case = MethodResponse<typeof client, "get", "/api/cases/{case_id}">;
 type Status = components["schemas"]["CaseStatus"];
+export const caseChannel = (item: Case) => item.verdict?.channel ?? item.channel;
 export function journeyStep(item: Case, events: StreamEventLocal[]) {
  const has = (...types: string[]) => events.some(event => types.includes(event.type));
  if (["sent", "tracked", "resolved"].includes(item.status) || has("action_succeeded", "followup_received")) return 4;
