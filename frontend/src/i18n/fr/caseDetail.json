@@ -1,11 +1,14 @@
 {
-  "checkNames": { "fake_rule_match": "Correspondance de la règle simulée" },
-  "checkDetails": { "fake_rule_match": "La règle de démonstration correspond à ce dossier fictif." },
+  "checkNames": {
+    "fake_rule_match": "Correspondance de la règle simulée"
+  },
+  "checkDetails": {
+    "fake_rule_match": "La règle de démonstration correspond à ce dossier fictif."
+  },
   "version": "v{{version}}",
   "polling": "Actualisation toutes les 2 s",
   "liveSse": "En direct (SSE)",
-  "title": "Détail du dossier"
-,
+  "title": "Détail du dossier",
   "validate": "Valider",
   "reject": "Rejeter",
   "reason": "Motif",
@@ -35,7 +38,7 @@
   "exclusions": "Exclusions possibles",
   "policy": "Politique d’envoi",
   "actions": "Actions et preuves d’exécution",
-  "actionsNote": "Reconstruction depuis les événements action_started/succeeded/failed ; aucun endpoint dédié.",
+  "actionsNote": "Historique renvoyé par GET /api/cases/{id}/actions.",
   "timeline": "Ligne de temps",
   "live": "● En direct",
   "reconnecting": "Reconnexion…",
@@ -84,5 +87,11 @@
     "source": "Source",
     "approved": "Approbation",
     "reason": "Motif"
-  }
+  },
+  "browserStep": "Étape navigateur",
+  "screenshot": "Capture",
+  "dellCase": "Numéro de dossier Dell : {{number}}",
+  "result": "Résultat",
+  "proofLabel": "Preuve",
+  "equipmentLabel": "Équipement"
 }

@@ -8,7 +8,7 @@ test("agent remains visible across navigation and language changes", async ({ pa
  await page.getByRole("button", { name: "Mettre en pause" }).click();
  await expect(page.getByRole("button", { name: "Reprendre l’agent" })).toBeVisible();
  await page.getByRole("link", { name: "Signalement" }).click();
- await expect(page.getByText("Données simulées — endpoint à venir")).toBeVisible();
+ await expect(page.getByRole("note", { name: "Mention IA" })).toBeVisible();
  await page.getByRole("combobox", { name: "Langue" }).selectOption("en");
  await expect(page.locator("html")).toHaveAttribute("lang", "en");
  await expect(page.getByRole("button", { name: "Resume agent" })).toBeVisible();

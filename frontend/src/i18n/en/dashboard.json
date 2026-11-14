@@ -3,14 +3,19 @@
   "possibleSavingsEur": "Possible savings",
   "realizedSavingsEur": "Realized savings",
   "scan": "Run scan",
-  "fictional": "Simulated local scan of fictional Appelia data.",
-  "progress": "Progress: {{percent}}%",
-  "complete": "Scan complete: {{count}} fictional invoices.",
+  "fictional": "Scan of fictional Appelia documents by the local server (reading, Factur-X and rules engine).",
+  "progress": "Progress: {{done}} / {{total}} documents",
+  "complete": "Scan complete: {{done}} / {{total}} documents read, {{count}} fictional invoices.",
   "expiring": "Expiring soon",
   "equipment": "Equipment",
   "right": "Right",
   "end": "End date",
   "days": "Days left",
   "empty": "Run the scan to display demo coverage.",
-  "title": "Dashboard"
+  "title": "Dashboard",
+  "failed": "Scan failed: {{error}}",
+  "coveredEquipmentEurHelp": "Purchase price of equipment whose verdict is covered or likely covered.",
+  "possibleSavingsEurHelp": "Pending purchases that a warranty claim could avoid.",
+  "realizedSavingsEurHelp": "Only cancelled purchases with a resolved case, as reported by the server.",
+  "noExpiring": "No right expires in the next 30 days."
 }

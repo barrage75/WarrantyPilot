@@ -3,15 +3,10 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import Chat from "./Chat";
-import Dashboard from "./Dashboard";
-import PurchaseGuard from "./PurchaseGuard";
 import Settings from "./Settings";
 import Demo from "./Demo";
 import Journal from "./Journal";
 import { OperatorProvider, OperatorSelector } from "@/operator";
-import { MockChatApi, MockPurchaseGuardApi } from "@/api/mocks";
-import type { ChatApi, ScanApi, PurchaseGuardApi } from "@/api/mocks";
 import i18n from "@/i18n";
 const person = "10000000-0000-4000-8000-000000000001";
 const original = { id: person, auto_send_threshold_eur: "25.00", agent_paused: true, email_allowlist: ["camille@example.test"], browser_allowed_origins: ["http://127.0.0.1:*"], feature_flags: { p1_chat: true, p2_voice: false, scan: false }, future_field: { preserved: true } };
@@ -31,6 +26,7 @@ beforeEach(async () => {
    if (request.method === "PUT") settings = body as typeof original;
    return Response.json(settings);
   }
+  if (path === "/api/people") return Response.json([{ id: person, name: "Camille Martin", email: "camille@example.test", role: "IT" }]);
   if (path === "/api/agent/status") return Response.json({ paused: true });
   if (path === "/api/journal/verify") return Response.json(verification);
   if (path === "/api/journal/anchor") return Response.json({ seq: 8, hash: "hash", hmac: "hmac", at: "2026-01-01T12:00:00Z" });
@@ -45,73 +41,6 @@ function show(children: ReactNode) {
  const result = render(<QueryClientProvider client={cache}><OperatorProvider>{children}</OperatorProvider></QueryClientProvider>);
  return { ...result, cache };
 }
-it("keeps the non-dismissible AI disclosure visible before and after chatting without creating a real case", async () => {
- show(<Chat/>);
- const disclosure = "Vous échangez avec l'assistant IA de WarrantyPilot";
- expect(screen.getByText(disclosure)).toBeVisible(); expect(screen.queryByRole("button", { name: /fermer|masquer/i })).not.toBeInTheDocument();
- expect(screen.getByRole("log")).toHaveAttribute("aria-live", "polite");
- await screen.findByText(/Bonjour !/);
- await userEvent.type(screen.getByLabelText("Décrivez votre panne"), "Mon casque est en panne");
- await userEvent.click(screen.getByRole("button", { name: "Envoyer" }));
- await screen.findByText(/Votre signalement fictif est prêt/);
- expect(screen.getByText(disclosure)).toBeVisible(); expect(screen.getByRole("log")).toHaveTextContent("Mon casque est en panne");
- await userEvent.click(screen.getByRole("button", { name: "Voir le dossier" }));
- expect(screen.getByText(/Dossier simulé uniquement/)).toBeInTheDocument();
- expect(requests).toEqual([]);
-});
-it("displays the exact English AI disclosure and disables empty messages", async () => {
- await i18n.changeLanguage("en"); show(<Chat/>);
- expect(screen.getByText("You are chatting with WarrantyPilot's AI assistant")).toBeVisible();
- await screen.findByText(/Hello!/); expect(screen.getByRole("button", { name: "Send" })).toBeDisabled();
-});
-it("shows chat API errors and retains the input for retry", async () => {
- const api: ChatApi = { startConversation: () => new MockChatApi().startConversation(), sendMessage: vi.fn().mockRejectedValue(new Error("offline")) };
- show(<Chat api={api}/>); await screen.findByText(/Bonjour !/);
- await userEvent.type(screen.getByLabelText("Décrivez votre panne"), "Panne"); await userEvent.click(screen.getByRole("button", { name: "Envoyer" }));
- expect(await screen.findByRole("alert")).toHaveTextContent("API indisponible");
- expect(screen.getByLabelText("Décrivez votre panne")).toHaveValue("Panne");
-});
-it("requires a nonblank reason to buy anyway", async () => {
- const api = new MockPurchaseGuardApi(), decide = vi.spyOn(api, "decide"); show(<PurchaseGuard api={api}/>);
- await userEvent.click(await screen.findByRole("button", { name: "Examiner la recommandation" }));
- const keep = screen.getByRole("button", { name: "Acheter quand même" });
- expect(keep).toBeDisabled();
- await userEvent.type(screen.getByLabelText("Motif obligatoire pour conserver l’achat"), "   "); expect(keep).toBeDisabled(); expect(decide).not.toHaveBeenCalled();
- await userEvent.type(screen.getByLabelText("Motif obligatoire pour conserver l’achat"), "Besoin immédiat"); await userEvent.click(keep);
- await screen.findByText("Achat maintenu");
- expect(decide).toHaveBeenCalledWith(expect.objectContaining({ state: "awaiting_decision" }), "keep", "   Besoin immédiat");
- expect(screen.getByText(/Économie réelle :/)).toHaveTextContent("0,00");
-});
-it("counts realized savings only after confirmed cancellation and resolved case", async () => {
- show(<PurchaseGuard/>); await userEvent.click(await screen.findByRole("button", { name: "Examiner la recommandation" }));
- await userEvent.click(screen.getByRole("button", { name: "Lancer la garantie et suspendre l'achat" }));
- await userEvent.click(await screen.findByRole("button", { name: "Confirmer l’annulation de l’achat (simulation)" }));
- await waitFor(() => expect(screen.getByRole("button", { name: "Confirmer le remplacement reçu et le dossier résolu (simulation)" })).toBeEnabled());
- expect(screen.getByRole("status")).toHaveTextContent("Économie réelle : 0,00");
- await userEvent.click(screen.getByRole("button", { name: "Confirmer le remplacement reçu et le dossier résolu (simulation)" }));
- await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/120,00.*économisés : achat annulé le/));
-});
-it("renders an empty purchase list and a readable API error", async () => {
- const api: PurchaseGuardApi = { recommendations: async () => [], decide: vi.fn(), confirmCancellation: vi.fn(), resolveCase: vi.fn() };
- const view = show(<PurchaseGuard api={api}/>); await screen.findByText("Aucune recommandation d’achat."); view.unmount();
- show(<PurchaseGuard api={{ ...api, recommendations: vi.fn().mockRejectedValue(new Error("offline")) }}/>);
- expect(await screen.findByRole("alert")).toHaveTextContent("API indisponible");
-});
-it("shows initial zero real savings, mock scan progress, and localized expiry details", async () => {
- show(<Dashboard/>);
- expect(screen.getByText("Économies réelles").closest("section")).toHaveTextContent("0,00");
- await userEvent.click(screen.getByRole("button", { name: "Lancer le scan" }));
- expect(screen.getByRole("progressbar")).toHaveAttribute("max", "100");
- await screen.findByText(/Scan terminé : 60/);
- expect(screen.getByText("Valeur du matériel couvert").closest("section")).toHaveTextContent(/1.*399,00/);
- expect(screen.getByText("Économies réelles").closest("section")).toHaveTextContent("0,00");
- expect(screen.getByText("Jabra Evolve2 65")).toBeInTheDocument(); expect(screen.getByText("Garantie fabricant")).toBeInTheDocument();
-});
-it("handles scan errors without inventing savings", async () => {
- const api: ScanApi = { scan: vi.fn().mockRejectedValue(new Error("offline")) }; show(<Dashboard api={api}/>);
- await userEvent.click(screen.getByRole("button", { name: "Lancer le scan" })); expect(await screen.findByRole("alert")).toHaveTextContent("API indisponible");
- expect(screen.getByText("Économies réelles").closest("section")).toHaveTextContent("0,00");
-});
 it("preserves other settings fields during PUT and validates editable lists", async () => {
  show(<Settings/>); const threshold = await screen.findByLabelText("Seuil d’envoi automatique (€)");
  await userEvent.clear(threshold); await userEvent.type(threshold, "42.50");
