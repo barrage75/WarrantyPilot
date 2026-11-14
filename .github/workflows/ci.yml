@@ -21,10 +21,12 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --locked
-      - run: uv run ruff check app tests
+      - run: uv run ruff check app tests ../data/appelia
       - run: uv run ruff format --check app tests
-      - run: uv run mypy --strict app/contracts app/core
-      - run: uv run pytest
+      - run: >-
+          MYPYPATH=.:../data uv run mypy --strict --explicit-package-bases
+          app/contracts app/core ../data/appelia
+      - run: uv run pytest tests ../data/appelia/tests
 
   frontend:
     runs-on: ubuntu-latest

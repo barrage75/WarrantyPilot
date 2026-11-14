@@ -1,0 +1,32 @@
+[
+  {
+    "id": "SUP-AUDIO",
+    "name": "AudioPro Démonstration",
+    "address": "12 rue des Ateliers",
+    "postal_code": "69007",
+    "city": "Lyon",
+    "country": "France",
+    "siret": "00000000000000",
+    "email": "factures@revendeur-test.example"
+  },
+  {
+    "id": "SUP-TECH",
+    "name": "Latitude Services Test",
+    "address": "8 avenue des Essais",
+    "postal_code": "31000",
+    "city": "Toulouse",
+    "country": "France",
+    "siret": "11111111111111",
+    "email": "ventes@revendeur-test.example"
+  },
+  {
+    "id": "SUP-PRINT",
+    "name": "Bureautique Exemple",
+    "address": "5 place des Inventeurs",
+    "postal_code": "44000",
+    "city": "Nantes",
+    "country": "France",
+    "siret": "22222222222222",
+    "email": "commandes@revendeur-test.example"
+  }
+]
