@@ -190,6 +190,7 @@ def create_app(
     application.state.chat_conversations = {}
     application.state.scans = {}
     for api_router in (
+        __import__("app.api.routers.intake", fromlist=["router"]).router,
         health.router,
         cases.router,
         chat.router,
