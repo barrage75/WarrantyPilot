@@ -13,7 +13,9 @@ FastAPI, puis les types TypeScript sont générés avec `openapi-typescript`.
 ## ADR-003 — Un agent produit, adaptateurs injectés
 
 Un seul orchestrateur produit la décision; les intégrations sont des Protocols
-injectés. L0 ne contient que des fakes afin d'éviter tout effet externe.
+injectés. Les adaptateurs d'action sont indexés par `Channel`, choisi d'abord
+par le verdict puis par le dossier. L0 ne contient que des fakes afin d'éviter
+tout effet externe.
 
 ## ADR-004 — Règles YAML, source vérifiable
 
@@ -23,8 +25,9 @@ porter source, version et date de consultation; L0 définit déjà leur contrat.
 ## ADR-005 — Journal à empreintes locales
 
 Le journal est append-only en base et ancré par HMAC dans un fichier séparé.
-Cette conception détecte les altérations mais n'est pas inviolable si la
-machine et la clé sont toutes deux compromises.
+Les ajouts SQLite utilisent `BEGIN IMMEDIATE` et un verrou local pour sérialiser
+les écritures. Cette conception détecte les altérations mais n'est pas
+inviolable si la machine et la clé sont toutes deux compromises.
 
 ## ADR-006 — Quatre priorités et Gmail à deux scopes
 
@@ -37,9 +40,10 @@ séparant lecture restreinte et envoi sensible; L0 ne demande aucun accès Gmail
 Le travail partagé reste à l'intégrateur; au maximum quatre agents de lot
 travaillent simultanément, avec un dossier propriétaire par lot.
 
-## ADR-008 — Repli manuel après échec
+## ADR-008 — Prise en main humaine après échec
 
-Le plan demande un repli `failed → manual`, mais l'énumération de contrat
-`CaseStatus` ne définit pas `manual`. L0 respecte l'énumération contractuelle :
-après deux essais au plus, le dossier reste `failed` et peut être annulé. Aucun
-état ou endpoint de transfert manuel n'est ajouté sans décision sur le contrat.
+Après deux essais, un dossier passe automatiquement de `failed` à
+`manual_takeover`; une personne peut aussi demander ce transfert depuis
+`failed`. Le retour à `sent` exige un `ActionResult` réussi avec preuve non vide
+et un événement attribué à `human:<id>`. La prise en main manuelle peut aussi
+être annulée.

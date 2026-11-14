@@ -21,7 +21,8 @@ UI (React) ──HTTP/SSE──> FastAPI routers
 Chaque dossier possède des étapes persistées et peut reprendre après un arrêt.
 Les contrats de `backend/app/contracts` sont la source de vérité partagée; les
 adaptateurs implémentent les Protocols sans modifier ces contrats. L0 ne branche
-que des fakes.
+que des fakes. Le répartiteur sélectionne l'adaptateur par `Verdict.channel`,
+puis par `Case.channel` si le verdict ne précise aucun canal.
 
 ## Frontières de confiance
 
@@ -45,11 +46,9 @@ que des fakes.
 en échec ou interrompu ne peut pas être présenté comme envoyé. Les tentatives
 sont limitées et chaque envoi possède une clé d'idempotence. L'orchestrateur
 enregistre l'étape `execute` avant l'appel à l'adaptateur; au redémarrage, un
-résultat inconnu devient donc `failed`, jamais `sent`.
-
-Le contrat `CaseStatus` ne contient pas d'état `manual`, contrairement à la
-formulation du plan sur le repli après deux échecs. L0 garde le dossier en
-`failed` (nouvelle tentative bornée ou annulation); le repli manuel doit être
-tranché avant d'ajouter un état ou un flux dédié.
+résultat inconnu devient `failed` ou `manual_takeover` si les deux essais sont
+épuisés, jamais `sent`. Un dossier `failed` peut être repris par un humain;
+seule une preuve saisie par une personne permet alors la transition vers
+`sent`.
 
 Les lots suivants possèdent leurs adaptateurs selon `OWNERSHIP.md`.
