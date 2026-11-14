@@ -100,5 +100,5 @@ Chaque réponse sépare **Fait vérifié** (code ou commande du dépôt, rejoué
 - Hypothèse : notre différence est côté propriétaire, jusqu'à la résolution, multi-canal, avec prévention à l'achat.
 
 **25. Qu'est-ce qui manque pour un pilote ?**
-- Fait (constaté au rejeu) : signaler au nom d'un collègue ou par Service Tag dans le chat de l'interface ; badge d'en-tête de dossier aligné sur la preuve d'exécution (aujourd'hui `simulated` par défaut) ; numéro de page de la preuve Factur-X (« facture p. None »).
+- Fait : les écarts relevés au rejeu précédent (signalement par Service Tag, badge du dossier, « p. None ») sont corrigés par #40. Reste constaté : le garde-fou se lie au dossier Jabra ouvert le plus récent.
 - Hypothèse : comptes individuels/SSO, vrais connecteurs fabricants (API officielles), boîte réelle ; 4 à 6 semaines selon `docs/PLAN_V4.md` §10.

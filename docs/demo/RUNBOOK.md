@@ -11,7 +11,7 @@ Repères : API `http://127.0.0.1:8001/api` (`WP_API`), front `http://127.0.0.1:5
 3. Reproduction Dell, une fois : `cd repro/dell && uv sync --locked && uv run playwright install --with-deps chromium && uv run pytest -v && cd ../..`.
 4. Vérifications, **tous les services de démo arrêtés** (port 8100 libre, voir § Port 8100) : `make lint typecheck test`, `make p0`, `make frontend-build`.
    - `make p0` : lance sa propre reproduction Dell sur 8100 (runtime temporaire), attend `GET /__test__/cases`, puis `pytest -m p0 backend/tests/p0/test_p0_gate.py`. Mesuré : `10 passed` en 23 s.
-5. Répéter le script deux fois, chronométrer (référence : 25,9 s de parcours automatisé à chaud, voir `SCRIPT_3MIN.md`).
+5. Répéter le script deux fois, chronométrer (durées de référence dans `SCRIPT_3MIN.md`).
 6. Enregistrer la **vidéo de secours** (3 min, 1440×900) sur la machine **et** une clé USB. Copier les captures Dell (`runtime/browser/screenshots/<action_id>/*.png`) hors de `runtime/`.
 7. Désactiver mises à jour, notifications, veille.
 
@@ -32,25 +32,13 @@ curl -s -X POST http://127.0.0.1:8100/__test__/reset   # vide les dossiers du po
 ls runtime/journal-archive/ | tail -1                  # le journal précédent est archivé (events.jsonl, anchors.jsonl)
 ```
 
-**Répétition de chauffe obligatoire** : après chaque démarrage de `make dev`, jouer une fois le parcours Dell (dossier par le chat, checklist, « Valider ») puis refaire `make reset` et le reset du portail. Mesuré : la première action portail après redémarrage a pris 32 s, les suivantes 1,7 à 2,1 s.
+**Répétition à blanc obligatoire juste avant de passer devant le jury** : jouer le parcours complet (dont Dell : Signalement, checklist, « Valider », avancer le portail), puis refaire `make reset` et le reset du portail ci-dessus.
 
 `make seed` recrée la base sans passer par l'API (`python -m app.core.reset`) : à utiliser **API arrêtée**, par exemple si `make reset` échoue faute de session. Reset par l'interface : connecté en Karim, page **Démo** → **« Réinitialiser la démo »** → **« Confirmer la remise à zéro »** ; message « Démo réinitialisée. Le journal précédent a été archivé… ». Un opérateur (Paul) ne peut pas faire le reset.
 
-## Dossier Dell par le chat (pendant la démo, ~1 s)
+## Dossier Dell depuis l'écran Signalement
 
-Le chat de l'interface parle au nom de l'opérateur connecté ; le PC 7XK4L93 est celui de Clément Faure (sans compte). On poste donc le signalement de Clément sur la **même route de chat**, avec la session de Karim (jamais `/api/dev/fake-case`) :
-
-```sh
-make login
-CONV=$(curl -s -b runtime/.make-session -H 'Content-Type: application/json' -d '{}' \
-  http://127.0.0.1:8001/api/chat/conversations | python3 -c 'import sys,json;print(json.load(sys.stdin)["id"])')
-CASE=$(curl -s -b runtime/.make-session -H 'Content-Type: application/json' \
-  -d '{"text":"Mon PC portable Latitude 7440 ne démarre plus, écran noir.","reporter_id":"2994dff0-15a0-527d-a224-e23315d93c0a"}' \
-  http://127.0.0.1:8001/api/chat/conversations/$CONV/messages | python3 -c 'import sys,json;print(json.load(sys.stdin)["case_id"])')
-echo "http://127.0.0.1:5173/cases/$CASE"
-```
-
-Vérifié : `awaiting_validation`, verdict `covered`, politique `needs_validation`, checklist de 7 étapes créée.
+Connecté en Karim : menu **« Signalement »** → `Le PC 7XK4L93 de Clément ne démarre plus` → **« Envoyer »** → **« Ouvrir le dossier créé #… »**. Le Service Tag exact identifie l'équipement quel que soit son propriétaire (#40). Vérifié le 14/11/2026 : dossier en 1,0 s, `awaiting_validation`, verdict « Couvert », checklist de 7 étapes, badge **SIMULÉ** puis **REPRODUCTION** après l'action portail.
 
 ## Avancer le portail local (simule la clôture côté Dell)
 
@@ -76,7 +64,14 @@ Note obligatoire (non vide) ; refus `409` si le dossier n'est pas `sent` ou `tra
 
 ## Port 8100 déjà occupé
 
-Constaté : si la reproduction de démo tourne, `make p0` affiche `[Errno 98] … address already in use` pour **sa** reproduction, mais sa sonde `curl …/__test__/cases` répond via l'instance existante et les tests P0 tournent **contre elle** (ils appellent `/__test__/reset` : les dossiers du portail de démo sont effacés). Donc :
+`make p0` refuse de tourner si le port 8100 est occupé (`python -m app.core.port_check`, première commande de la cible). Constaté le 14/11/2026, reproduction de démo lancée :
+
+```text
+Port 8100 on 127.0.0.1 is already in use; stop the existing Dell reproduction before running make p0.
+make: *** [Makefile:28: p0] Error 1
+```
+
+Libérer le port, puis relancer :
 
 ```sh
 ss -ltnp 'sport = :8100'          # qui écoute ?
@@ -86,7 +81,7 @@ ss -ltnp 'sport = :8100'          # doit être vide
 make p0
 ```
 
-Ne jamais lancer `make p0` (ni `make test`) pendant la démo. Après, relancer le terminal 1. Le backend vise `http://127.0.0.1:8100` par défaut (`DEFAULT_PORTAL_URL`, `backend/app/actions/browser/settings.py`) et `make p0` code ce port en dur : changer `DELL_REPRO_PORT` ne contourne pas le conflit, il faut libérer 8100.
+Ne jamais lancer `make p0` (ni `make test`) pendant la démo. Après, relancer le terminal 1. Le backend vise `http://127.0.0.1:8100` par défaut (`DEFAULT_PORTAL_URL`, `backend/app/actions/browser/settings.py`) et `make p0` code ce port en dur : il faut libérer 8100.
 
 ## Contrôle avant démo (H-5)
 
@@ -94,7 +89,8 @@ Ne jamais lancer `make p0` (ni `make test`) pendant la démo. Après, relancer l
 - [ ] `ss -ltnp | grep -E ':(8001|5173|2525|8100) '` : quatre lignes, toutes sur `127.0.0.1`.
 - [ ] Navigateur sur `http://127.0.0.1:5173/`, écran « Connexion opérateur », déconnecté, zoom 100 %.
 - [ ] **Garde-fou achat** : Jabra Evolve2 65, 120 €, « Recommandation ». Aucun dossier dans **Dossiers**.
-- [ ] Terminal 3 : commandes « Dossier Dell » et « Avancer le portail » prêtes.
+- [ ] Terminal 3 : commande « Avancer le portail » prête.
+- [ ] Répétition à blanc faite, puis `make reset` et reset du portail.
 - [ ] Wi-Fi coupé, vidéo de secours en pause.
 
 ## Réseau coupé
@@ -109,7 +105,10 @@ Aucun réseau externe nécessaire : SMTP local, portail Dell local, moteur navig
 
 ## Plan B Dell (boutons inutilisables)
 
+`CASE` = identifiant du dossier, lu dans l'URL `/cases/<id>` après `make login` :
+
 ```sh
+CASE=<id lu dans l'URL>
 for s in repair_type backup_verified disk_encryption disk_handling accounts_and_mdm shipping_label return_inspection; do
   curl -s -o /dev/null -w '%{http_code} ' -b runtime/.make-session -X POST -H 'Content-Type: application/json' -d '{}' \
     http://127.0.0.1:8001/api/cases/$CASE/checklist/$s
