@@ -10,7 +10,38 @@ from app.api.routers.scan import _run_scan
 from app.contracts.enums import FactField
 from app.contracts.models import Fact, Provenance
 from app.core import tables
+from app.core.warranty import inventory_verdict, rules_engine, stored_inventory
 from tests.auth_helpers import KARIM_ID, login
+
+
+def test_indexed_inventory_preserves_all_seed_verdicts(db_engine, app_settings, session_factory):
+    application = create_app(app_settings=app_settings, app_engine=db_engine)
+    with TestClient(application) as client:
+        login(client, person_id=KARIM_ID)
+        assert client.post("/api/demo/reset", json={"confirm": "RESET"}).status_code == 200
+        with session_factory() as session:
+            equipment, indexed, rights = stored_inventory(session)
+            count = session.scalar(select(func.count()).select_from(tables.facts))
+        assert len(indexed) == 229
+        flat = [fact for group in indexed.values() for fact in group]
+        assert len(flat) == count
+        for item in equipment:
+            engine = rules_engine(application)
+            rules = application.state.services["rules"]
+            expected, expected_dates = inventory_verdict(engine, item, flat, rules, rights)
+            actual, actual_dates = inventory_verdict(
+                engine, item, indexed.get(item.id, []), rules, rights
+            )
+            assert actual_dates == expected_dates, item.serial
+            # Inventory evaluations create fresh incidents, checks and classifier IDs.
+            exclude = {
+                "id": True,
+                "checks": {"__all__": {"id"}},
+                "evidence": {"__all__": {"id"}},
+            }
+            assert actual.model_dump(exclude=exclude) == expected.model_dump(exclude=exclude), (
+                item.serial
+            )
 
 
 def test_seed_and_scan_persist_invoice_facts_idempotently(db_engine, app_settings, session_factory):

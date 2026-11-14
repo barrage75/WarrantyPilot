@@ -1,5 +1,6 @@
 from datetime import date
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -34,19 +35,22 @@ def evaluate_equipment(
     return engine.evaluate(equipment, normalized, incident, rules, rights)
 
 
-def stored_inventory(session: Session) -> tuple[list[Equipment], list[Fact], list[Right]]:
+def stored_inventory(
+    session: Session,
+) -> tuple[list[Equipment], dict[UUID, list[Fact]], list[Right]]:
+    """Load and index scoped evidence once, avoiding fleet scans per verdict."""
     document_owners: dict[str, list[str]] = {}
     for link in session.execute(select(tables.equipment_documents)):
         document_owners.setdefault(link.document_id, []).append(link.equipment_id)
-    scoped_facts = []
+    scoped_facts: dict[UUID, list[Fact]] = {}
     for row in session.execute(select(tables.facts)).mappings():
         fact = Fact.model_validate(dict(row))
         if fact.equipment_id is not None:
-            scoped_facts.append(fact)
+            scoped_facts.setdefault(fact.equipment_id, []).append(fact)
         else:
             document_id = fact.document_id or fact.provenance.document_id
             for owner in document_owners.get(str(document_id), []):
-                scoped_facts.append(
+                scoped_facts.setdefault(UUID(owner), []).append(
                     Fact.model_validate({**fact.model_dump(), "equipment_id": owner})
                 )
     return (
@@ -82,7 +86,7 @@ def savings_totals(session: Session, engine: RulesEngine, rules: list[Rule]) -> 
     covered = sum(
         float(item.purchase_price or 0)
         for item in equipment
-        if inventory_verdict(engine, item, facts, rules, rights)[0].value.value
+        if inventory_verdict(engine, item, facts.get(item.id, []), rules, rights)[0].value.value
         in {"covered", "likely_covered"}
     )
     possible = realized = 0.0
