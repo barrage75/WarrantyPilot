@@ -32,6 +32,32 @@ CHECK_NAMES = (
     "contact_delay",
 )
 DATE_FIELDS = {"purchase_date", "invoice_date", "delivery_date", "ship_date"}
+FACT_LABELS = {
+    "purchase_date": "Date d'achat",
+    "invoice_date": "Date de facture",
+    "delivery_date": "Date de livraison",
+    "ship_date": "Date d'expédition",
+    "standard_warranty_end": "Fin de garantie standard",
+    "warranty_term_months": "Durée de garantie",
+    "extension_months": "Durée de l'extension de garantie",
+    "serial_number": "Numéro de série",
+    "reseller_name": "Nom du revendeur",
+    "reseller_address": "Adresse du revendeur",
+    "product_type": "Type de produit",
+    "model_number": "Modèle",
+    "warranty_plus_certificate": "Certificat Warranty+",
+    "sku": "Référence produit",
+    "lease_contract": "Contrat de location",
+}
+EXCLUSION_LABELS = {
+    "third_party_repair": "réparation par un tiers",
+    "liquid_damage": "dommage causé par un liquide",
+    "accidental_damage": "dommage accidentel",
+    "consumable_wear": "usure d'un consommable",
+    "theft": "vol",
+    "loss": "perte",
+    "misuse": "mauvaise utilisation",
+}
 
 
 def fact_value(fact: Fact) -> str | int | bool | date:
@@ -226,7 +252,7 @@ class DeterministicRulesEngine:
                 for fact in values:
                     use(fact)
                 detail = "; ".join(f"{f.value}{_page_reference(f.provenance.page)}" for f in values)
-                check("document_conflict", False, f"Conflit {name} : {detail}")
+                check("document_conflict", False, f"Conflit — {FACT_LABELS[name]} : {detail}")
                 return verify(
                     f"documents contradictoires : {detail}", f"conflicting documents: {detail}"
                 )
@@ -254,11 +280,14 @@ class DeterministicRulesEngine:
         missing.extend(
             name for name in rule.proof_required if name not in fields and name != "purchase_date"
         )
+        missing_labels = ", ".join(
+            FACT_LABELS.get(name, name.replace("_", " ")) for name in missing
+        )
         check(
             "purchase_proof",
             True,
             "Preuve d'achat présente"
-            + (f" ; avertissement : champs absents {', '.join(missing)}" if missing else ""),
+            + (f" ; avertissement : champs absents {missing_labels}" if missing else ""),
         )
         months = rule.duration_months
         if not rule.duration_days and not months:
@@ -272,24 +301,24 @@ class DeterministicRulesEngine:
         start_fact = get(event)
         start = fact_value(start_fact) if start_fact else None
         approximated = False
-        origin = event
+        origin = FACT_LABELS[event]
         if not isinstance(start, date):
             start = (
                 getattr(equipment, event, None) if event in {"ship_date", "delivery_date"} else None
             )
             approximated = True
-            origin += " inventaire"
+            origin += " (inventaire)"
         if not isinstance(start, date):
             invoice = get("invoice_date")
             fallback = invoice if invoice and isinstance(fact_value(invoice), date) else proof
             start = fact_value(fallback)
-            origin = fallback.field
+            origin = FACT_LABELS[fallback.field]
         if not isinstance(start, date):
             raise RuntimeError("Date de départ invalide après résolution")
         check(
             "start_date",
             today >= start,
-            f"{origin} : {start:%d/%m/%Y}, approximation={approximated}",
+            f"{origin} : {start:%d/%m/%Y}" + (" (date estimée)" if approximated else ""),
         )
         if today < start:
             return verify(
@@ -387,13 +416,15 @@ class DeterministicRulesEngine:
                 target = certain if fact.confidence >= 0.8 and not early_wear else possible
                 if category not in target:
                     target.append(category)
+        certain_labels = ", ".join(EXCLUSION_LABELS.get(c, c.replace("_", " ")) for c in certain)
+        possible_labels = ", ".join(EXCLUSION_LABELS.get(c, c.replace("_", " ")) for c in possible)
         check(
             "exclusions",
             not certain,
-            "Exclusions certaines : " + ", ".join(certain)
+            "Exclusions certaines : " + certain_labels
             if certain
             else "Aucune exclusion certaine"
-            + (" ; possibles : " + ", ".join(possible) if possible else ""),
+            + (" ; possibles : " + possible_labels if possible else ""),
         )
         if rule.contact_delay_days is not None and rule.contact_delay_start.value == "unspecified":
             check(
@@ -408,8 +439,8 @@ class DeterministicRulesEngine:
         if certain:
             return finish(
                 VerdictValue.NOT_COVERED,
-                "Non couvert : exclusion " + ", ".join(certain),
-                "Not covered: exclusion " + ", ".join(certain),
+                "Non couvert : exclusion " + certain_labels,
+                "Not covered: exclusion " + ", ".join(c.replace("_", " ") for c in certain),
             )
         near = approximated and abs((today - end).days) < 30
         if today > end and not near:

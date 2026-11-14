@@ -1334,7 +1334,7 @@ def build_traps(
                 "condition",
                 "refurbished",
                 None,
-                "Condition issue de l'inventaire : refurbished",
+                "État indiqué dans l'inventaire : reconditionné",
                 source="inventory",
             )
         if trap_id == 3:
@@ -1351,7 +1351,7 @@ def build_traps(
                 "lease_contract",
                 True,
                 support_files["lease"],
-                "Contrat de location LocaPrint Test",
+                "Contrat de location d'imprimantes",
             )
         elif trap_id == 6:
             add_fact(
@@ -1402,7 +1402,7 @@ def build_traps(
                 "extension_months",
                 12,
                 certificate,
-                "extension_months : 12 mois",
+                "Extension de garantie : 12 mois (Warranty+).",
             )
         elif trap_id == 12:
             add_fact(
@@ -1709,7 +1709,7 @@ def _make_support_documents(
                 "FICTIF — aucun certificat réel n'est émis.",
                 f"Produit : Jabra {item['model']}.",
                 f"Numéro de série : {item['serial']}.",
-                f"extension_months : {item['warranty_plus_months'] or 12} mois (Warranty+).",
+                f"Extension de garantie : {item['warranty_plus_months'] or 12} mois (Warranty+).",
                 f"Date de début : {item['purchase_date']}.",
                 f"Référence de test : WP-WPPLUS-{suffix}.",
             ],
@@ -1721,7 +1721,7 @@ def _make_support_documents(
             "FICTIF — contrat de démonstration sans couverture réelle.",
             "Client : Appelia SAS.",
             "Couverture : 20 ordinateurs Dell Latitude.",
-            "extension_months : 36 mois (Dell ProSupport).",
+            "Extension de garantie : 36 mois (Dell ProSupport).",
             "Numéros de série couverts : "
             + ", ".join(item["serial"] for item in dell_laptops),
             (

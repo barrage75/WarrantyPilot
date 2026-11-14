@@ -586,7 +586,7 @@
             "id": "bf2eb44e-97ec-56a4-890a-99b8281ffbf3",
             "document_id": "891cbd39-f59a-57ae-8aab-0fc3267b21ac",
             "page": 1,
-            "excerpt": "Contrat de location LocaPrint Test"
+            "excerpt": "Contrat de location d'imprimantes"
           },
           "confidence": 0.99,
           "source": "structured"
@@ -1744,7 +1744,7 @@
             "id": "93226e9d-c3f8-5f76-a4b2-a07a17a3cb49",
             "document_id": "5cc39974-8978-5234-acbb-dc6941658474",
             "page": 1,
-            "excerpt": "extension_months : 12 mois"
+            "excerpt": "Extension de garantie : 12 mois (Warranty+)."
           },
           "confidence": 0.99,
           "source": "structured"
@@ -1934,7 +1934,7 @@
             "id": "5be5bdc7-f45e-589a-b4bd-52f92c237c41",
             "document_id": "51bba344-405b-5d7d-98df-9a5df955dbfd",
             "page": null,
-            "excerpt": "Condition issue de l'inventaire : refurbished"
+            "excerpt": "État indiqué dans l'inventaire : reconditionné"
           },
           "confidence": 0.99,
           "source": "inventory"

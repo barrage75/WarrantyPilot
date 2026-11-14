@@ -132,6 +132,13 @@ def test_seed_and_scan_persist_invoice_facts_idempotently(db_engine, app_setting
         login(client, person_id=KARIM_ID)
         assert client.post("/api/demo/reset", json={"confirm": "RESET"}).status_code == 200
         seeded = client.get("/api/equipment/overview").json()
+        assert Counter(item["verdict"] for item in seeded) == {
+            "covered": 131,
+            "likely_covered": 9,
+            "not_covered": 53,
+            "out_of_manufacturer": 10,
+            "to_verify": 27,
+        }
         target = next(item for item in seeded if item["serial"] == "JBR0000000003")
         assert target["verdict"] == "not_covered"  # Engage 55: one year from 10/03/2025
         assert target["warranty_end"] == "2026-03-09"

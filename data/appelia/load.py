@@ -218,14 +218,14 @@ def load_dataset(
                 "lease-hp-laserjet",
                 lease_start,
                 lease_end,
-                "Période du 2024-01-15 au 2027-01-14.",
+                "Période : du 2024-01-15 au 2027-01-14.",
             )
             add_support_fact(
                 item,
                 lease_document,
                 FactField.LEASE_CONTRACT,
                 True,
-                "Matériel listé au contrat de location LocaPrint Test.",
+                "Les imprimantes listées restent la propriété de LocaPrint Test.",
             )
 
     certificate_by_scenario = {
@@ -248,21 +248,21 @@ def load_dataset(
             "jabra-warranty-plus",
             extension_start,
             extension_end,
-            f"Warranty+ : extension_months {extension_months}.",
+            f"Extension de garantie : {extension_months} mois (Warranty+).",
         )
         add_support_fact(
             item,
             document,
             FactField.WARRANTY_PLUS_CERTIFICATE,
             True,
-            "Jabra Warranty+ Confirmation Notice.",
+            "Jabra Warranty+ Confirmation Notice",
         )
         add_support_fact(
             item,
             document,
             FactField.EXTENSION_MONTHS,
             extension_months,
-            f"extension_months : {extension_months}.",
+            f"Extension de garantie : {extension_months} mois (Warranty+).",
         )
 
     dell_document = documents_by_filename["documents/contrat-dell-prosupport.pdf"]
@@ -283,21 +283,21 @@ def load_dataset(
             "dell-prosupport",
             date(2025, 1, 1),
             date(2027, 12, 31),
-            "Contrat Dell ProSupport, extension_months : 36.",
+            "Extension de garantie : 36 mois (Dell ProSupport).",
         )
         add_support_fact(
             item,
             dell_document,
             FactField.SERVICE_CONTRACT,
             True,
-            "Dell ProSupport — numéro de série couvert.",
+            "Contrat Dell ProSupport",
         )
         add_support_fact(
             item,
             dell_document,
             FactField.EXTENSION_MONTHS,
             36,
-            "extension_months : 36.",
+            "Extension de garantie : 36 mois (Dell ProSupport).",
         )
 
     return AppeliaDataset(
