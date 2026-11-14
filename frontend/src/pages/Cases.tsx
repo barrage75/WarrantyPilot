@@ -29,6 +29,7 @@ import { CaseRealityPill } from "@/components/case/CaseRealityPill";
 import { CaseEquipment } from "@/components/case/CaseEquipment";
 import { AgentJourney } from "@/components/case/AgentJourney";
 import { caseChannel } from "@/components/case/caseState";
+import { formatDocumentFact } from "@/components/documents/facts";
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { isTechnicalField, isTechnicalValue, technicalLabel } from "@/i18n/technical";
 type Case = MethodResponse<typeof client, "get", "/api/cases/{case_id}">;
@@ -93,8 +94,16 @@ function useFormat() {
 }
 function ErrorMessage({ error }: { error: unknown }) { const { t } = useTranslation(); return <p role="alert" className="py-3 text-red-800">{t(apiErrorKey(error))}</p>; }
 function Evidence({ verdict }: { verdict?: Verdict | null }) {
- const { t } = useTranslation("caseDetail");
- return <div><h3 className="my-3 font-semibold">{t("evidence")}</h3>{!verdict?.evidence?.length ? <p className="text-sm text-slate-500">{t("none")}</p> : <ul className="space-y-3">{verdict.evidence.map((e, i) => <li key={e.id ?? i} className="border-l-2 border-teal-600 pl-3 text-sm"><p>{t("document")} <code>{short(e.document_id)}</code> · {t("page")} {e.page ?? "—"}</p>{isTechnicalValue(e.excerpt) ? <TechnicalDetails value={{ document_id: e.document_id, excerpt: e.excerpt }}/> : <blockquote className="mt-1 text-slate-600 [overflow-wrap:anywhere]">{e.excerpt}</blockquote>}{e.document_id && !isTechnicalValue(e.excerpt) && <TechnicalDetails value={{ document_id: e.document_id }}/>}</li>)}</ul>}</div>;
+ const { t, i18n } = useTranslation("caseDetail");
+ return <div><h3 className="my-3 font-semibold">{t("evidence")}</h3>{!verdict?.evidence?.length ? <p className="text-sm text-slate-500">{t("none")}</p> : <ul className="space-y-3">{verdict.evidence.map((e, i) => {
+  const match = /^([\w.[\]]+)\s*:\s*([^\r\n]*)$/.exec(e.excerpt?.trim() ?? "");
+  const raw = match?.[2].trim() ?? "";
+  const value = /^(?:true|false)$/i.test(raw) ? raw.toLowerCase() === "true" : /^(?:null|none)$/i.test(raw) ? null : raw;
+  const fact = match ? formatDocumentFact({ field: match[1], value }, i18n.language) : undefined;
+  const generated = fact?.known;
+  const technical = isTechnicalValue(e.excerpt);
+  return <li key={e.id ?? i} className="border-l-2 border-teal-600 pl-3 text-sm"><p>{t("document")} <code>{short(e.document_id)}</code> · {t("page")} {e.page ?? "—"}</p>{technical ? <TechnicalDetails value={{ document_id: e.document_id, excerpt: e.excerpt }}/> : <blockquote className="mt-1 text-slate-600 [overflow-wrap:anywhere]">{generated ? t("evidenceFact", { label: fact.label, value: fact.formatted }) : e.excerpt}</blockquote>}{!technical && (e.document_id || generated) && <TechnicalDetails value={{ document_id: e.document_id, ...(generated ? { excerpt: e.excerpt } : {}) }}/>}</li>;
+ })}</ul>}</div>;
 }
 function Reasons({ item }: { item: Case }) {
  const { t, i18n } = useTranslation("caseDetail");

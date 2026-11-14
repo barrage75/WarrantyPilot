@@ -204,6 +204,62 @@ it("renders browser steps with screenshots and the structured Dell case number",
  expect(screen.getAllByRole("img", { name: "Browser step screenshot" }).length).toBeGreaterThan(0);
 });
 
+it.each(["fr", "en"])("formats generated evidence with document fact labels and values in %s", async language => {
+ await i18n.changeLanguage(language);
+ const fr = language === "fr";
+ const excerpts = ["extension_months : 36", "invoice_date : 2025-11-20", "total_ttc : 1234.50", "warranty_extension_mentioned : True", "security.suspicious : false", "supplier_name : None", "serial_number : 00123", "lines[0].unit_price_ht : 12.5", "serial : 12345678901234567890"];
+ data[0].verdict!.evidence = excerpts.map(excerpt => ({ document_id: person, page: 2, excerpt }));
+ const { container } = show("detail");
+ const extension = fr ? "Extension (mois) : 36" : "Extension (months): 36";
+ expect(await screen.findByText(extension)).toBeVisible();
+ const euro = (amount: number) => new Intl.NumberFormat(language, { style: "currency", currency: "EUR" }).format(amount);
+ expect(Array.from(container.querySelectorAll("blockquote"), quote => quote.textContent)).toEqual(fr ? [
+  extension, "Date de facture : 20/11/2025", "Total TTC : " + euro(1234.5), "Extension de garantie mentionnée : Oui", "Signal de sécurité suspect : Non", "Nom du fournisseur : —", "Numéro de série : 00123", "Prix unitaire HT : " + euro(12.5), "Numéro de série : 12345678901234567890",
+ ] : [
+  extension, "Invoice date: 11/20/2025", "Total incl. VAT: " + euro(1234.5), "Warranty extension mentioned: Yes", "Suspicious security signal: No", "Supplier name: —", "Serial number: 00123", "Unit price excl. VAT: " + euro(12.5), "Serial number: 12345678901234567890",
+ ]);
+ expect(visibleText(container)).not.toContain("extension_months");
+ const raw = Array.from(container.querySelectorAll("details pre")).find(pre => pre.textContent?.includes(excerpts[0]))!;
+ expect(raw).not.toBeVisible();
+ await act(async () => { await i18n.changeLanguage(fr ? "en" : "fr"); });
+ expect(screen.getByText(fr ? "Extension (months): 36" : "Extension (mois) : 36")).toBeVisible();
+ await userEvent.click(within(raw.closest("details")!).getByText(fr ? "Technical details" : "Détails techniques"));
+ expect(raw).toBeVisible();
+ expect(raw).toHaveTextContent(excerpts[0]);
+});
+
+it.each(["fr", "en"])("preserves genuine source quotes and unrecognized fact fields in %s", async language => {
+ await i18n.changeLanguage(language);
+ const excerpts = ["Extension de garantie : 36 mois à compter de la livraison.", "La clause extension_months : 36 apparaît dans le contrat.", "extension_months : 36\nLa couverture dépend des conditions du contrat.", "unknown_fact : 36", "constructor : unchanged", "  Invoice: supplier_name : Fournisseur original  "];
+ data[0].verdict!.evidence = excerpts.map(excerpt => ({ document_id: person, page: 2, excerpt }));
+ const { container } = show("detail");
+ await screen.findByText(excerpts[0]);
+ expect(Array.from(container.querySelectorAll("blockquote"), quote => quote.textContent)).toEqual(excerpts);
+});
+
+it.each(["fr", "en"])("keeps technical data in generated evidence collapsed in %s", async language => {
+ await i18n.changeLanguage(language);
+ const excerpt = "supplier_name : " + person;
+ data[0].verdict!.evidence = [{ document_id: person, page: 2, excerpt }];
+ const { container } = show("detail");
+ await screen.findByRole("heading", { name: language === "fr" ? "Preuves" : "Evidence" });
+ expect(visibleText(container)).not.toMatch(uuidPattern);
+ expect(container.querySelector("blockquote")).not.toBeInTheDocument();
+ const raw = Array.from(container.querySelectorAll("details pre")).find(pre => pre.textContent?.includes(excerpt))!;
+ expect(raw).not.toBeVisible();
+});
+
+it.each(["fr", "en"])("preserves browser-step free text without a step code in %s", async language => {
+ await i18n.changeLanguage(language);
+ const description = "Formulaire rempli avec les données de l’action";
+ events = [{ seq: 1, case_id: caseId, type: "action_step", actor: "agent", at: "2026-01-01T12:00:00Z", payload: { action_id: "a1", text: "[scripted] " + description, screenshot_name: "01-form-filled.png", screenshot_path: "/runtime/screens/01-form-filled.png" } }];
+ const { container } = show("detail");
+ expect(await screen.findByRole("heading", { name: language === "fr" ? "Étape navigateur" : "Browser step" })).toBeVisible();
+ expect(screen.getByText(description)).toBeVisible();
+ expect(visibleText(container)).not.toContain("[scripted]");
+ expect(visibleText(container)).not.toContain("01-form-filled.png");
+});
+
 it.each([
  ["portal_claim", "Demande sur le portail", "Portal claim"],
  ["api_claim", "Demande par API", "API claim"],

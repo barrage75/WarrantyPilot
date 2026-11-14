@@ -1,10 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { resources } from "@/i18n";
-import { groupDocumentFacts } from "./facts";
+import { formatDocumentFact, groupDocumentFacts } from "./facts";
 
 const fact = (field: string, value: unknown, confidence = 1) => ({ field, value, confidence });
 describe.each(["fr", "en"])("document facts in %s", language => {
  const fr = language === "fr";
+ it("formats a single known fact with the same labels and values as grouped facts", () => {
+  for (const entry of [fact("extension_months", 36), fact("invoice_date", "2025-11-20"), fact("lease_contract", false), fact("total_ttc", "1234.50"), fact("lines[0].unit_price_ht", "12.5"), fact("serial_number", "00123"), fact("supplier_name", null)]) {
+   const formatted = formatDocumentFact(entry, language);
+   expect(formatted.known).toBe(true);
+   expect(groupDocumentFacts([entry], language)[0].facts[0]).toMatchObject({ label: formatted.label, formatted: formatted.formatted });
+  }
+  expect(formatDocumentFact(fact("extension_months", 36), language)).toEqual({ label: fr ? "Extension (mois)" : "Extension (months)", formatted: "36", known: true });
+  expect(formatDocumentFact(fact("unknown_field", "raw"), language)).toEqual({ label: "Unknown field", formatted: "raw", known: false });
+  expect(formatDocumentFact(fact("constructor", "raw"), language).known).toBe(false);
+ });
  it("labels every extractor and normalized field, groups and sorts lines", () => {
   const fields = ["supplier_name", "supplier_address", "invoice_number", "invoice_date", "customer_name", "total_ttc", "warranty_extension_mentioned", "warranty_duration_months", "model", "sku", "serial", "quantity", "unit_price_ht", "purchase_date", "delivery_date", "ship_date", "warranty_term_months", "extension_months", "warranty_plus_certificate", "service_contract", "lease_contract", "serial_number", "brand", "model_number", "product_type", "reseller_name", "reseller_address", "condition", "buyer_name", "equipment_ambiguous", "security.suspicious", "incident_category"];
   const labels = resources[language].documents.factLabels as Record<string, string>;
