@@ -280,6 +280,7 @@ async def test_identified_email_runs_shared_rules_instead_of_placeholder(
         )
         case_id = UUID(str(report["case_id"]))
         assert session.execute(select(cases.c.verdict_id)).scalar_one() is None
+        assert session.execute(select(cases.c.status)).scalar_one() == "prepared"
         assert session.execute(select(verdicts)).first() is None
     with patch("app.core.orchestrator.evaluate_equipment", wraps=evaluate_equipment) as shared:
         result = await make_orchestrator(session_factory, app_settings).run(case_id)

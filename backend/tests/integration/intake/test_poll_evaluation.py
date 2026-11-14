@@ -113,6 +113,7 @@ def test_poll_retries_evaluation_from_committed_duplicate_receipt(
         with factory() as session:
             assert session.scalar(select(func.count()).select_from(cases)) == 1
             assert session.execute(select(cases.c.verdict_id)).scalar_one() is None
+            assert session.execute(select(cases.c.status)).scalar_one() == "prepared"
             assert (
                 session.scalar(
                     select(func.count())
