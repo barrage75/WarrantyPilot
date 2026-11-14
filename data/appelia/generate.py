@@ -1276,7 +1276,7 @@ def build_traps(
                 "invoice_date",
                 invoice_date,
                 invoice_filename,
-                f"Facture : {invoice_date}",
+                f"Facture n° {invoice['invoice_number']} du {invoice_date}",
             )
             add_fact(
                 "buyer_name",
@@ -1365,6 +1365,18 @@ def build_traps(
                 delivery_date,
                 support_files["delivery"],
                 f"Date de livraison : {delivery_date}",
+            )
+            invoice = next(
+                record
+                for record in invoice_records
+                if item["id"] in record["equipment_ids"]
+            )
+            add_fact(
+                "invoice_date",
+                delivery_date,
+                support_files["delivery"],
+                f"Facture n° {invoice['invoice_number']} du {delivery_date} "
+                "(date indiquée sur le bon de livraison)",
             )
         elif trap_id == 9:
             add_fact(
@@ -1711,7 +1723,6 @@ def _make_support_documents(
     )
     trap7 = by_scenario["trap-7"]
     trap7_delivery_date = date.fromisoformat(trap7["delivery_date"])
-    trap7_invoice_date = date.fromisoformat(trap7["purchase_date"])
     draw_support_pdf(
         output_directory / support_files["delivery"],
         "Bon de livraison — piège 7 — FICTIF",
@@ -1720,8 +1731,8 @@ def _make_support_documents(
             "Destinataire : Appelia SAS.",
             f"Produit : Dell {trap7['model']}, série {trap7['serial']}.",
             f"Date de livraison : {trap7_delivery_date.strftime('%d/%m/%Y')}.",
-            f"Facture associée : {trap7['invoice_number']} en date du "
-            f"{trap7_invoice_date.strftime('%d/%m/%Y')}.",
+            f"Facture n° {trap7['invoice_number']} du "
+            f"{trap7_delivery_date.strftime('%d/%m/%Y')} (date indiquée sur le bon de livraison).",
         ],
     )
     return support_files

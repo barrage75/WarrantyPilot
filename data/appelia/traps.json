@@ -100,7 +100,7 @@
             "id": "8a6be2db-e547-53b9-9975-818d36ad56fd",
             "document_id": "1cedba04-447e-5c5a-a38d-d6e4a7a466e9",
             "page": 1,
-            "excerpt": "Facture : 2025-03-10"
+            "excerpt": "Facture n° APP-2025-0002 du 2025-03-10"
           },
           "confidence": 0.99,
           "source": "structured"
@@ -275,7 +275,7 @@
             "id": "da4dbb6a-7939-52be-856d-adfa13d18435",
             "document_id": "663b5a29-63fc-58de-b60b-ace88796158b",
             "page": 1,
-            "excerpt": "Facture : 2025-12-25"
+            "excerpt": "Facture n° APP-2025-0003 du 2025-12-25"
           },
           "confidence": 0.99,
           "source": "structured"
@@ -466,7 +466,7 @@
             "id": "ee620758-5fc3-5401-a120-966c23102e85",
             "document_id": "8b68ead8-4b70-5a36-87f1-20948ae4d9a2",
             "page": 1,
-            "excerpt": "Facture : 2024-06-03"
+            "excerpt": "Facture n° APP-2024-0057 du 2024-06-03"
           },
           "confidence": 0.99,
           "source": "structured"
@@ -657,7 +657,7 @@
             "id": "0ab32169-5dd7-5773-b193-de025faed352",
             "document_id": "6f84a1e6-8fa5-5ec2-8a15-fc69d7005247",
             "page": 1,
-            "excerpt": "Facture : 2024-12-20"
+            "excerpt": "Facture n° APP-2024-0001 du 2024-12-20"
           },
           "confidence": 0.99,
           "source": "structured"
@@ -832,7 +832,7 @@
             "id": "c3dd9edd-18f4-5492-aaff-4ec4bcc4189d",
             "document_id": "4eaefdd6-b4b4-58bd-9419-157cc6f00260",
             "page": 1,
-            "excerpt": "Facture : 2025-07-08"
+            "excerpt": "Facture n° APP-2025-0004 du 2025-07-08"
           },
           "confidence": 0.99,
           "source": "structured"
@@ -1023,7 +1023,7 @@
             "id": "ddbf479d-78ca-58b1-969c-128157224a05",
             "document_id": "ccb23706-de87-50a3-9390-ec81f8a1d76e",
             "page": 1,
-            "excerpt": "Facture : 2023-12-10"
+            "excerpt": "Facture n° APP-2023-0039 du 2023-12-10"
           },
           "confidence": 0.99,
           "source": "structured"
@@ -1162,6 +1162,21 @@
           },
           "confidence": 0.99,
           "source": "structured"
+        },
+        {
+          "id": "da04b73d-93ce-550b-b1ab-b788fbe622a9",
+          "equipment_id": "200a3c02-3aec-5f98-948e-cbfbbaa3a5e0",
+          "document_id": "16aee7d6-af69-538b-9fc2-27813f2def72",
+          "field": "invoice_date",
+          "value": "2024-01-15",
+          "provenance": {
+            "id": "2913ea28-7b54-5d1f-b2a2-d0843391af07",
+            "document_id": "16aee7d6-af69-538b-9fc2-27813f2def72",
+            "page": 1,
+            "excerpt": "Facture n° APP-2023-0039 du 2024-01-15 (date indiquée sur le bon de livraison)"
+          },
+          "confidence": 0.99,
+          "source": "structured"
         }
       ]
     },
@@ -1228,7 +1243,7 @@
             "id": "25c50cf3-faaf-5040-b6d0-d2df72ea1dc6",
             "document_id": "89a9fe67-34f6-5463-a836-4b500069d854",
             "page": 1,
-            "excerpt": "Facture : 2026-06-23"
+            "excerpt": "Facture n° APP-2026-0005 du 2026-06-23"
           },
           "confidence": 0.99,
           "source": "structured"
@@ -1403,7 +1418,7 @@
             "id": "cbdbd20d-c386-5bd1-86e4-04b1a9713f75",
             "document_id": "e66b34a7-9b6f-54d8-924f-177efe4b3310",
             "page": 1,
-            "excerpt": "Facture : 2025-10-16"
+            "excerpt": "Facture n° APP-2025-0006 du 2025-10-16"
           },
           "confidence": 0.99,
           "source": "structured"
@@ -1594,7 +1609,7 @@
             "id": "ea585085-83ac-50b8-b36d-10062c9b0ce1",
             "document_id": "7b42c056-1727-5a9d-bff5-43ae8045505c",
             "page": 1,
-            "excerpt": "Facture : 2024-05-20"
+            "excerpt": "Facture n° APP-2024-0007 du 2024-05-20"
           },
           "confidence": 0.99,
           "source": "structured"
@@ -1799,7 +1814,7 @@
             "id": "9aba33d2-015b-50e5-bce7-3da0175adfab",
             "document_id": "15f049d0-b80a-569e-8881-46da3b6271b8",
             "page": 1,
-            "excerpt": "Facture : 2026-05-04"
+            "excerpt": "Facture n° APP-2026-0008 du 2026-05-04"
           },
           "confidence": 0.99,
           "source": "structured"
@@ -1991,7 +2006,7 @@
             "id": "07f6c2ed-cabd-5732-a1ae-af7907b64c47",
             "document_id": "dcb9a497-cd86-56e7-aa18-28e28e9856c5",
             "page": 1,
-            "excerpt": "Facture : 2026-01-24"
+            "excerpt": "Facture n° APP-2026-0009 du 2026-01-24"
           },
           "confidence": 0.99,
           "source": "structured"
@@ -2181,7 +2196,7 @@
             "id": "8ae18b54-12da-56e7-9c73-995f46a3b9e4",
             "document_id": "7293e89b-9290-5a35-ad57-3bd3209df262",
             "page": 1,
-            "excerpt": "Facture : 2023-11-30"
+            "excerpt": "Facture n° APP-2023-0040 du 2023-11-30"
           },
           "confidence": 0.99,
           "source": "structured"
@@ -2371,7 +2386,7 @@
             "id": "e9cd9462-ec2d-5377-9bc3-7c481863aec7",
             "document_id": "001edb5c-4533-599d-b104-529857afe5f4",
             "page": 1,
-            "excerpt": "Facture : 2026-03-15"
+            "excerpt": "Facture n° APP-2026-0011 du 2026-03-15"
           },
           "confidence": 0.99,
           "source": "structured"
@@ -2546,7 +2561,7 @@
             "id": "e1726210-f5e0-5154-bb6f-af7bc5798b92",
             "document_id": "95f179e0-9f36-5922-abfe-39d6a1284f2e",
             "page": 1,
-            "excerpt": "Facture : 2025-03-30"
+            "excerpt": "Facture n° APP-2025-0012 du 2025-03-30"
           },
           "confidence": 0.99,
           "source": "structured"

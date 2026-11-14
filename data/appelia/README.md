@@ -30,6 +30,8 @@ supplémentaire dont la facture ne précise pas la durée de garantie.
 Chaque piège fournit aussi `equipment`, `incident` et `facts` selon les contrats
 Pydantic, afin que le moteur L3 puisse évaluer directement les cas. Le doublon
 du piège 5 conserve un seul ensemble de faits.
+Le piège 7 répète le numéro de la facture avec une date différente sur le bon de
+livraison; `traps.json` conserve les deux faits `invoice_date` et leur provenance.
 `documents/` contient le contrat de location, deux certificats Warranty+, le
 contrat Dell ProSupport et le bon de livraison associé au piège 7.
 
