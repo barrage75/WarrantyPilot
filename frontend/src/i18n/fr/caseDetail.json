@@ -23,6 +23,43 @@
   "resolutionNote": "Note de résolution",
   "resolution": "Résolution",
   "yourDecision": "Votre décision",
+  "actionUnknown": "Autre action",
+  "actorUnknown": "Intervenant",
+  "actionKinds": {
+    "portal_claim": "Demande sur le portail",
+    "api_claim": "Demande par API",
+    "manual_claim": "Demande manuelle",
+    "lessor_request": "Demande au bailleur",
+    "warranty_claim_email": "Demande de garantie par e-mail",
+    "dell_repair_request": "Demande de réparation Dell",
+    "send_claim_email": "Envoi de la demande par e-mail",
+    "send_email": "Envoi d’un e-mail"
+  },
+  "sources": {
+    "ingestion_registry": "Registre des documents importés",
+    "classifier": "Classificateur"
+  },
+  "personRoles": {
+    "admin": "Administrateur",
+    "operator": "Opérateur"
+  },
+  "payloadLabels": {
+    "role": "Rôle",
+    "person_id": "Personne",
+    "reporter_id": "Signalé par",
+    "approver_id": "Approuvé par",
+    "operator_id": "Opérateur",
+    "assignee_id": "Attribué à"
+  },
+  "eventValues": {
+    "yes": "Oui",
+    "no": "Non",
+    "done": "Terminé",
+    "pending": "En attente",
+    "running": "En cours",
+    "blocked": "Bloqué",
+    "skipped": "Ignoré"
+  },
   "reality": {
     "real": "Réel",
     "reproduction": "Reproduction locale",
@@ -69,6 +106,7 @@
     "agent_paused": "L’agent est en pause",
     "data_checklist_incomplete": "La procédure données du PC est incomplète",
     "verdict_not_covered": "Le verdict n’est pas couvert",
+    "purchase_proof_llm_only": "La preuve d’achat doit être confirmée à partir d’un document",
     "under_threshold": "Le montant dépasse le seuil ou aucun seuil n’est défini",
     "verdict_covered": "La couverture n’est pas confirmée",
     "equipment_unambiguous": "Équipement ambigu",

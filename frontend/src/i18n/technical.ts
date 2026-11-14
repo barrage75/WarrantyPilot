@@ -35,7 +35,7 @@ export function technicalLabel(key: string, language: string): string {
 
 export function isTechnicalValue(value: unknown): boolean {
  if (typeof value !== "string") return false;
- return /https?:\/\/|(?:[A-Za-z]:\\|\/{1,2}[A-Za-z_][\w:.-]*(?:\/[\w:.*@-]+)+)|\b(?:[A-Za-z_][\w.-]*:)?[\w.-]+(?:\/(?:[A-Za-z_][\w.-]*:)?[\w.*@-]+){2,}|\b[a-f0-9]{32,}\b|\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(value)
+ return /https?:\/\/|(?:[A-Za-z]:\\|\/{1,2}[A-Za-z_][\w:.-]*(?:\/[\w:.*@-]+)+)|\b(?:[A-Za-z_][\w.-]*:)?[\w.-]+(?:\/(?:[A-Za-z_][\w.-]*:)?[\w.*@-]+){2,}|\b[a-f0-9]{32,}\b|\b[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\b|\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(value)
   || (value.length > 160 && !/\s/.test(value));
 }
 

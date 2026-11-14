@@ -18,10 +18,12 @@ let posts: { url: string; body: Record<string, string> }[];
 let postStatus: number;
 let events: unknown[], actions: unknown[];
 let checklistDone: Set<string>;
+let people: components["schemas"]["Person"][], peopleStatus: number, checklistPerson: string;
 beforeEach(async () => {
  resetPendingValidations();
  localStorage.clear(); await i18n.changeLanguage("fr");
  data = [structuredClone(item)]; posts = []; postStatus = 200; events = []; actions = []; checklistDone = new Set(["backup_verified"]);
+ people = [{ id: person, name: "Camille Martin", email: "camille@example.test", role: "IT" }]; peopleStatus = 200; checklistPerson = person;
  vi.stubGlobal("EventSource", class { close() {} addEventListener() {} });
  vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
   const request = input instanceof Request ? input : new Request(new URL(String(input), window.location.origin), init);
@@ -36,10 +38,10 @@ beforeEach(async () => {
    data[0] = { ...data[0], status: url.endsWith("/reject") ? "cancelled" : url.endsWith("/resolve") ? "resolved" : "sent" };
    return Response.json(data[0]);
   }
-  if (url.endsWith("/checklist")) return Response.json({ case_id: caseId, steps: Object.fromEntries(["repair_type", "backup_verified", "disk_encryption", "disk_handling", "accounts_and_mdm", "shipping_label", "return_inspection"].map(step => [step, { done: checklistDone.has(step), by_person_id: checklistDone.has(step) ? person : null, at: checklistDone.has(step) ? "2026-01-01T12:00:00Z" : null }])) });
+  if (url.endsWith("/checklist")) return Response.json({ case_id: caseId, steps: Object.fromEntries(["repair_type", "backup_verified", "disk_encryption", "disk_handling", "accounts_and_mdm", "shipping_label", "return_inspection"].map(step => [step, { done: checklistDone.has(step), by_person_id: checklistDone.has(step) ? checklistPerson : null, at: checklistDone.has(step) ? "2026-01-01T12:00:00Z" : null }])) });
   if (url.endsWith("/events")) return Response.json(events);
   if (url.endsWith("/actions")) return Response.json(actions);
-  if (url === "/api/people") return Response.json([{ id: person, name: "Camille Martin", email: "camille@example.test", role: "IT" }]);
+  if (url === "/api/people") return Response.json(people, { status: peopleStatus });
   if (url === "/api/equipment") return Response.json([{ id: person, brand: "Dell", model: "Latitude 5440", serial: "SVC-FAKE-01", category: "laptop" }]);
   if (url === "/api/equipment/overview") return Response.json([]);
   if (url === "/api/cases") return Response.json(data);
@@ -51,6 +53,12 @@ function show(kind: "decisions" | "cases" | "detail", identity = true) {
  const cache = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
  return render(<QueryClientProvider client={cache}><TestSession user={identity ? sessionUser : null}><MemoryRouter initialEntries={[kind === "detail" ? "/cases/" + caseId : "/"]}><Routes><Route path="/" element={kind === "decisions" ? <Decisions/> : <CasesPage/>}/><Route path="/cases/:id" element={<CaseDetail/>}/></Routes></MemoryRouter></TestSession></QueryClientProvider>);
 }
+function visibleText(element: HTMLElement) {
+ const copy = element.cloneNode(true) as HTMLElement;
+ copy.querySelectorAll("details:not([open])").forEach(details => details.replaceWith(details.querySelector("summary")!.cloneNode(true)));
+ return copy.textContent ?? "";
+}
+const uuidPattern = /\b[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}\b/i;
 it("shows the queue and validates after the undo window with the session as actor", async () => {
  show("decisions"); await screen.findByText("Couverture fictive");
  expect(screen.getByText("Achat fictif")).toBeInTheDocument();
@@ -194,4 +202,104 @@ it("renders browser steps with screenshots and the structured Dell case number",
  expect(screen.getByRole("dialog")).toBeInTheDocument();
  await i18n.changeLanguage("en");
  expect(screen.getAllByRole("img", { name: "Browser step screenshot" }).length).toBeGreaterThan(0);
+});
+
+it.each([
+ ["portal_claim", "Demande sur le portail", "Portal claim"],
+ ["api_claim", "Demande par API", "API claim"],
+ ["manual_claim", "Demande manuelle", "Manual claim"],
+ ["lessor_request", "Demande au bailleur", "Lessor request"],
+ ["warranty_claim_email", "Demande de garantie par e-mail", "Warranty claim by email"],
+ ["dell_repair_request", "Demande de réparation Dell", "Dell repair request"],
+ ["send_claim_email", "Envoi de la demande par e-mail", "Send claim by email"],
+ ["send_email", "Envoi d’un e-mail", "Send email"],
+])("translates action kind %s in French and English", async (kind, fr, en) => {
+ actions = [{ action: { id: "a1", case_id: caseId, channel: "browser_portal", kind, badge: "reproduction" }, results: [] }];
+ const { container } = show("detail");
+ expect(await screen.findByRole("heading", { name: "Portail web · " + fr })).toBeVisible();
+ expect(visibleText(container)).not.toMatch(uuidPattern);
+ expect(visibleText(container)).not.toContain("Portal claim");
+ await act(async () => { await i18n.changeLanguage("en"); });
+ expect(screen.getByRole("heading", { name: "Browser portal · " + en })).toBeVisible();
+});
+
+it("keeps French case detail human-readable with named people and technical UUIDs collapsed", async () => {
+ const unknown = "2994dff0-6a5d-421a-b61b-c7b71c49dce9";
+ events = [
+  { seq: 1, case_id: caseId, type: "case_created", actor: "human:" + person, at: "2026-01-01T12:00:00Z", payload: { assigned_to: person, source: "ingestion registry" } },
+  { seq: 2, case_id: caseId, type: "validated", actor: "human:" + unknown, at: "2026-01-01T12:00:05Z", payload: { assigned_to: unknown, by_person_id: person, from: "awaiting_validation", to: "sent", kind: "portal_claim", channel: "browser_portal", role: "operator", untrusted: false, text: "Référence interne : " + unknown } },
+  { seq: 3, case_id: caseId, type: "action_step", actor: "agent", at: "2026-01-01T12:00:08Z", payload: { text: "Référence interne : " + unknown, case_number: unknown } },
+ ];
+ actions = [{ action: { id: "a1", case_id: caseId, channel: "browser_portal", kind: "portal_claim", badge: "reproduction" }, results: [{ id: "r1", action_id: "a1", status: "success", proof: JSON.stringify({ case_number: unknown }) }] }];
+ const { container } = show("detail");
+ await screen.findByRole("heading", { name: "Portail web · Demande sur le portail" });
+ expect(await screen.findByText("Registre des documents importés")).toBeVisible();
+ await waitFor(() => expect(screen.getAllByText("Camille Martin", { selector: "dd" })).toHaveLength(2));
+ expect(screen.getByText("Opérateur", { selector: "dd" })).toBeVisible();
+ expect(screen.getByText("Non", { selector: "dd" })).toBeVisible();
+ const completed = screen.getByRole("heading", { name: /Sauvegarde vérifiée/ }).closest("li")!;
+ expect(visibleText(completed)).toContain("Camille Martin · ");
+ expect(visibleText(completed)).toMatch(/01\/01\/2026.*\d{2}:\d{2}:\d{2}/);
+ expect(visibleText(container)).not.toMatch(uuidPattern);
+ expect(visibleText(container)).not.toContain("Portal claim");
+ expect(visibleText(container)).not.toContain("ingestion registry");
+ expect(visibleText(container)).not.toContain("Référence interne");
+ const raw = Array.from(container.querySelectorAll("details pre")).find(pre => pre.textContent?.includes(unknown))!;
+ expect(raw).not.toBeVisible();
+ expect(container.querySelector("details[open]")).not.toBeInTheDocument();
+ await userEvent.click(within(raw.closest("details")!).getByText("Détails techniques"));
+ expect(raw).toBeVisible();
+ expect(raw).toHaveTextContent(unknown);
+ await act(async () => { await i18n.changeLanguage("en"); });
+ expect(screen.getByText("Imported document registry")).toBeVisible();
+ expect(screen.getByText("Operator", { selector: "dd" })).toBeVisible();
+});
+
+it.each([200, 503])("omits unknown people but preserves timestamps when the people API returns %s", async status => {
+ people = []; peopleStatus = status;
+ checklistPerson = "97225c38-49ad-4bb9-ac59-b848a3868af0";
+ events = [{ seq: 1, case_id: caseId, type: "case_created", actor: "human:" + checklistPerson, at: "2026-01-01T12:00:05Z", payload: { assigned_to: checklistPerson, by_person_id: checklistPerson } }];
+ const { container } = show("detail");
+ await screen.findByRole("heading", { name: "Dossier créé" });
+ await screen.findAllByRole("button", { name: "Compléter" });
+ const completed = screen.getByRole("heading", { name: /Sauvegarde vérifiée/ }).closest("li")!;
+ expect(visibleText(completed)).toMatch(/01\/01\/2026.*\d{2}:\d{2}:\d{2}/);
+ expect(visibleText(completed)).not.toContain(" · ");
+ expect(visibleText(container)).toMatch(/01\/01\/2026.*\d{2}:\d{2}:\d{2} · Humain/);
+ expect(visibleText(container)).not.toContain("Attribué à:");
+ expect(visibleText(container)).not.toMatch(uuidPattern);
+ const technical = Array.from(container.querySelectorAll("details pre")).filter(pre => pre.textContent?.includes(checklistPerson));
+ expect(technical.length).toBeGreaterThanOrEqual(3);
+ technical.forEach(pre => expect(pre).not.toBeVisible());
+});
+
+it("translates known event sources and enum values instead of exposing their codes", async () => {
+ const sources = ["llm", "structured", "human", "inventory", "classifier", "upload", "gmail", "facturx"];
+ events = sources.map((source, index) => ({ seq: index + 1, case_id: caseId, type: "fact_extracted", actor: "agent", at: "2026-01-01T12:00:00Z", payload: { source } }));
+ events.push({ seq: 9, case_id: caseId, type: "followup_received", actor: "agent", at: "2026-01-01T12:00:00Z", payload: { source: "ingestion_registry", kind: "portal_status", portal_status: "part_shipped", reported_via: "chat", outcome: "auto_send", status: "done", engine: "scripted" } });
+ const { container } = show("detail");
+ for (const label of ["Modèle de langage", "Document structuré", "Personne", "Inventaire", "Classificateur", "Téléversement", "Gmail", "Factur-X", "Registre des documents importés", "Statut du portail", "Pièce expédiée", "Discussion", "Envoi automatique", "Terminé", "Moteur de secours (sans IA)"]) {
+  expect(await screen.findByText(label, { selector: "dd" })).toBeVisible();
+ }
+ expect(visibleText(container)).not.toContain("ingestion registry");
+ expect(visibleText(container)).not.toContain("portal_status");
+ expect(visibleText(container)).not.toContain("part_shipped");
+});
+
+it("keeps unknown action kinds and event codes only in collapsed technical details", async () => {
+ actions = [{ action: { id: "a1", case_id: caseId, channel: "browser_portal", kind: "future_action_kind", badge: "reproduction" }, results: [] }];
+ events = [{ seq: 1, case_id: caseId, type: "fact_extracted", actor: "agent", at: "2026-01-01T12:00:00Z", payload: { source: "future_source", status: "future_status", future_metadata: "future_value" } }];
+ const { container } = show("detail");
+ expect(await screen.findByRole("heading", { name: "Portail web · Autre action" })).toBeVisible();
+ await screen.findByRole("heading", { name: "Fait extrait" });
+ expect(visibleText(container)).not.toMatch(/future[_ ]/i);
+ expect(container.textContent).toContain("future_action_kind");
+ expect(container.textContent).toContain("future_source");
+ expect(container.textContent).toContain("future_status");
+});
+
+it("does not display UUIDs in French case tiles", async () => {
+ const { container } = show("cases");
+ await screen.findByRole("link", { name: "20000000" });
+ expect(visibleText(container)).not.toMatch(uuidPattern);
 });

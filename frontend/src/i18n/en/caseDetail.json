@@ -23,6 +23,43 @@
   "resolutionNote": "Resolution note",
   "resolution": "Resolution",
   "yourDecision": "Your decision",
+  "actionUnknown": "Other action",
+  "actorUnknown": "Actor",
+  "actionKinds": {
+    "portal_claim": "Portal claim",
+    "api_claim": "API claim",
+    "manual_claim": "Manual claim",
+    "lessor_request": "Lessor request",
+    "warranty_claim_email": "Warranty claim by email",
+    "dell_repair_request": "Dell repair request",
+    "send_claim_email": "Send claim by email",
+    "send_email": "Send email"
+  },
+  "sources": {
+    "ingestion_registry": "Imported document registry",
+    "classifier": "Classifier"
+  },
+  "personRoles": {
+    "admin": "Administrator",
+    "operator": "Operator"
+  },
+  "payloadLabels": {
+    "role": "Role",
+    "person_id": "Person",
+    "reporter_id": "Reported by",
+    "approver_id": "Approved by",
+    "operator_id": "Operator",
+    "assignee_id": "Assigned to"
+  },
+  "eventValues": {
+    "yes": "Yes",
+    "no": "No",
+    "done": "Done",
+    "pending": "Pending",
+    "running": "Running",
+    "blocked": "Blocked",
+    "skipped": "Skipped"
+  },
   "reality": {
     "real": "Real",
     "reproduction": "Local reproduction",
@@ -69,6 +106,7 @@
     "agent_paused": "The agent is paused",
     "data_checklist_incomplete": "The PC data checklist is incomplete",
     "verdict_not_covered": "The verdict is not covered",
+    "purchase_proof_llm_only": "Purchase evidence must be confirmed from a document",
     "under_threshold": "Amount exceeds threshold or no threshold is set",
     "verdict_covered": "Coverage is not confirmed",
     "equipment_unambiguous": "Ambiguous equipment",

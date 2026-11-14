@@ -11,7 +11,7 @@ import { useHumanAction } from "@/api/human";
 import { HumanActions } from "@/components/case/HumanActions";
 export { HumanActions } from "@/components/case/HumanActions";
 import { useCaseStream } from "@/api/useCaseStream";
-import { equipmentLabel, useCaseActions, useEquipment, type CaseActionHistory } from "@/api/resources";
+import { equipmentLabel, useCaseActions, useEquipment, usePeople, type CaseActionHistory } from "@/api/resources";
 import type { StreamEventLocal } from "@/api/untyped";
 import type { MethodResponse } from "openapi-fetch";
 import { useOperator } from "@/operator-state";
@@ -36,6 +36,18 @@ type Verdict = NonNullable<Case["verdict"]>;
 const steps = ["repair_type", "backup_verified", "disk_encryption", "disk_handling", "accounts_and_mdm", "shipping_label", "return_inspection"] as const;
 const conditions = ["under_threshold", "verdict_covered", "equipment_unambiguous", "no_possible_exclusion", "no_suspicious_signal", "low_commitment_action"] as const;
 const short = (id?: string | null) => id?.slice(0, 8) ?? "—";
+type PersonNames = ReadonlyMap<string, string>;
+const personFields = new Set(["assigned_to", "by_person_id", "person_id", "reporter_id", "approver_id", "operator_id", "assignee_id"]);
+const payloadEnums: Record<string, string[]> = {
+ from: ["enums:CaseStatus"], to: ["enums:CaseStatus"], recommended_status: ["enums:CaseStatus"],
+ status: ["enums:CaseStatus", "enums:ActionResultStatus", "eventValues", "technical:"],
+ step: ["enums:ChecklistStepName"], badge: ["enums:RealityBadge"], reality: ["enums:RealityBadge"],
+ channel: ["enums:Channel"], source: ["sources", "enums:FactSource", "enums:DocumentSource"],
+ kind: ["actionKinds", "enums:IncidentKind", "enums:DocumentKind", "technical:"],
+ reported_via: ["enums:IncidentReportedVia"], outcome: ["enums:PolicyOutcome", "technical:"],
+ engine: ["technical:"], browser_engine: ["technical:"], portal_status: ["technical:"],
+ code: ["technical:"], role: ["personRoles"],
+};
 function useEquipmentName() {
  const equipment = useEquipment();
  return (id?: string | null) => equipmentLabel(equipment.data?.find(item => item.id === id)) ?? short(id);
@@ -45,7 +57,7 @@ function proofCaseNumber(proof?: string | null) {
  try { const value: unknown = JSON.parse(proof); return value && typeof value === "object" && "case_number" in value && typeof value.case_number === "string" ? value.case_number : undefined; } catch { return undefined; }
 }
 function BrowserStep({ payload }: { payload: Record<string, unknown> }) {
- const { t, i18n } = useTranslation("caseDetail");
+ const { t } = useTranslation("caseDetail");
  const [expanded, setExpanded] = useState(false);
  const closeButton = useRef<HTMLButtonElement>(null);
  const number = typeof payload.case_number === "string" ? payload.case_number : undefined;
@@ -53,8 +65,9 @@ function BrowserStep({ payload }: { payload: Record<string, unknown> }) {
  const text = typeof payload.text === "string" ? payload.text : "";
  const engine = typeof payload.engine === "string" ? payload.engine : text.match(/^\[([a-z_]+)\]\s*/i)?.[1];
  const description = text.replace(/^\[[a-z_]+\]\s*/i, "");
+ const engineLabel = engine ? t("technical:" + engine, { defaultValue: "" }) : "";
  const screenshotAlt = t("screenshotAlt");
- return <div className="mt-2 space-y-1 text-sm"><p>{engine && <span className="font-medium">{technicalLabel(engine, i18n.language)} · </span>}{description || "—"}</p>{number && <p className="font-semibold text-teal-900">{t("dellCase", { number })}</p>}{screenshotUrl && <><button type="button" aria-label={t("expandScreenshot")} className="block max-w-full cursor-zoom-in" onClick={() => setExpanded(true)}><img src={screenshotUrl} alt={screenshotAlt} className="max-h-64 max-w-full rounded border border-slate-200 object-contain"/></button><Dialog open={expanded} onOpenChange={setExpanded}><DialogContent className="w-auto max-w-[95vw] p-4" onOpenAutoFocus={event => { event.preventDefault(); closeButton.current?.focus(); }}><div className="flex items-center justify-between gap-4"><DialogTitle>{t("screenshot")}</DialogTitle><DialogClose ref={closeButton} autoFocus className="rounded border border-slate-300 px-3 py-1 text-sm">{t("close")}</DialogClose></div><DialogDescription className="sr-only">{screenshotAlt}</DialogDescription><img src={screenshotUrl} alt={screenshotAlt} className="max-h-[85vh] max-w-[90vw] rounded object-contain"/></DialogContent></Dialog></>}{Object.entries(payload).some(([key, value]) => isTechnicalField(key) || isTechnicalValue(value)) && <TechnicalDetails value={payload}/>}</div>;
+ return <div className="mt-2 space-y-1 text-sm">{!isTechnicalValue(description) && <p>{engineLabel && <span className="font-medium">{engineLabel} · </span>}{description || "—"}</p>}{number && !isTechnicalValue(number) && <p className="font-semibold text-teal-900">{t("dellCase", { number })}</p>}{screenshotUrl && <><button type="button" aria-label={t("expandScreenshot")} className="block max-w-full cursor-zoom-in" onClick={() => setExpanded(true)}><img src={screenshotUrl} alt={screenshotAlt} className="max-h-64 max-w-full rounded border border-slate-200 object-contain"/></button><Dialog open={expanded} onOpenChange={setExpanded}><DialogContent className="w-auto max-w-[95vw] p-4" onOpenAutoFocus={event => { event.preventDefault(); closeButton.current?.focus(); }}><div className="flex items-center justify-between gap-4"><DialogTitle>{t("screenshot")}</DialogTitle><DialogClose ref={closeButton} autoFocus className="rounded border border-slate-300 px-3 py-1 text-sm">{t("close")}</DialogClose></div><DialogDescription className="sr-only">{screenshotAlt}</DialogDescription><img src={screenshotUrl} alt={screenshotAlt} className="max-h-[85vh] max-w-[90vw] rounded object-contain"/></DialogContent></Dialog></>}{((engine && !engineLabel) || Object.entries(payload).some(([key, value]) => isTechnicalField(key) || isTechnicalValue(value))) && <TechnicalDetails value={payload}/>}</div>;
 }
 function TechnicalDetails({ value }: { value: unknown }) {
  const { t, i18n } = useTranslation("caseDetail");
@@ -71,7 +84,8 @@ function TechnicalDetails({ value }: { value: unknown }) {
 }
 function ActionHistory({ history }: { history: CaseActionHistory }) {
  const { t, i18n } = useTranslation("caseDetail");
- return <li className="border-l-2 border-teal-600 pl-4"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{t("enums:Channel." + history.action.channel)} · {technicalLabel(history.action.kind, i18n.language)}</h3><CaseRealityPill value={history.action.badge}/></div><ul className="mt-2 space-y-2 text-sm">{history.results.map((result, index) => { const number = proofCaseNumber(result.proof); return <li key={result.id ?? index}><p className={result.status === "success" ? "text-green-800" : "text-red-800"}>{t("result")} : {t("enums:ActionResultStatus." + result.status, { defaultValue: technicalLabel(result.status, i18n.language) })}</p>{number && <p className="font-semibold text-teal-900">{t("dellCase", { number })}</p>}{result.proof && <TechnicalDetails value={result.proof} />}{result.error && <details className="max-w-full text-red-800"><summary className="cursor-pointer">{t("technicalDetails")}</summary><pre className="mt-2 max-w-full overflow-x-auto whitespace-pre-wrap rounded bg-slate-50 p-3 text-xs">{result.error}</pre></details>}</li>; })}</ul></li>;
+ const kind = t("actionKinds." + history.action.kind, { defaultValue: "" });
+ return <li className="border-l-2 border-teal-600 pl-4"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{t("enums:Channel." + history.action.channel)} · {kind || t("actionUnknown")}</h3><CaseRealityPill value={history.action.badge}/></div>{!kind && <TechnicalDetails value={{ kind: history.action.kind }}/>}<ul className="mt-2 space-y-2 text-sm">{history.results.map((result, index) => { const number = proofCaseNumber(result.proof); return <li key={result.id ?? index}><p className={result.status === "success" ? "text-green-800" : "text-red-800"}>{t("result")} : {t("enums:ActionResultStatus." + result.status, { defaultValue: technicalLabel(result.status, i18n.language) })}</p>{number && !isTechnicalValue(number) && <p className="font-semibold text-teal-900">{t("dellCase", { number })}</p>}{result.proof && <TechnicalDetails value={result.proof} />}{result.error && <details className="max-w-full text-red-800"><summary className="cursor-pointer">{t("technicalDetails")}</summary><pre className="mt-2 max-w-full overflow-x-auto whitespace-pre-wrap rounded bg-slate-50 p-3 text-xs">{result.error}</pre></details>}</li>; })}</ul></li>;
 }
 function useFormat() {
  const { i18n } = useTranslation();
@@ -136,39 +150,55 @@ export function CasesPage() {
   {!query.isPending && !query.isError && !rows.length && <Tile><EmptyState title={t("empty")} description={t("emptyHelp")} action={<Button variant="outline" onClick={() => { setFilters({}); setSearch(""); }}>{t("clearFilters")}</Button>}/></Tile>}
  </div>;
 }
-function Checklist({ id }: { id: string }) {
+function Checklist({ id, personNames }: { id: string; personNames: PersonNames }) {
  const { t } = useTranslation("caseDetail"), date = useFormat();
  const query = useChecklist(id), action = useHumanAction(id), { personId } = useOperator();
  if (query.error instanceof ApiError && query.error.status === 404) return null;
  return <Card><h2 className="mb-4 text-xl font-semibold">{t("checklist")}</h2>{query.isPending && <p>{t("common:loading")}</p>}{query.isError && <ErrorMessage error={query.error}/>}
  {!personId && <p className="mb-4 text-sm text-amber-900">{t("common:identityRequired")}</p>}
- {query.data && <><p role="status" aria-live="polite" className="mb-5 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm font-medium text-amber-950">{steps.every(step => query.data.steps?.[step]?.done) ? t("checklistComplete") : t("checklistIncomplete", { count: steps.filter(step => query.data.steps?.[step]?.done).length })}</p><ol className="space-y-5">{steps.map((step, index) => { const data = query.data.steps?.[step]; return <li key={step} className="border-b border-slate-100 pb-4"><h3 className="font-semibold">{index + 1}. {t("enums:ChecklistStepName." + step)} {data?.done ? "✓" : ""}</h3><p className="my-1 text-sm text-slate-600">{t("steps." + step)}</p><p className="text-sm">{t("who")}: {t(["repair_type", "shipping_label"].includes(step) ? "agent" : "human")}</p>{data?.done ? <p className="mt-2 text-sm [overflow-wrap:anywhere]">{data.by_person_id ?? "—"} · {date(data.at)}</p> : <Button className="mt-2" variant="outline" disabled={!personId || action.isPending} onClick={() => action.mutate({ kind: "checklist", step }, { onSuccess: () => toast.success(t("actionSuccess")), onError: error => toast.error(t(apiErrorKey(error))) })}>{t("complete")}</Button>}</li>; })}</ol></>}{action.isError && <ErrorMessage error={action.error}/>}</Card>;
+ {query.data && <><p role="status" aria-live="polite" className="mb-5 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm font-medium text-amber-950">{steps.every(step => query.data.steps?.[step]?.done) ? t("checklistComplete") : t("checklistIncomplete", { count: steps.filter(step => query.data.steps?.[step]?.done).length })}</p><ol className="space-y-5">{steps.map((step, index) => { const data = query.data.steps?.[step], name = data?.by_person_id ? personNames.get(data.by_person_id) : undefined; return <li key={step} className="border-b border-slate-100 pb-4"><h3 className="font-semibold">{index + 1}. {t("enums:ChecklistStepName." + step)} {data?.done ? "✓" : ""}</h3><p className="my-1 text-sm text-slate-600">{t("steps." + step)}</p><p className="text-sm">{t("who")}: {t(["repair_type", "shipping_label"].includes(step) ? "agent" : "human")}</p>{data?.done ? <><p className="mt-2 text-sm [overflow-wrap:anywhere]">{name && <>{name} · </>}{date(data.at)}</p>{data.by_person_id && <TechnicalDetails value={{ by_person_id: data.by_person_id }}/>}</> : <Button className="mt-2" variant="outline" disabled={!personId || action.isPending} onClick={() => action.mutate({ kind: "checklist", step }, { onSuccess: () => toast.success(t("actionSuccess")), onError: error => toast.error(t(apiErrorKey(error))) })}>{t("complete")}</Button>}</li>; })}</ol></>}{action.isError && <ErrorMessage error={action.error}/>}</Card>;
 }
-function Payload({ payload }: { payload: Record<string, unknown> }) {
- const { t, i18n } = useTranslation("caseDetail");
- function readable(value: unknown, key?: string): string {
+function Payload({ payload, personNames }: { payload: Record<string, unknown>; personNames: PersonNames }) {
+ const { t } = useTranslation("caseDetail");
+ function readable(value: unknown, key: string): string | undefined {
+  if (personFields.has(key)) return typeof value === "string" ? personNames.get(value) : undefined;
   if (value === null || value === undefined) return "—";
-  if (Array.isArray(value)) return value.map(child => readable(child, key)).join(" · ");
-  if (typeof value === "object") return Object.entries(value).map(([nestedKey, child]) => technicalLabel(nestedKey, i18n.language) + ": " + readable(child, nestedKey)).join(" · ");
-  if (key === "from" || key === "to") return t("enums:CaseStatus." + String(value), { defaultValue: technicalLabel(String(value), i18n.language) });
-  if (key === "step") return t("enums:ChecklistStepName." + String(value), { defaultValue: technicalLabel(String(value), i18n.language) });
-  if (key === "badge" && ["real", "reproduction", "simulated"].includes(String(value))) return t("enums:RealityBadge." + String(value));
-  if (key === "channel") return t("enums:Channel." + String(value), { defaultValue: technicalLabel(String(value), i18n.language) });
-  if (["engine", "browser_engine", "kind", "status", "portal_status", "reality", "code", "recommended_status", "reported_via", "outcome"].includes(key ?? "")) return technicalLabel(String(value), i18n.language);
+  if (typeof value === "boolean") return t(value ? "eventValues.yes" : "eventValues.no");
+  const namespaces = payloadEnums[key];
+  if (namespaces) {
+   const code = key === "source" ? String(value).replaceAll(" ", "_") : String(value);
+   for (const namespace of namespaces) {
+    const label = t(namespace + (namespace.endsWith(":") ? "" : ".") + code, { defaultValue: "" });
+    if (label) return label;
+   }
+   return undefined;
+  }
+  if (key === "reason") return t("reasons." + String(value), { defaultValue: String(value) });
   return String(value);
  }
- const visible = Object.entries(payload).filter(([key, value]) => !isTechnicalField(key) && !isTechnicalValue(value) && (value === null || typeof value !== "object"));
- const hasTechnical = visible.length !== Object.keys(payload).length;
- return <>{visible.length > 0 && <dl className="mt-2 space-y-1 text-sm text-slate-600 [overflow-wrap:anywhere]">{visible.map(([key, value]) => <div key={key}><dt className="inline font-medium">{technicalLabel(key, i18n.language)}: </dt><dd className="inline">{key === "badge" && (value === "real" || value === "reproduction" || value === "simulated") ? <CaseRealityPill value={value}/> : readable(value, key)}</dd></div>)}</dl>}{hasTechnical && <TechnicalDetails value={payload}/>}</>;
+ const visible = Object.entries(payload).flatMap(([key, value]) => {
+  if (!personFields.has(key) && (isTechnicalField(key) || isTechnicalValue(value) || (value !== null && typeof value === "object"))) return [];
+  const fieldLabel = t("payloadLabels." + key, { defaultValue: "" }) || t("technical:" + key, { defaultValue: "" });
+  if (!fieldLabel) return [];
+  const label = readable(value, key);
+  return label === undefined ? [] : [{ key, value, label, fieldLabel }];
+ });
+ const hasTechnical = visible.length !== Object.keys(payload).length || Object.keys(payload).some(key => personFields.has(key));
+ return <>{visible.length > 0 && <dl className="mt-2 space-y-1 text-sm text-slate-600 [overflow-wrap:anywhere]">{visible.map(({ key, value, label, fieldLabel }) => <div key={key}><dt className="inline font-medium">{fieldLabel}: </dt><dd className="inline">{key === "badge" && (value === "real" || value === "reproduction" || value === "simulated") ? <CaseRealityPill value={value}/> : label}</dd></div>)}</dl>}{hasTechnical && <TechnicalDetails value={payload}/>}</>;
 }
-function EventRow({ event }: { event: StreamEventLocal }) {
+function EventRow({ event, personNames }: { event: StreamEventLocal; personNames: PersonNames }) {
  const { t, i18n } = useTranslation("caseDetail"), date = useFormat();
- const actor = event.actor.startsWith("human:") ? t("human") + " · " + event.actor.slice(6) : t(event.actor, { defaultValue: event.actor });
- return <li className="border-l-2 border-teal-600 pl-4"><h3 className="font-semibold">{t("enums:EventType." + event.type, { defaultValue: technicalLabel(event.type, i18n.language) })}</h3><p className="text-xs text-slate-500">{date(event.at)} · {actor} · #{event.seq}</p>{event.type === "action_step" ? <BrowserStep payload={event.payload}/> : <Payload payload={event.payload}/>}</li>;
+ const human = event.actor.startsWith("human:"), knownActor = ["agent", "system", "human"].includes(event.actor);
+ const actor = human ? personNames.get(event.actor.slice(6)) ?? t("human") : knownActor ? t(event.actor) : t("actorUnknown");
+ return <li className="border-l-2 border-teal-600 pl-4"><h3 className="font-semibold">{t("enums:EventType." + event.type, { defaultValue: technicalLabel(event.type, i18n.language) })}</h3><p className="text-xs text-slate-500">{date(event.at)} · {actor} · #{event.seq}</p>{event.type === "action_step" ? <BrowserStep payload={event.payload}/> : <Payload payload={event.payload} personNames={personNames}/>}{!knownActor && <TechnicalDetails value={{ actor: event.actor }}/>}</li>;
 }
 export function CaseDetail() {
  const { id = "" } = useParams(), { t, i18n } = useTranslation("caseDetail"), date = useFormat();
  const query = useCase(id), stream = useCaseStream(id), history = useCaseActions(id), equipmentName = useEquipmentName();
+ const people = usePeople(), { user } = useOperator();
+ const personNames = new Map<string, string>();
+ for (const person of people.data ?? []) if (person.id && person.name) personNames.set(person.id, person.name);
+ if (user && !personNames.has(user.person_id)) personNames.set(user.person_id, user.name);
  const item = query.data, verdict = item?.verdict;
  if (query.isPending) return <p>{t("common:loading")}</p>;
  if (query.isError) return <ErrorMessage error={query.error}/>;
@@ -195,8 +225,8 @@ export function CaseDetail() {
   </Card>
   <Card><h2 className="mb-4 text-xl font-semibold">{t("policy")}</h2>{item.policy ? <><p className="font-semibold">{t("enums:PolicyOutcome." + item.policy.outcome)}</p><Reasons item={item}/><ul className="space-y-3">{conditions.map(key => <li key={key}><span className={item.policy!.conditions[key] ? "text-green-800" : "text-red-800"}>{item.policy!.conditions[key] === true ? "✓" : item.policy!.conditions[key] === false ? "✗" : t("undetermined")}</span> {t("conditions." + key)}</li>)}</ul></> : <p>{t("none")}</p>}</Card>
  </div>
- <Checklist id={id}/>
+ <Checklist id={id} personNames={personNames}/>
  <Card><h2 className="text-xl font-semibold">{t("actions")}</h2><p className="my-3 text-sm text-slate-600">{t("actionsNote")}</p>{history.isError && <ErrorMessage error={history.error}/>}{history.data && !history.data.length && <p>{t("none")}</p>}<ol className="space-y-5">{history.data?.map((entry, index) => <ActionHistory key={entry.action.id ?? index} history={entry}/>)}</ol></Card>
  {["sent", "tracked"].includes(item.status) && <Card><h2 className="mb-4 text-xl font-semibold">{t("resolution")}</h2><HumanActions item={item} section="resolution"/></Card>}
- <Card><div className="mb-5 flex flex-wrap justify-between gap-3"><h2 className="text-xl font-semibold">{t("timeline")}</h2><span role="status" className={stream.connection === "open" ? "text-green-800" : "text-amber-900"}>{t(stream.mode === "poll" ? "polling" : stream.connection === "open" ? "liveSse" : "reconnecting")}</span></div>{stream.isError && <ErrorMessage error={stream.error}/>}<ol className="space-y-6">{stream.data?.map(e => <EventRow key={e.seq} event={e}/>)}</ol>{!stream.isPending && !stream.data?.length && <p>{t("none")}</p>}</Card></div>;
+ <Card><div className="mb-5 flex flex-wrap justify-between gap-3"><h2 className="text-xl font-semibold">{t("timeline")}</h2><span role="status" className={stream.connection === "open" ? "text-green-800" : "text-amber-900"}>{t(stream.mode === "poll" ? "polling" : stream.connection === "open" ? "liveSse" : "reconnecting")}</span></div>{stream.isError && <ErrorMessage error={stream.error}/>}<ol className="space-y-6">{stream.data?.map(e => <EventRow key={e.seq} event={e} personNames={personNames}/>)}</ol>{!stream.isPending && !stream.data?.length && <p>{t("none")}</p>}</Card></div>;
 }
