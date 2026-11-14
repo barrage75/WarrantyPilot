@@ -1,0 +1,6 @@
+{
+  "supplier_name": {"value": "Appelia", "page": 1, "excerpt": "appelIA", "confidence": 0.98},
+  "invoice_number": {"value": "APP-001", "page": 1, "excerpt": "APP-001", "confidence": 1.0},
+  "total_ttc": {"value": "1200.00", "page": 1, "excerpt": "1200.00 EUR", "confidence": 0.95},
+  "lines": [{"serial": {"value": "FAKE-001", "page": 1, "excerpt": "S/N: FAKE-001", "confidence": 0.9}}]
+}
