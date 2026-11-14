@@ -12,7 +12,7 @@ import { EmptyState } from "@/components/bento/EmptyState";
 import { Pill } from "@/components/bento/Pill";
 import { StatusDot } from "@/components/bento/StatusDot";
 import { UploadProgress } from "@/components/documents/UploadProgress";
-import { isTechnicalValue, technicalLabel } from "@/i18n/technical";
+import { DocumentFacts } from "@/components/documents/DocumentFacts";
 
 type UploadResult = { document_id: string; duplicate: boolean; reason?: string; state?: string; facts?: number; suspicious?: boolean };
 type PollState = "failure" | "invoice" | "duplicate" | "quarantined" | "ignored";
@@ -85,7 +85,7 @@ export default function Documents() {
     ["source", t("enums:DocumentSource." + item.source)],
     ["suspicious", t(item.suspicious ? "yes" : "no")], ["facts", item.facts_count], ["date", date(item.created_at)],
    ].map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-muted">{t("columns." + label)}</dt><dd className="break-words">{value}</dd></div>)}</dl>
-   {active && linked.data && <details open><summary className="min-h-10 cursor-pointer font-medium focus-visible:outline-accent">{t("factsTitle")}</summary><dl className="space-y-3">{linked.data.facts.map((fact, index) => <div key={index} className="[overflow-wrap:anywhere]"><dt className="text-sm text-muted">{technicalLabel(fact.field, i18n.language)}</dt><dd>{typeof fact.value === "string" ? fact.value : JSON.stringify(fact.value)}</dd></div>)}</dl></details>}
+   {active && linked.data && <details open><summary className="min-h-10 cursor-pointer font-medium focus-visible:outline-accent">{t("factsTitle")}</summary><DocumentFacts facts={linked.data.facts}/></details>}
   </Card>;
  }
  return <div className="space-y-5 text-ink">
@@ -99,7 +99,7 @@ export default function Documents() {
    <p className="text-sm text-slate-600" id="document-formats">{t("formats")}</p>
    {filename && <UploadProgress name={filename} waiting={busy === "upload"} state={result?.state} duplicate={result?.duplicate} documentId={result?.document_id} suspicious={result?.suspicious || detail?.suspicious} reason={result?.reason} facts={result?.facts} error={validation ? t(validation) : error !== undefined && errorSource === "upload" ? errorText(error) : undefined}>
    {result?.state === "pending_extraction" && <p role="status">{t("results.pending_extraction")}</p>}
-  {!!detail?.facts.length && <details><summary className="cursor-pointer font-semibold">{t("factsTitle")}</summary><dl className="mt-3 space-y-2">{detail.facts.map((fact, index) => { const value = typeof fact.value === "string" ? fact.value : JSON.stringify(fact.value); const technical = isTechnicalValue(value) || typeof fact.value === "object" && fact.value !== null; return <div key={index} className="rounded bg-slate-50 p-3"><dt className="font-medium [overflow-wrap:anywhere]">{technicalLabel(fact.field, i18n.language)}</dt>{technical ? <dd><details className="mt-1"><summary className="cursor-pointer text-sm text-slate-600">{t("technicalDetails")}</summary><pre className="mt-2 max-w-full overflow-x-auto whitespace-pre rounded bg-white p-3 text-xs">{value}</pre></details></dd> : <dd className="[overflow-wrap:anywhere]">{value}</dd>}<dd className="text-sm text-slate-600">{t("confidence", { value: new Intl.NumberFormat(i18n.language, { style: "percent" }).format(fact.confidence) })}</dd></div>; })}</dl></details>}
+  {!!detail?.facts.length && <details><summary className="cursor-pointer font-semibold">{t("factsTitle")}</summary><DocumentFacts facts={detail.facts}/></details>}
    </UploadProgress>}
   </Card>
   <Card className="space-y-4"><h2 className="text-xl font-semibold">{t("inboxTitle")}</h2><Button disabled={!!busy} onClick={() => void poll()}>{t("poll")}</Button>
