@@ -1,0 +1,5263 @@
+[
+  {
+    "filename": "invoices/invoice-001.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2024-0001",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2024-12-20",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000001"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000005"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000016"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000017"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      }
+    ],
+    "total_ttc": "920.02",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-002.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2025-0002",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2025-03-10",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000003"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000016"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000017"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000018"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      }
+    ],
+    "total_ttc": "980.02",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-003.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2025-0003",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2025-12-25",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000004"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000019"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000020"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000021"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      }
+    ],
+    "total_ttc": "835.01",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-004.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2025-0004",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2025-07-08",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000006"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000022"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000023"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000024"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      }
+    ],
+    "total_ttc": "920.02",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-005.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2026-0005",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2026-06-23",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Engage 99",
+        "sku": "ENG99-FICT-001",
+        "serials": [
+          "JBR0000000007"
+        ],
+        "qty": 1,
+        "unit_price_ht": "165.83"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000025"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000026"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000027"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      }
+    ],
+    "total_ttc": "889.01",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-006.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2025-0006",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2025-10-16",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000008"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000028"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000029"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000030"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      }
+    ],
+    "total_ttc": "920.02",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-007.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2024-0007",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2024-05-20",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000009"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000031"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000032"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000033"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      }
+    ],
+    "total_ttc": "920.02",
+    "has_warranty_plus": true,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-008.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2026-0008",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2026-05-04",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000010"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000034"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000035"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000036"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      }
+    ],
+    "total_ttc": "920.02",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-009.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2026-0009",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2026-01-24",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000011"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000037"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000038"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000039"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      }
+    ],
+    "total_ttc": "920.02",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-010.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2026-0010",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2026-01-24",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000012"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000040"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000041"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000042"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      }
+    ],
+    "total_ttc": "835.01",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-011.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2026-0011",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2026-03-15",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000013"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000043"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000044"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000045"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      }
+    ],
+    "total_ttc": "1030.01",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-012.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2025-0012",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2025-03-30",
+    "client_name": "Brevia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000014"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000046"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000047"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000048"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      }
+    ],
+    "total_ttc": "920.02",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-013.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2024-0013",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2024-05-20",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000015"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000049"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000050"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000051"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      }
+    ],
+    "total_ttc": "920.02",
+    "has_warranty_plus": true,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-014.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2025-0014",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2025-06-28",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000052"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000053"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000054"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000055"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      }
+    ],
+    "total_ttc": "920.02",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-015.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2024-0015",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2024-01-23",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000056"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000057"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000058"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000059"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      }
+    ],
+    "total_ttc": "579.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-016.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2023-0016",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2023-03-10",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000060"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000061"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000062"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000063"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      }
+    ],
+    "total_ttc": "579.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-017.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2025-0017",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2025-10-01",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000064"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000065"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000066"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000067"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      }
+    ],
+    "total_ttc": "579.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-018.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2025-0018",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2025-10-28",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000068"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000069"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000070"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000071"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      }
+    ],
+    "total_ttc": "579.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-019.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2023-0019",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2023-04-13",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000072"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000073"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000074"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000075"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      }
+    ],
+    "total_ttc": "579.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-020.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2026-0020",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2026-04-01",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000076"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000077"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000078"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000079"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      }
+    ],
+    "total_ttc": "579.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-021.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2026-0021",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2026-03-23",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000080"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000081"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000082"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      },
+      {
+        "model": "Evolve2 40",
+        "sku": "24089-999-899",
+        "serials": [
+          "JBR0000000083"
+        ],
+        "qty": 1,
+        "unit_price_ht": "120.83"
+      }
+    ],
+    "total_ttc": "579.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-022.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2026-0022",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2026-08-13",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000084"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      },
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000085"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      },
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000086"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      },
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000087"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      }
+    ],
+    "total_ttc": "1160.02",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-023.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2024-0023",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2024-01-13",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000088"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      },
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000089"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      },
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000090"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      },
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000091"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      }
+    ],
+    "total_ttc": "1160.02",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-024.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2026-0024",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2026-09-18",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000092"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      },
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000093"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      },
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000094"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      },
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000095"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      }
+    ],
+    "total_ttc": "1160.02",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-025.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2023-0025",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2023-07-20",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000096"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      },
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000097"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      },
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000098"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      },
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000099"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      }
+    ],
+    "total_ttc": "1160.02",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-026.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2025-0026",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2025-01-15",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000100"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      },
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000101"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      },
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000102"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      },
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000103"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      }
+    ],
+    "total_ttc": "1160.02",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-027.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2026-0027",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2026-01-14",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000104"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      },
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000105"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      },
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000106"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      },
+      {
+        "model": "Engage 55",
+        "sku": "9553-410-111",
+        "serials": [
+          "JBR0000000107"
+        ],
+        "qty": 1,
+        "unit_price_ht": "241.67"
+      }
+    ],
+    "total_ttc": "1160.02",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-028.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2024-0028",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2024-07-11",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Engage 40",
+        "sku": "9456-25-707",
+        "serials": [
+          "JBR0000000108"
+        ],
+        "qty": 1,
+        "unit_price_ht": "150.00"
+      },
+      {
+        "model": "Engage 40",
+        "sku": "9456-25-707",
+        "serials": [
+          "JBR0000000109"
+        ],
+        "qty": 1,
+        "unit_price_ht": "150.00"
+      },
+      {
+        "model": "Engage 40",
+        "sku": "9456-25-707",
+        "serials": [
+          "JBR0000000110"
+        ],
+        "qty": 1,
+        "unit_price_ht": "150.00"
+      },
+      {
+        "model": "Engage 40",
+        "sku": "9456-25-707",
+        "serials": [
+          "JBR0000000111"
+        ],
+        "qty": 1,
+        "unit_price_ht": "150.00"
+      }
+    ],
+    "total_ttc": "720.00",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-029.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2023-0029",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2023-03-31",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Engage 40",
+        "sku": "9456-25-707",
+        "serials": [
+          "JBR0000000112"
+        ],
+        "qty": 1,
+        "unit_price_ht": "150.00"
+      },
+      {
+        "model": "Engage 40",
+        "sku": "9456-25-707",
+        "serials": [
+          "JBR0000000113"
+        ],
+        "qty": 1,
+        "unit_price_ht": "150.00"
+      },
+      {
+        "model": "Engage 40",
+        "sku": "9456-25-707",
+        "serials": [
+          "JBR0000000114"
+        ],
+        "qty": 1,
+        "unit_price_ht": "150.00"
+      },
+      {
+        "model": "Engage 40",
+        "sku": "9456-25-707",
+        "serials": [
+          "JBR0000000115"
+        ],
+        "qty": 1,
+        "unit_price_ht": "150.00"
+      }
+    ],
+    "total_ttc": "720.00",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-030.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2025-0030",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2025-01-19",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Engage 40",
+        "sku": "9456-25-707",
+        "serials": [
+          "JBR0000000116"
+        ],
+        "qty": 1,
+        "unit_price_ht": "150.00"
+      },
+      {
+        "model": "Engage 40",
+        "sku": "9456-25-707",
+        "serials": [
+          "JBR0000000117"
+        ],
+        "qty": 1,
+        "unit_price_ht": "150.00"
+      },
+      {
+        "model": "Engage 40",
+        "sku": "9456-25-707",
+        "serials": [
+          "JBR0000000118"
+        ],
+        "qty": 1,
+        "unit_price_ht": "150.00"
+      },
+      {
+        "model": "Engage 40",
+        "sku": "9456-25-707",
+        "serials": [
+          "JBR0000000119"
+        ],
+        "qty": 1,
+        "unit_price_ht": "150.00"
+      }
+    ],
+    "total_ttc": "720.00",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-031.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2025-0031",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2025-06-09",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Engage 40",
+        "sku": "9456-25-707",
+        "serials": [
+          "JBR0000000120"
+        ],
+        "qty": 1,
+        "unit_price_ht": "150.00"
+      },
+      {
+        "model": "Engage 40",
+        "sku": "9456-25-707",
+        "serials": [
+          "JBR0000000121"
+        ],
+        "qty": 1,
+        "unit_price_ht": "150.00"
+      },
+      {
+        "model": "Engage 40",
+        "sku": "9456-25-707",
+        "serials": [
+          "JBR0000000122"
+        ],
+        "qty": 1,
+        "unit_price_ht": "150.00"
+      },
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000123"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      }
+    ],
+    "total_ttc": "880.00",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-032.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2025-0032",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2025-01-03",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000124"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      },
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000125"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      },
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000126"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      },
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000127"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      }
+    ],
+    "total_ttc": "1359.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-033.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2024-0033",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2024-07-16",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000128"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      },
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000129"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      },
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000130"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      },
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000131"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      }
+    ],
+    "total_ttc": "1359.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-034.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2023-0034",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2023-05-28",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000132"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      },
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000133"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      },
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000134"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      },
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000135"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      }
+    ],
+    "total_ttc": "1359.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-035.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2026-0035",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2026-01-30",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000136"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      },
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000137"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      },
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000138"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      },
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000139"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      }
+    ],
+    "total_ttc": "1359.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-036.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2026-0036",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2026-05-21",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000140"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      },
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000141"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      },
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000142"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      },
+      {
+        "model": "Evolve2 85",
+        "sku": "28599-999-899",
+        "serials": [
+          "JBR0000000143"
+        ],
+        "qty": 1,
+        "unit_price_ht": "283.33"
+      }
+    ],
+    "total_ttc": "1359.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-037.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2026-0037",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2026-01-29",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Engage 99",
+        "sku": "ENG99-FICT-001",
+        "serials": [
+          "JBR0000000144"
+        ],
+        "qty": 1,
+        "unit_price_ht": "165.83"
+      },
+      {
+        "model": "Engage 99",
+        "sku": "ENG99-FICT-001",
+        "serials": [
+          "JBR0000000145"
+        ],
+        "qty": 1,
+        "unit_price_ht": "165.83"
+      },
+      {
+        "model": "Engage 99",
+        "sku": "ENG99-FICT-001",
+        "serials": [
+          "JBR0000000146"
+        ],
+        "qty": 1,
+        "unit_price_ht": "165.83"
+      },
+      {
+        "model": "Engage 99",
+        "sku": "ENG99-FICT-001",
+        "serials": [
+          "JBR0000000147"
+        ],
+        "qty": 1,
+        "unit_price_ht": "165.83"
+      }
+    ],
+    "total_ttc": "795.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-038.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2024-0038",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2024-05-10",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Engage 99",
+        "sku": "ENG99-FICT-001",
+        "serials": [
+          "JBR0000000148"
+        ],
+        "qty": 1,
+        "unit_price_ht": "165.83"
+      },
+      {
+        "model": "Engage 99",
+        "sku": "ENG99-FICT-001",
+        "serials": [
+          "JBR0000000149"
+        ],
+        "qty": 1,
+        "unit_price_ht": "165.83"
+      },
+      {
+        "model": "Engage 99",
+        "sku": "ENG99-FICT-001",
+        "serials": [
+          "JBR0000000150"
+        ],
+        "qty": 1,
+        "unit_price_ht": "165.83"
+      },
+      {
+        "model": "Speak 750",
+        "sku": "JABRA-SPEAK-750",
+        "serials": [
+          "JBR0000000151"
+        ],
+        "qty": 1,
+        "unit_price_ht": "207.50"
+      }
+    ],
+    "total_ttc": "845.99",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-039.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2023-0039",
+    "supplier_id": "SUP-TECH",
+    "supplier_name": "Latitude Services Test",
+    "supplier_address": "8 avenue des Essais, 31000 Toulouse, France",
+    "invoice_date": "2023-12-10",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "000255T"
+        ],
+        "qty": 1,
+        "unit_price_ht": "983.33"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "000255W"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      },
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "000255X"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "000255Y"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      }
+    ],
+    "total_ttc": "4728.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-040.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2023-0040",
+    "supplier_id": "SUP-TECH",
+    "supplier_name": "Latitude Services Test",
+    "supplier_address": "8 avenue des Essais, 31000 Toulouse, France",
+    "invoice_date": "2023-11-30",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "000255U"
+        ],
+        "qty": 1,
+        "unit_price_ht": "908.33"
+      },
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "000255Z"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "0002560"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      },
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "0002561"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      }
+    ],
+    "total_ttc": "4737.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-041.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2025-0041",
+    "supplier_id": "SUP-TECH",
+    "supplier_name": "Latitude Services Test",
+    "supplier_address": "8 avenue des Essais, 31000 Toulouse, France",
+    "invoice_date": "2025-11-20",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "000255V"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "0002562"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      },
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "0002563"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "0002564"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      }
+    ],
+    "total_ttc": "4797.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-042.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2026-0042",
+    "supplier_id": "SUP-TECH",
+    "supplier_name": "Latitude Services Test",
+    "supplier_address": "8 avenue des Essais, 31000 Toulouse, France",
+    "invoice_date": "2026-10-06",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "0002565"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "0002566"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      },
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "0002567"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "0002568"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      }
+    ],
+    "total_ttc": "4797.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-043.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2025-0043",
+    "supplier_id": "SUP-TECH",
+    "supplier_name": "Latitude Services Test",
+    "supplier_address": "8 avenue des Essais, 31000 Toulouse, France",
+    "invoice_date": "2025-04-16",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "0002569"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "000256A"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      },
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "000256B"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "000256C"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      }
+    ],
+    "total_ttc": "4797.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-044.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2026-0044",
+    "supplier_id": "SUP-TECH",
+    "supplier_name": "Latitude Services Test",
+    "supplier_address": "8 avenue des Essais, 31000 Toulouse, France",
+    "invoice_date": "2026-09-22",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "000256D"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "000256E"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      },
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "000256F"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "000256G"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      }
+    ],
+    "total_ttc": "4797.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-045.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2023-0045",
+    "supplier_id": "SUP-TECH",
+    "supplier_name": "Latitude Services Test",
+    "supplier_address": "8 avenue des Essais, 31000 Toulouse, France",
+    "invoice_date": "2023-01-27",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "000256H"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "000256I"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      },
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "000256J"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "000256K"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      }
+    ],
+    "total_ttc": "4797.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-046.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2026-0046",
+    "supplier_id": "SUP-TECH",
+    "supplier_name": "Latitude Services Test",
+    "supplier_address": "8 avenue des Essais, 31000 Toulouse, France",
+    "invoice_date": "2026-09-19",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "000256L"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "000256M"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      },
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "000256N"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "000256O"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      }
+    ],
+    "total_ttc": "4797.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-047.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2023-0047",
+    "supplier_id": "SUP-TECH",
+    "supplier_name": "Latitude Services Test",
+    "supplier_address": "8 avenue des Essais, 31000 Toulouse, France",
+    "invoice_date": "2023-05-30",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "000256P"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "000256Q"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      },
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "000256R"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "000256S"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      }
+    ],
+    "total_ttc": "4797.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-048.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2026-0048",
+    "supplier_id": "SUP-TECH",
+    "supplier_name": "Latitude Services Test",
+    "supplier_address": "8 avenue des Essais, 31000 Toulouse, France",
+    "invoice_date": "2026-01-05",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "000256T"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "000256U"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      },
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "000256V"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "000256W"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      }
+    ],
+    "total_ttc": "4797.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-049.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2026-0049",
+    "supplier_id": "SUP-TECH",
+    "supplier_name": "Latitude Services Test",
+    "supplier_address": "8 avenue des Essais, 31000 Toulouse, France",
+    "invoice_date": "2026-06-17",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "000256X"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "000256Y"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      },
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "000256Z"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "0002570"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      }
+    ],
+    "total_ttc": "4797.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-050.pdf",
+    "format": "pdf",
+    "invoice_number": "APP-2024-0001",
+    "supplier_id": "SUP-AUDIO",
+    "supplier_name": "AudioPro Démonstration",
+    "supplier_address": "12 rue des Ateliers, 69007 Lyon, France",
+    "invoice_date": "2024-12-20",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000001"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000005"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000016"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      },
+      {
+        "model": "Evolve2 65",
+        "sku": "26599-999-899",
+        "serials": [
+          "JBR0000000017"
+        ],
+        "qty": 1,
+        "unit_price_ht": "191.67"
+      }
+    ],
+    "total_ttc": "920.02",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    },
+    "duplicate_of": "invoices/invoice-001.pdf"
+  },
+  {
+    "filename": "invoices/invoice-051.pdf",
+    "format": "facturx",
+    "invoice_number": "APP-2025-0050",
+    "supplier_id": "SUP-TECH",
+    "supplier_name": "Latitude Services Test",
+    "supplier_address": "8 avenue des Essais, 31000 Toulouse, France",
+    "invoice_date": "2025-02-16",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "0002571"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "0002572"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      },
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "0002573"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "0002574"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      }
+    ],
+    "total_ttc": "4797.98",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-052.pdf",
+    "format": "facturx",
+    "invoice_number": "APP-2026-0051",
+    "supplier_id": "SUP-TECH",
+    "supplier_name": "Latitude Services Test",
+    "supplier_address": "8 avenue des Essais, 31000 Toulouse, France",
+    "invoice_date": "2026-08-07",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "Latitude 7440",
+        "sku": "DL-LAT-7440",
+        "serials": [
+          "0002575"
+        ],
+        "qty": 1,
+        "unit_price_ht": "1040.83"
+      },
+      {
+        "model": "Latitude 5440",
+        "sku": "DL-LAT-5440",
+        "serials": [
+          "0002576"
+        ],
+        "qty": 1,
+        "unit_price_ht": "958.33"
+      },
+      {
+        "model": "P2423",
+        "sku": "DELL-P2423",
+        "serials": [
+          "0002577"
+        ],
+        "qty": 1,
+        "unit_price_ht": "174.17"
+      },
+      {
+        "model": "P2423",
+        "sku": "DELL-P2423",
+        "serials": [
+          "0002578"
+        ],
+        "qty": 1,
+        "unit_price_ht": "174.17"
+      }
+    ],
+    "total_ttc": "2817.00",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-053.pdf",
+    "format": "facturx",
+    "invoice_number": "APP-2023-0052",
+    "supplier_id": "SUP-TECH",
+    "supplier_name": "Latitude Services Test",
+    "supplier_address": "8 avenue des Essais, 31000 Toulouse, France",
+    "invoice_date": "2023-11-22",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "P2423",
+        "sku": "DELL-P2423",
+        "serials": [
+          "0002579"
+        ],
+        "qty": 1,
+        "unit_price_ht": "174.17"
+      },
+      {
+        "model": "P2423",
+        "sku": "DELL-P2423",
+        "serials": [
+          "000257A"
+        ],
+        "qty": 1,
+        "unit_price_ht": "174.17"
+      },
+      {
+        "model": "P2423",
+        "sku": "DELL-P2423",
+        "serials": [
+          "000257B"
+        ],
+        "qty": 1,
+        "unit_price_ht": "174.17"
+      },
+      {
+        "model": "P2423",
+        "sku": "DELL-P2423",
+        "serials": [
+          "000257C"
+        ],
+        "qty": 1,
+        "unit_price_ht": "174.17"
+      }
+    ],
+    "total_ttc": "836.02",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-054.pdf",
+    "format": "facturx",
+    "invoice_number": "APP-2023-0053",
+    "supplier_id": "SUP-TECH",
+    "supplier_name": "Latitude Services Test",
+    "supplier_address": "8 avenue des Essais, 31000 Toulouse, France",
+    "invoice_date": "2023-06-06",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "P2423",
+        "sku": "DELL-P2423",
+        "serials": [
+          "000257D"
+        ],
+        "qty": 1,
+        "unit_price_ht": "174.17"
+      },
+      {
+        "model": "P2423",
+        "sku": "DELL-P2423",
+        "serials": [
+          "000257E"
+        ],
+        "qty": 1,
+        "unit_price_ht": "174.17"
+      },
+      {
+        "model": "P2423",
+        "sku": "DELL-P2423",
+        "serials": [
+          "000257F"
+        ],
+        "qty": 1,
+        "unit_price_ht": "174.17"
+      },
+      {
+        "model": "P2423",
+        "sku": "DELL-P2423",
+        "serials": [
+          "000257G"
+        ],
+        "qty": 1,
+        "unit_price_ht": "174.17"
+      }
+    ],
+    "total_ttc": "836.02",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-055.pdf",
+    "format": "facturx",
+    "invoice_number": "APP-2025-0054",
+    "supplier_id": "SUP-TECH",
+    "supplier_name": "Latitude Services Test",
+    "supplier_address": "8 avenue des Essais, 31000 Toulouse, France",
+    "invoice_date": "2025-12-24",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "P2423",
+        "sku": "DELL-P2423",
+        "serials": [
+          "000257H"
+        ],
+        "qty": 1,
+        "unit_price_ht": "174.17"
+      },
+      {
+        "model": "P2423",
+        "sku": "DELL-P2423",
+        "serials": [
+          "000257I"
+        ],
+        "qty": 1,
+        "unit_price_ht": "174.17"
+      },
+      {
+        "model": "P2423",
+        "sku": "DELL-P2423",
+        "serials": [
+          "000257J"
+        ],
+        "qty": 1,
+        "unit_price_ht": "174.17"
+      },
+      {
+        "model": "P2423",
+        "sku": "DELL-P2423",
+        "serials": [
+          "000257K"
+        ],
+        "qty": 1,
+        "unit_price_ht": "174.17"
+      }
+    ],
+    "total_ttc": "836.02",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-056.pdf",
+    "format": "facturx",
+    "invoice_number": "APP-2024-0055",
+    "supplier_id": "SUP-TECH",
+    "supplier_name": "Latitude Services Test",
+    "supplier_address": "8 avenue des Essais, 31000 Toulouse, France",
+    "invoice_date": "2024-05-23",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "P2423",
+        "sku": "DELL-P2423",
+        "serials": [
+          "000257L"
+        ],
+        "qty": 1,
+        "unit_price_ht": "174.17"
+      },
+      {
+        "model": "WD19 Dock",
+        "sku": "DELL-WD19",
+        "serials": [
+          "000257M"
+        ],
+        "qty": 1,
+        "unit_price_ht": "137.50"
+      }
+    ],
+    "total_ttc": "374.00",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-057.pdf",
+    "format": "facturx",
+    "invoice_number": "APP-2023-0056",
+    "supplier_id": "SUP-TECH",
+    "supplier_name": "Latitude Services Test",
+    "supplier_address": "8 avenue des Essais, 31000 Toulouse, France",
+    "invoice_date": "2023-07-01",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "USB-C Hub",
+        "sku": "DELL-USBC-HUB",
+        "serials": [
+          "000257N"
+        ],
+        "qty": 1,
+        "unit_price_ht": "65.83"
+      },
+      {
+        "model": "P2423 Stand",
+        "sku": "DELL-P2423-STAND",
+        "serials": [
+          "000257O"
+        ],
+        "qty": 1,
+        "unit_price_ht": "35.00"
+      }
+    ],
+    "total_ttc": "121.00",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-058.pdf",
+    "format": "facturx",
+    "invoice_number": "APP-2024-0057",
+    "supplier_id": "SUP-PRINT",
+    "supplier_name": "Bureautique Exemple",
+    "supplier_address": "5 place des Inventeurs, 44000 Nantes, France",
+    "invoice_date": "2024-06-03",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "LaserJet Pro M404",
+        "sku": "HP-LJ-M404",
+        "serials": [
+          "HP004ABL"
+        ],
+        "qty": 1,
+        "unit_price_ht": "72.00"
+      },
+      {
+        "model": "LaserJet Pro M404",
+        "sku": "HP-LJ-M404",
+        "serials": [
+          "HP004ABM"
+        ],
+        "qty": 1,
+        "unit_price_ht": "72.00"
+      },
+      {
+        "model": "LaserJet Pro M404",
+        "sku": "HP-LJ-M404",
+        "serials": [
+          "HP004ABN"
+        ],
+        "qty": 1,
+        "unit_price_ht": "72.00"
+      },
+      {
+        "model": "LaserJet Pro M404",
+        "sku": "HP-LJ-M404",
+        "serials": [
+          "HP004ABO"
+        ],
+        "qty": 1,
+        "unit_price_ht": "72.00"
+      }
+    ],
+    "total_ttc": "345.60",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-059.pdf",
+    "format": "facturx",
+    "invoice_number": "APP-2024-0058",
+    "supplier_id": "SUP-PRINT",
+    "supplier_name": "Bureautique Exemple",
+    "supplier_address": "5 place des Inventeurs, 44000 Nantes, France",
+    "invoice_date": "2024-05-06",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "LaserJet Pro M404",
+        "sku": "HP-LJ-M404",
+        "serials": [
+          "HP004ABP"
+        ],
+        "qty": 1,
+        "unit_price_ht": "72.00"
+      },
+      {
+        "model": "LaserJet Pro M404",
+        "sku": "HP-LJ-M404",
+        "serials": [
+          "HP004ABQ"
+        ],
+        "qty": 1,
+        "unit_price_ht": "72.00"
+      },
+      {
+        "model": "LaserJet Pro M404",
+        "sku": "HP-LJ-M404",
+        "serials": [
+          "HP004ABR"
+        ],
+        "qty": 1,
+        "unit_price_ht": "72.00"
+      },
+      {
+        "model": "LaserJet Pro M404",
+        "sku": "HP-LJ-M404",
+        "serials": [
+          "HP004ABS"
+        ],
+        "qty": 1,
+        "unit_price_ht": "72.00"
+      }
+    ],
+    "total_ttc": "345.60",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  },
+  {
+    "filename": "invoices/invoice-060.pdf",
+    "format": "facturx",
+    "invoice_number": "APP-2024-0059",
+    "supplier_id": "SUP-PRINT",
+    "supplier_name": "Bureautique Exemple",
+    "supplier_address": "5 place des Inventeurs, 44000 Nantes, France",
+    "invoice_date": "2024-04-08",
+    "client_name": "Appelia SAS",
+    "lines": [
+      {
+        "model": "LaserJet Pro M404",
+        "sku": "HP-LJ-M404",
+        "serials": [
+          "HP004ABT"
+        ],
+        "qty": 1,
+        "unit_price_ht": "72.00"
+      },
+      {
+        "model": "LaserJet Pro M404",
+        "sku": "HP-LJ-M404",
+        "serials": [
+          "HP004ABU"
+        ],
+        "qty": 1,
+        "unit_price_ht": "72.00"
+      },
+      {
+        "model": "LaserJet Toner Kit",
+        "sku": "HP-TONER-KIT",
+        "serials": [
+          "HP004ABV"
+        ],
+        "qty": 1,
+        "unit_price_ht": "73.33"
+      }
+    ],
+    "total_ttc": "260.80",
+    "has_warranty_plus": false,
+    "pages": {
+      "supplier_name": 1,
+      "supplier_address": 1,
+      "invoice_number": 1,
+      "invoice_date": 1,
+      "client_name": 1,
+      "lines": [
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        },
+        {
+          "model": 1,
+          "sku": 1,
+          "serials": 1,
+          "qty": 1,
+          "unit_price_ht": 1
+        }
+      ],
+      "total_ttc": 1,
+      "has_warranty_plus": 1
+    }
+  }
+]

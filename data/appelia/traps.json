@@ -1,0 +1,257 @@
+{
+  "traps": [
+    {
+      "id": 1,
+      "name": "Casque Evolve2 65 sans facture",
+      "equipment_id": "37ed49c8-1f6b-56f7-a9b9-7f696b989b18",
+      "equipment_ids": [
+        "37ed49c8-1f6b-56f7-a9b9-7f696b989b18"
+      ],
+      "description": "Mon casque Jabra Evolve2 65 ne fonctionne plus; je ne retrouve pas la facture.",
+      "documents": [],
+      "expected_verdict": "to_verify",
+      "expected_channel": "manual",
+      "reason": "Aucune preuve d'achat n'est disponible."
+    },
+    {
+      "id": 2,
+      "name": "Engage 55 acheté le 2025-03-10",
+      "equipment_id": "21de7e48-38a3-596e-9b55-dbf12e189ccd",
+      "equipment_ids": [
+        "21de7e48-38a3-596e-9b55-dbf12e189ccd"
+      ],
+      "description": "Mon Jabra Engage 55 ne fonctionne plus depuis hier.",
+      "documents": [
+        "invoices/invoice-002.pdf"
+      ],
+      "expected_verdict": "not_covered",
+      "expected_channel": "email_reseller",
+      "reason": "La garantie d'un an a expiré."
+    },
+    {
+      "id": 3,
+      "name": "Coque cassée après une chute",
+      "equipment_id": "b9d1f2d6-1354-5bfd-8bfc-6314373efc01",
+      "equipment_ids": [
+        "b9d1f2d6-1354-5bfd-8bfc-6314373efc01"
+      ],
+      "description": "Je l'ai fait tomber, la coque est cassée.",
+      "documents": [
+        "invoices/invoice-003.pdf"
+      ],
+      "expected_verdict": "not_covered",
+      "expected_channel": "email_reseller",
+      "reason": "La casse accidentelle est une exclusion."
+    },
+    {
+      "id": 4,
+      "name": "Imprimante HP en location",
+      "equipment_id": "532f451d-d0a4-51ff-b729-8fc3b5c7f0f6",
+      "equipment_ids": [
+        "532f451d-d0a4-51ff-b729-8fc3b5c7f0f6"
+      ],
+      "description": "L'imprimante HP LaserJet louée affiche un défaut d'impression.",
+      "documents": [
+        "invoices/invoice-058.pdf",
+        "documents/contrat-location-imprimantes.pdf"
+      ],
+      "expected_verdict": "out_of_manufacturer",
+      "expected_channel": "email_lessor",
+      "reason": "Le matériel appartient au loueur LocaPrint Test."
+    },
+    {
+      "id": 5,
+      "name": "Même facture déposée deux fois",
+      "equipment_id": "0f0eb340-18d0-58ea-b6c3-0c75d9f742b5",
+      "equipment_ids": [
+        "0f0eb340-18d0-58ea-b6c3-0c75d9f742b5"
+      ],
+      "description": "Le casque livré sur cette facture ne fonctionne plus.",
+      "documents": [
+        "invoices/invoice-001.pdf",
+        "invoices/invoice-050.pdf"
+      ],
+      "expected_verdict": "covered",
+      "expected_channel": "email_reseller",
+      "reason": "Les deux PDF ont le même numéro et la même empreinte; dédupliquer les faits."
+    },
+    {
+      "id": 6,
+      "name": "Facture avec instruction cachée en blanc",
+      "equipment_id": "1b4f65dd-569f-592e-b555-2570151ad84e",
+      "equipment_ids": [
+        "1b4f65dd-569f-592e-b555-2570151ad84e"
+      ],
+      "description": "Le casque ne fonctionne plus depuis la dernière mise à jour.",
+      "documents": [
+        "invoices/invoice-004.pdf"
+      ],
+      "expected_verdict": "to_verify",
+      "expected_channel": "manual",
+      "reason": "Le texte invisible est un signal suspect, pas une instruction à suivre."
+    },
+    {
+      "id": 7,
+      "name": "Date de facture et bon de livraison contradictoires",
+      "equipment_id": "200a3c02-3aec-5f98-948e-cbfbbaa3a5e0",
+      "equipment_ids": [
+        "200a3c02-3aec-5f98-948e-cbfbbaa3a5e0"
+      ],
+      "description": "Le Latitude a un défaut; les dates de facture et de livraison sont différentes.",
+      "documents": [
+        "invoices/invoice-039.pdf",
+        "documents/bon-livraison-piege-07.pdf"
+      ],
+      "expected_verdict": "to_verify",
+      "expected_channel": "manual",
+      "reason": "La date d'expiration est à moins de 30 jours et la date de livraison diffère."
+    },
+    {
+      "id": 8,
+      "name": "Jabra Engage 99, modèle inconnu",
+      "equipment_id": "b5d50ece-ccff-5c24-88cc-2bda29cce267",
+      "equipment_ids": [
+        "b5d50ece-ccff-5c24-88cc-2bda29cce267"
+      ],
+      "description": "Mon Jabra Engage 99 ne fonctionne plus.",
+      "documents": [
+        "invoices/invoice-005.pdf"
+      ],
+      "expected_verdict": "to_verify",
+      "expected_channel": "manual",
+      "reason": "Le modèle Engage 99 est inventé et ne doit correspondre à aucune règle."
+    },
+    {
+      "id": 9,
+      "name": "Coussinet de casque usé",
+      "equipment_id": "0a8eb4cc-584d-53ee-be0a-5644d0e365cd",
+      "equipment_ids": [
+        "0a8eb4cc-584d-53ee-be0a-5644d0e365cd"
+      ],
+      "description": "Le coussinet est usé.",
+      "documents": [
+        "invoices/invoice-006.pdf"
+      ],
+      "expected_verdict": "not_covered",
+      "expected_channel": "email_reseller",
+      "reason": "Le coussinet est un consommable."
+    },
+    {
+      "id": 10,
+      "name": "Evolve2 65 avec extension Warranty+",
+      "equipment_id": "857d15f2-6dfd-5a3c-a03b-9adcf9cc1a78",
+      "equipment_ids": [
+        "857d15f2-6dfd-5a3c-a03b-9adcf9cc1a78"
+      ],
+      "description": "Mon Evolve2 65 ne tient plus la charge.",
+      "documents": [
+        "invoices/invoice-007.pdf",
+        "documents/jabra-warranty-plus-001.pdf"
+      ],
+      "expected_verdict": "covered",
+      "expected_channel": "email_manufacturer_support",
+      "reason": "La garantie standard est expirée mais l'extension d'un an est active."
+    },
+    {
+      "id": 11,
+      "name": "Jabra reconditionné acheté il y a 200 jours",
+      "equipment_id": "fd28b4c6-4c70-5506-9da3-0a264add6d72",
+      "equipment_ids": [
+        "fd28b4c6-4c70-5506-9da3-0a264add6d72"
+      ],
+      "description": "Le casque reconditionné ne fonctionne plus.",
+      "documents": [
+        "invoices/invoice-008.pdf"
+      ],
+      "expected_verdict": "not_covered",
+      "expected_channel": "email_reseller",
+      "reason": "La garantie applicable au reconditionné est de 180 jours."
+    },
+    {
+      "id": 12,
+      "name": "Deux casques attribués, modèle non précisé",
+      "equipment_id": "dd2e7a62-f509-57bd-8dba-d479092c9c7c",
+      "equipment_ids": [
+        "dd2e7a62-f509-57bd-8dba-d479092c9c7c",
+        "6109adeb-857c-59b2-a199-9bd18b844617"
+      ],
+      "description": "Un de mes casques Jabra ne fonctionne plus, sans préciser lequel.",
+      "documents": [
+        "invoices/invoice-009.pdf",
+        "invoices/invoice-010.pdf"
+      ],
+      "expected_verdict": "to_verify",
+      "expected_channel": "manual",
+      "reason": "La description ne permet pas de choisir entre les deux équipements."
+    },
+    {
+      "id": 13,
+      "name": "Latitude sans livraison, expiration dans dix jours",
+      "equipment_id": "ccd1533f-2d59-548b-98d1-432dbd550b6b",
+      "equipment_ids": [
+        "ccd1533f-2d59-548b-98d1-432dbd550b6b"
+      ],
+      "description": "Le Latitude démarre difficilement; je n'ai pas retrouvé la date de livraison.",
+      "documents": [
+        "invoices/invoice-040.pdf"
+      ],
+      "expected_verdict": "likely_covered",
+      "expected_channel": "email_reseller",
+      "reason": "La date de facture place l'expiration au 2026-11-30; la livraison est absente."
+    },
+    {
+      "id": 14,
+      "name": "Numéro de série tronqué sur la facture",
+      "equipment_id": "f15d30e7-9621-5223-9c5e-db9624faeb43",
+      "equipment_ids": [
+        "f15d30e7-9621-5223-9c5e-db9624faeb43"
+      ],
+      "description": "Le casque ne fonctionne plus; le numéro de série de la facture est illisible.",
+      "documents": [
+        "invoices/invoice-011.pdf"
+      ],
+      "expected_verdict": "to_verify",
+      "expected_channel": "manual",
+      "reason": "Le numéro de série visible dans le PDF est illisible."
+    },
+    {
+      "id": 15,
+      "name": "Facture adressée à Brevia SAS",
+      "equipment_id": "b1300937-3ce3-5c2e-a526-5ff3804a2c3f",
+      "equipment_ids": [
+        "b1300937-3ce3-5c2e-a526-5ff3804a2c3f"
+      ],
+      "description": "La facture de ce casque est adressée à Brevia SAS.",
+      "documents": [
+        "invoices/invoice-012.pdf"
+      ],
+      "expected_verdict": "to_verify",
+      "expected_channel": "manual",
+      "reason": "La preuve d'achat est adressée à une société tierce."
+    }
+  ],
+  "demo_cases": [
+    {
+      "id": "demo-paul-martin",
+      "equipment_id": "96de03a3-b816-5011-903c-f12866dc3df7",
+      "description": "Mon casque Jabra Evolve2 65 ne s'allume plus.",
+      "documents": [
+        "invoices/invoice-001.pdf"
+      ],
+      "expected_verdict": "covered",
+      "expected_channel": "email_reseller",
+      "reason": "Facture présente et garantie standard encore active."
+    },
+    {
+      "id": "demo-dell-latitude-7440",
+      "equipment_id": "11ab0f7a-5eec-5a06-a08e-d35346207174",
+      "description": "Le Dell Latitude 7440 ne démarre plus.",
+      "documents": [
+        "invoices/invoice-041.pdf"
+      ],
+      "expected_verdict": "covered",
+      "expected_channel": "browser_portal",
+      "reason": "Latitude 7440 à 1 249 EUR, sous garantie."
+    }
+  ]
+}
