@@ -1,0 +1,6 @@
+.command-overlay { position: fixed; inset: 0; z-index: 60; background: rgb(24 24 27 / .4); }
+.command-dialog { position: fixed; z-index: 61; top: 12vh; left: 50%; transform: translateX(-50%); width: min(38rem, calc(100vw - 2rem)); overflow: hidden; border-radius: 28px; background: var(--color-surface); color: var(--color-ink); box-shadow: 0 20px 70px rgb(0 0 0 / .12); }
+.command-dialog [cmdk-group-heading] { padding: 12px; color: var(--color-muted); font-size: 12px; font-weight: 600; }
+.command-dialog [cmdk-item] { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 12px; border-radius: 16px; cursor: pointer; font-size: 14px; }
+.command-dialog [cmdk-item][data-selected=true] { background: var(--color-canvas); outline: 2px solid var(--color-focus); outline-offset: -2px; }
+.command-dialog [cmdk-item] > svg { flex-shrink: 0; }
