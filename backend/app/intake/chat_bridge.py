@@ -23,6 +23,16 @@ async def create_failure(
         badge=inbox.badge,
     )
     case_id = report.case_id
+    if report.equipment_id is not None:
+        session.execute(
+            update(cases)
+            .where(cases.c.id == case_id)
+            .values(
+                status=CaseStatus.AWAITING_VALIDATION.value,
+                updated_at=utc_now().isoformat(),
+            )
+        )
+        return {"case_id": case_id, "verdict": None, "questions": report.questions}
     verdict = Verdict(
         value=VerdictValue.TO_VERIFY,
         missing=report.questions or ["Évaluer les preuves de garantie avant toute action"],
