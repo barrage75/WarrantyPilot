@@ -25,7 +25,10 @@ TRANSITIONS: dict[CaseStatus, frozenset[CaseStatus]] = {
     ),
     CaseStatus.SENDING: frozenset({CaseStatus.SENT, CaseStatus.FAILED}),
     CaseStatus.SENT: frozenset({CaseStatus.TRACKED, CaseStatus.RESOLVED}),
-    CaseStatus.FAILED: frozenset({CaseStatus.SENDING, CaseStatus.CANCELLED}),
+    CaseStatus.FAILED: frozenset(
+        {CaseStatus.SENDING, CaseStatus.MANUAL_TAKEOVER, CaseStatus.CANCELLED}
+    ),
+    CaseStatus.MANUAL_TAKEOVER: frozenset({CaseStatus.SENT, CaseStatus.CANCELLED}),
     CaseStatus.TRACKED: frozenset({CaseStatus.RESOLVED, CaseStatus.FAILED}),
     CaseStatus.RESOLVED: frozenset(),
     CaseStatus.CANCELLED: frozenset(),
@@ -38,16 +41,23 @@ def transition(
     *,
     action_result: ActionResult | None = None,
     attempts: int = 0,
+    actor: str | None = None,
 ) -> CaseStatus:
     if target not in TRANSITIONS[current]:
         raise InvalidTransition(f"transition {current.value} -> {target.value} is forbidden")
     if target == CaseStatus.SENT and (
-        current != CaseStatus.SENDING
+        current not in {CaseStatus.SENDING, CaseStatus.MANUAL_TAKEOVER}
         or action_result is None
         or action_result.status != ActionResultStatus.SUCCESS
         or not (action_result.proof and action_result.proof.strip())
     ):
         raise InvalidTransition("sent requires a successful ActionResult with proof")
+    if (
+        current == CaseStatus.MANUAL_TAKEOVER
+        and target == CaseStatus.SENT
+        and (actor is None or not actor.startswith("human:") or not actor.removeprefix("human:"))
+    ):
+        raise InvalidTransition("manual takeover requires proof from a human actor")
     if current == CaseStatus.FAILED and target == CaseStatus.SENDING and attempts >= 2:
         raise InvalidTransition("failed cases may be retried at most twice")
     return target
@@ -56,7 +66,7 @@ def transition(
 def recover_interrupted_sends(
     session_factory: sessionmaker[Session] | None = None,
 ) -> int:
-    """Return the number of cases that must be marked failed on process restart."""
+    """Recover interrupted sends, transferring exhausted retries to a human."""
     from sqlalchemy import select, update
 
     from app.contracts.enums import EventType
@@ -73,8 +83,17 @@ def recover_interrupted_sends(
             .all(),
         )
         for case_id in pending:
+            attempt = session.execute(
+                select(case_steps.c.attempt)
+                .where(
+                    case_steps.c.case_id == case_id,
+                    case_steps.c.step_name == "execute",
+                )
+                .limit(1)
+            ).scalar_one_or_none()
+            failed_status = transition(CaseStatus.SENDING, CaseStatus.FAILED)
             session.execute(
-                update(cases).where(cases.c.id == case_id).values(status=CaseStatus.FAILED.value)
+                update(cases).where(cases.c.id == case_id).values(status=failed_status.value)
             )
             session.execute(
                 update(case_steps)
@@ -100,4 +119,19 @@ def recover_interrupted_sends(
                 case_id=case_id,
                 payload={"from": CaseStatus.SENDING.value, "to": CaseStatus.FAILED.value},
             )
+            if attempt is not None and int(attempt) >= 2:
+                takeover_status = transition(failed_status, CaseStatus.MANUAL_TAKEOVER)
+                session.execute(
+                    update(cases).where(cases.c.id == case_id).values(status=takeover_status.value)
+                )
+                append_event(
+                    session,
+                    EventType.STATUS_CHANGED,
+                    case_id=case_id,
+                    payload={
+                        "from": failed_status.value,
+                        "to": takeover_status.value,
+                        "reason": "retry_limit_reached",
+                    },
+                )
         return len(pending)

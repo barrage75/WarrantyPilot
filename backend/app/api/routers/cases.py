@@ -3,17 +3,25 @@ import json
 from collections.abc import AsyncIterator
 from datetime import datetime
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, ConfigDict
-from sqlalchemy import select, update
+from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy import insert, select, update
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
 
 from app.api.dependencies import get_orchestrator, get_session
-from app.contracts.enums import CaseStatus, ChecklistStepName, EventType
+from app.contracts.enums import (
+    ActionResultStatus,
+    CaseStatus,
+    Channel,
+    ChecklistStepName,
+    EventType,
+)
 from app.contracts.models import (
+    Action,
+    ActionResult,
     Case,
     ChecklistStep,
     DataChecklist,
@@ -25,7 +33,16 @@ from app.contracts.models import (
 from app.core.journal import append_event
 from app.core.orchestrator import Orchestrator
 from app.core.status import InvalidTransition, transition
-from app.core.tables import cases, data_checklists, events, people, policy_decisions, verdicts
+from app.core.tables import (
+    action_results,
+    actions,
+    cases,
+    data_checklists,
+    events,
+    people,
+    policy_decisions,
+    verdicts,
+)
 
 router = APIRouter()
 
@@ -46,6 +63,17 @@ class ChecklistStepUpdate(BaseModel):
     person_id: UUID
 
 
+class ManualTakeoverRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    person_id: UUID
+
+
+class ManualProofRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    person_id: UUID
+    proof: str = Field(min_length=1)
+
+
 def _case_from_row(session: Session, row: Any) -> Case:
     verdict = None
     if row["verdict_id"]:
@@ -62,6 +90,8 @@ def _case_from_row(session: Session, row: Any) -> Case:
                 rule_version=value["rule_version"],
                 checks=value["checks"],
                 evidence=value["evidence"],
+                channel=value["channel"],
+                target_url=value["target_url"],
                 missing=value["missing"],
                 possible_exclusions=value["possible_exclusions"],
                 explanation_fr=value["explanation_fr"],
@@ -240,6 +270,125 @@ def reject_case(
     )
     session.commit()
     return case.model_copy(update={"status": new_status, "updated_at": utc_now()})
+
+
+@router.post("/cases/{case_id}/manual-takeover", response_model=Case)
+def request_manual_takeover(
+    case_id: UUID,
+    request_body: ManualTakeoverRequest,
+    session: Session = Depends(get_session),
+) -> Case:
+    case = _load_case(session, case_id)
+    if case.status != CaseStatus.FAILED:
+        raise HTTPException(status_code=409, detail="Case is not failed")
+    person = session.execute(select(people.c.id).where(people.c.id == str(request_body.person_id)))
+    if person.first() is None:
+        raise HTTPException(status_code=404, detail="Human approver not found")
+    try:
+        new_status = transition(case.status, CaseStatus.MANUAL_TAKEOVER)
+    except InvalidTransition as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    updated_at = utc_now()
+    session.execute(
+        update(cases)
+        .where(cases.c.id == str(case_id))
+        .values(status=new_status.value, updated_at=updated_at.isoformat())
+    )
+    append_event(
+        session,
+        EventType.STATUS_CHANGED,
+        actor=f"human:{request_body.person_id}",
+        case_id=str(case_id),
+        payload={"from": case.status.value, "to": new_status.value},
+    )
+    session.commit()
+    return case.model_copy(update={"status": new_status, "updated_at": updated_at})
+
+
+@router.post("/cases/{case_id}/manual-proof", response_model=Case)
+def submit_manual_proof(
+    case_id: UUID,
+    request_body: ManualProofRequest,
+    session: Session = Depends(get_session),
+) -> Case:
+    case = _load_case(session, case_id)
+    if case.status != CaseStatus.MANUAL_TAKEOVER:
+        raise HTTPException(status_code=409, detail="Case is not awaiting manual proof")
+    if not request_body.proof.strip():
+        raise HTTPException(status_code=422, detail="Proof must not be blank")
+    person = session.execute(select(people.c.id).where(people.c.id == str(request_body.person_id)))
+    if person.first() is None:
+        raise HTTPException(status_code=404, detail="Human approver not found")
+
+    actor = f"human:{request_body.person_id}"
+    action = Action(
+        case_id=case_id,
+        channel=Channel.MANUAL,
+        kind="manual_claim",
+        idempotency_key=f"case:{case_id}:manual-proof:{uuid4()}",
+        payload={"proof": request_body.proof},
+        badge=case.badge,
+    )
+    result = ActionResult(
+        action_id=action.id,
+        status=ActionResultStatus.SUCCESS,
+        proof=request_body.proof,
+        badge=case.badge,
+    )
+    try:
+        new_status = transition(
+            case.status,
+            CaseStatus.SENT,
+            action_result=result,
+            actor=actor,
+        )
+    except InvalidTransition as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+    updated_at = utc_now()
+    session.execute(
+        insert(actions).values(
+            id=str(action.id),
+            case_id=str(action.case_id),
+            channel=action.channel.value,
+            kind=action.kind,
+            idempotency_key=action.idempotency_key,
+            payload=action.payload,
+            badge=action.badge.value,
+            requires_data_checklist=action.requires_data_checklist,
+        )
+    )
+    session.execute(
+        insert(action_results).values(
+            id=str(result.id),
+            action_id=str(result.action_id),
+            status=result.status.value,
+            proof=result.proof,
+            error=result.error,
+            badge=result.badge.value,
+        )
+    )
+    session.execute(
+        update(cases)
+        .where(cases.c.id == str(case_id))
+        .values(status=new_status.value, updated_at=updated_at.isoformat())
+    )
+    append_event(
+        session,
+        EventType.ACTION_SUCCEEDED,
+        actor=actor,
+        case_id=str(case_id),
+        payload={"action_id": str(action.id), "proof": result.proof, "manual": True},
+    )
+    append_event(
+        session,
+        EventType.STATUS_CHANGED,
+        actor=actor,
+        case_id=str(case_id),
+        payload={"from": case.status.value, "to": new_status.value},
+    )
+    session.commit()
+    return case.model_copy(update={"status": new_status, "updated_at": updated_at})
 
 
 @router.get("/cases/{case_id}/checklist", response_model=DataChecklist)

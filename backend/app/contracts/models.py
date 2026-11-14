@@ -164,6 +164,8 @@ class RuleCheck(ContractModel):
 class Verdict(ContractModel):
     id: UUID = Field(default_factory=uuid4)
     value: VerdictValue
+    channel: Channel | None = None
+    target_url: str | None = None
     rule_id: str | None = None
     rule_version: str | None = None
     checks: list[RuleCheck] = Field(default_factory=list)

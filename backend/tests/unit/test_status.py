@@ -21,6 +21,8 @@ def test_every_declared_transition_is_accepted() -> None:
     for current, targets in TRANSITIONS.items():
         for target in targets:
             kwargs = {"action_result": _success()} if target == CaseStatus.SENT else {}
+            if current == CaseStatus.MANUAL_TAKEOVER and target == CaseStatus.SENT:
+                kwargs["actor"] = "human:123"
             assert transition(current, target, **kwargs) == target
 
 
@@ -57,3 +59,21 @@ def test_failed_retry_is_limited_to_two_attempts() -> None:
     assert transition(CaseStatus.FAILED, CaseStatus.SENDING, attempts=1)
     with pytest.raises(InvalidTransition, match="at most twice"):
         transition(CaseStatus.FAILED, CaseStatus.SENDING, attempts=2)
+
+
+def test_manual_takeover_requires_human_proof_to_reach_sent() -> None:
+    with pytest.raises(InvalidTransition, match="human actor"):
+        transition(
+            CaseStatus.MANUAL_TAKEOVER,
+            CaseStatus.SENT,
+            action_result=_success(),
+        )
+    assert (
+        transition(
+            CaseStatus.MANUAL_TAKEOVER,
+            CaseStatus.SENT,
+            action_result=_success(),
+            actor="human:123",
+        )
+        == CaseStatus.SENT
+    )

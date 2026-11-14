@@ -13,6 +13,11 @@ async def assert_action_adapter_contract(adapter: ActionAdapter) -> None:
         channel=adapter.channel,
         kind="contract_test",
         idempotency_key=f"contract:{uuid4()}",
+        payload=(
+            {"url": "http://localhost:8001/claim"}
+            if adapter.channel == Channel.BROWSER_PORTAL
+            else {}
+        ),
         badge=adapter.badge,
     )
     result = await adapter.execute(action)

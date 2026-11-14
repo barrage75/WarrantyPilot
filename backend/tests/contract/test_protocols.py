@@ -19,7 +19,13 @@ from app.contracts.models import (
     Incident,
     utc_now,
 )
-from app.testing.fakes import FakeActionAdapter, FakeExtractor, FakeFollowUp, FakeRulesEngine
+from app.testing.fakes import (
+    FakeBrowserAdapter,
+    FakeEmailAdapter,
+    FakeExtractor,
+    FakeFollowUp,
+    FakeRulesEngine,
+)
 from tests.contract.helpers import (
     assert_action_adapter_contract,
     assert_extractor_contract,
@@ -38,9 +44,17 @@ def make_document() -> Document:
     )
 
 
-@pytest.mark.parametrize("result_kind", ["success", "failure"])
-async def test_action_adapter_contract(result_kind: str) -> None:
-    adapter = FakeActionAdapter(result=result_kind)
+@pytest.mark.parametrize(
+    ("adapter_type", "result_kind"),
+    [
+        (FakeEmailAdapter, "success"),
+        (FakeEmailAdapter, "failure"),
+        (FakeBrowserAdapter, "success"),
+        (FakeBrowserAdapter, "failure"),
+    ],
+)
+async def test_action_adapter_contract(adapter_type, result_kind: str) -> None:
+    adapter = adapter_type(result=result_kind)
     await assert_action_adapter_contract(adapter)
 
 

@@ -6,10 +6,17 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.api.routers import agent, cases, demo, health, journal, settings
+from app.contracts.enums import Channel
 from app.core.db import SessionLocal, create_schema, engine, make_session_factory
 from app.core.settings import AppSettings, get_settings
 from app.core.status import recover_interrupted_sends
-from app.testing.fakes import FakeActionAdapter, FakeExtractor, FakeFollowUp, FakeRulesEngine
+from app.testing.fakes import (
+    FakeBrowserAdapter,
+    FakeEmailAdapter,
+    FakeExtractor,
+    FakeFollowUp,
+    FakeRulesEngine,
+)
 
 
 def create_app(
@@ -35,7 +42,10 @@ def create_app(
         application.state.services = services or {
             "extractor": FakeExtractor(),
             "rules_engine": FakeRulesEngine(),
-            "action_adapter": FakeActionAdapter(),
+            "action_adapters": {
+                Channel.EMAIL_RESELLER: FakeEmailAdapter(),
+                Channel.BROWSER_PORTAL: FakeBrowserAdapter(),
+            },
             "follow_up": FakeFollowUp(),
         }
         yield

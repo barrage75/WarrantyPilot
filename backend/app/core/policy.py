@@ -30,8 +30,7 @@ def decide(
         ),
         "no_possible_exclusion": not verdict.possible_exclusions,
         "no_suspicious_signal": not suspicious_signal,
-        "low_commitment_action": action_kind
-        in {"request_information", "warranty_claim_email", "repair_request"},
+        "low_commitment_action": action_kind in {"warranty_claim_email", "lessor_request"},
     }
     reasons: list[str] = []
     if settings.agent_paused:

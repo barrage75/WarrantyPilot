@@ -7,6 +7,7 @@ class CaseStatus(StrEnum):
     SENDING = "sending"
     SENT = "sent"
     FAILED = "failed"
+    MANUAL_TAKEOVER = "manual_takeover"
     TRACKED = "tracked"
     RESOLVED = "resolved"
     CANCELLED = "cancelled"
@@ -160,6 +161,7 @@ _LABELS: dict[type[StrEnum], dict[str, tuple[str, str]]] = {
         "sending": ("Envoi en cours", "Sending"),
         "sent": ("Envoyé", "Sent"),
         "failed": ("Échec", "Failed"),
+        "manual_takeover": ("Pris en main par un humain", "Handed to a human"),
         "tracked": ("Suivi", "Tracked"),
         "resolved": ("Résolu", "Resolved"),
         "cancelled": ("Annulé", "Cancelled"),

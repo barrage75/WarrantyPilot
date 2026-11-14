@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
@@ -11,6 +12,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.contracts.enums import (
     ActionResultStatus,
     CaseStatus,
+    Channel,
     EventType,
     PolicyOutcome,
 )
@@ -61,14 +63,14 @@ class Orchestrator:
         session_factory: sessionmaker[Session],
         extractor: DocumentExtractor,
         rules_engine: RulesEngine,
-        action_adapter: ActionAdapter,
+        action_adapters: Mapping[Channel, ActionAdapter],
         follow_up: FollowUpChecker,
         app_settings: AppSettings,
     ) -> None:
         self.session_factory = session_factory
         self.extractor = extractor
         self.rules_engine = rules_engine
-        self.action_adapter = action_adapter
+        self.action_adapters = action_adapters
         self.follow_up = follow_up
         self.app_settings = app_settings
 
@@ -80,7 +82,11 @@ class Orchestrator:
             if case_row is None:
                 raise KeyError(f"case not found: {case_id}")
             case = self._case_from_row(session, case_row)
-            if case.status in {CaseStatus.TRACKED, CaseStatus.RESOLVED}:
+            if case.status in {
+                CaseStatus.TRACKED,
+                CaseStatus.RESOLVED,
+                CaseStatus.MANUAL_TAKEOVER,
+            }:
                 return case
             prior_success = (
                 session.execute(
@@ -232,7 +238,7 @@ class Orchestrator:
                 case,
                 verdict,
                 equipment_model,
-                "warranty_claim_email",
+                _action_kind_for_channel(verdict.channel or case.channel),
                 policy_settings,
                 checklist_complete=checklist_complete,
                 requires_data_checklist=requires_checklist,
@@ -303,7 +309,7 @@ class Orchestrator:
             paused = self._load_policy_settings(session).agent_paused
             if paused:
                 return case
-            action, attempt, prior_running = self._prepare_action(session, case)
+            action, adapter, attempt, prior_running = self._prepare_action(session, case)
             if prior_running:
                 return case.model_copy(update={"status": CaseStatus.FAILED})
 
@@ -370,6 +376,18 @@ class Orchestrator:
                 payload={"from": case.status.value, "to": CaseStatus.SENDING.value},
             )
 
+        if adapter is None:
+            return self._finish_action(
+                action,
+                case,
+                ActionResult(
+                    action_id=action.id,
+                    status=ActionResultStatus.FAILURE,
+                    error="no_adapter_for_channel",
+                    badge=action.badge,
+                ),
+            )
+
         try:
             self._assert_action_allowed(action)
         except SecurityViolation as error:
@@ -383,8 +401,7 @@ class Orchestrator:
                     badge=action.badge,
                 ),
             )
-
-        action_result = await self.action_adapter.execute(action)
+        action_result = await adapter.execute(action)
         if action_result.action_id != action.id:
             action_result = ActionResult(
                 action_id=action.id,
@@ -394,7 +411,9 @@ class Orchestrator:
             )
         return self._finish_action(action, case, action_result)
 
-    def _prepare_action(self, session: Session, case: Case) -> tuple[Action, int, bool]:
+    def _prepare_action(
+        self, session: Session, case: Case
+    ) -> tuple[Action, ActionAdapter | None, int, bool]:
         step_rows = session.execute(
             select(case_steps.c.status, case_steps.c.attempt, case_steps.c.output)
             .where(
@@ -432,20 +451,25 @@ class Orchestrator:
             select(equipment_table.c.category).where(equipment_table.c.id == str(case.equipment_id))
         ).first()
         category = str(equipment_row.category).casefold() if equipment_row is not None else ""
+        channel = (case.verdict.channel if case.verdict is not None else None) or case.channel
+        adapter = self.action_adapters.get(channel)
+        payload: dict[str, Any] = {
+            "case_id": str(case.id),
+            "incident_id": str(case.incident_id),
+            **({"to": recipient} if recipient else {}),
+        }
+        if channel == Channel.BROWSER_PORTAL:
+            payload["url"] = case.verdict.target_url if case.verdict else ""
         action = Action(
             case_id=case.id,
-            channel=self.action_adapter.channel,
-            kind="warranty_claim_email",
+            channel=channel,
+            kind=_action_kind_for_channel(channel),
             idempotency_key=idempotency_key,
-            payload={
-                "case_id": str(case.id),
-                "incident_id": str(case.incident_id),
-                **({"to": recipient} if recipient else {}),
-            },
-            badge=self.action_adapter.badge,
+            payload=payload,
+            badge=adapter.badge if adapter is not None else case.badge,
             requires_data_checklist=category in {"computer", "laptop", "notebook"},
         )
-        return action, attempt, prior_running
+        return action, adapter, attempt, prior_running
 
     def _assert_action_allowed(self, action: Action) -> None:
         active_settings = self._settings_for_action()
@@ -457,7 +481,7 @@ class Orchestrator:
                 raise SecurityViolation("email action has no recipient")
             assert_email_allowed(str(recipient), active_settings)
         target_url = action.payload.get("url")
-        if action.channel.value == "browser_portal" and target_url is None:
+        if action.channel == Channel.BROWSER_PORTAL and not target_url:
             raise SecurityViolation("browser action has no target URL")
         if target_url is not None:
             assert_url_allowed(str(target_url), active_settings)
@@ -532,6 +556,20 @@ class Orchestrator:
                 case_id=str(case.id),
                 payload={"from": CaseStatus.SENDING.value, "to": failed.value},
             )
+            if latest_step is not None and int(latest_step.attempt) >= 2:
+                takeover = transition(failed, CaseStatus.MANUAL_TAKEOVER)
+                self._set_status(session, case, takeover)
+                append_event(
+                    session,
+                    EventType.STATUS_CHANGED,
+                    case_id=str(case.id),
+                    payload={
+                        "from": failed.value,
+                        "to": takeover.value,
+                        "reason": "retry_limit_reached",
+                    },
+                )
+                return case.model_copy(update={"status": takeover})
             return case.model_copy(update={"status": failed})
 
     def _complete_tracking(
@@ -630,6 +668,8 @@ class Orchestrator:
                     rule_version=verdict_row["rule_version"],
                     checks=verdict_row["checks"],
                     evidence=verdict_row["evidence"],
+                    channel=verdict_row["channel"],
+                    target_url=verdict_row["target_url"],
                     missing=verdict_row["missing"],
                     possible_exclusions=verdict_row["possible_exclusions"],
                     explanation_fr=verdict_row["explanation_fr"],
@@ -735,6 +775,8 @@ class Orchestrator:
                 possible_exclusions=verdict.possible_exclusions,
                 explanation_fr=verdict.explanation_fr,
                 explanation_en=verdict.explanation_en,
+                channel=verdict.channel.value if verdict.channel is not None else None,
+                target_url=verdict.target_url,
             )
         )
 
@@ -765,3 +807,17 @@ def _checklist_is_complete(value: Any) -> bool:
         ).complete()
     except (TypeError, ValueError):
         return False
+
+
+def _action_kind_for_channel(channel: Channel) -> str:
+    if channel == Channel.EMAIL_LESSOR:
+        return "lessor_request"
+    if channel == Channel.BROWSER_PORTAL:
+        return "portal_claim"
+    if channel == Channel.API:
+        return "api_claim"
+    if channel == Channel.MANUAL:
+        return "manual_claim"
+    if channel.value.startswith("email_"):
+        return "warranty_claim_email"
+    raise ValueError(f"unsupported action channel: {channel.value}")

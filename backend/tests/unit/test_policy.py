@@ -34,7 +34,7 @@ def test_auto_send_requires_all_six_conditions() -> None:
         case,
         verdict,
         equipment,
-        "repair_request",
+        "warranty_claim_email",
         settings,
         checklist_complete=True,
         equipment_unambiguous=True,
@@ -47,7 +47,7 @@ def test_auto_send_requires_all_six_conditions() -> None:
 @pytest.mark.parametrize(
     ("override", "action_kind"),
     [
-        ({"settings": Settings(auto_send_threshold_eur=Decimal("0"))}, "repair_request"),
+        ({"settings": Settings(auto_send_threshold_eur=Decimal("0"))}, "warranty_claim_email"),
         (
             {
                 "verdict": Verdict(
@@ -56,9 +56,9 @@ def test_auto_send_requires_all_six_conditions() -> None:
                     explanation_en="Likely",
                 )
             },
-            "repair_request",
+            "warranty_claim_email",
         ),
-        ({"equipment_unambiguous": False}, "repair_request"),
+        ({"equipment_unambiguous": False}, "warranty_claim_email"),
         (
             {
                 "verdict": Verdict(
@@ -68,9 +68,9 @@ def test_auto_send_requires_all_six_conditions() -> None:
                     explanation_en="Covered subject to review",
                 )
             },
-            "repair_request",
+            "warranty_claim_email",
         ),
-        ({"suspicious_signal": True}, "repair_request"),
+        ({"suspicious_signal": True}, "warranty_claim_email"),
         ({}, "purchase_order"),
     ],
 )
@@ -99,14 +99,14 @@ def test_pause_and_incomplete_data_checklist_are_blocking() -> None:
         case,
         verdict,
         equipment,
-        "repair_request",
+        "warranty_claim_email",
         settings.model_copy(update={"agent_paused": True}),
     )
     checklist = decide(
         case,
         verdict,
         equipment,
-        "repair_request",
+        "warranty_claim_email",
         settings,
         requires_data_checklist=True,
         checklist_complete=False,
@@ -124,16 +124,30 @@ def test_zero_threshold_always_requires_validation() -> None:
         case,
         verdict,
         equipment,
-        "repair_request",
+        "warranty_claim_email",
         settings.model_copy(update={"auto_send_threshold_eur": Decimal("0")}),
     )
     assert result.conditions["under_threshold"] is False
     assert result.outcome == PolicyOutcome.NEEDS_VALIDATION
 
 
+@pytest.mark.parametrize("action_kind", ["portal_claim", "api_claim", "manual_claim"])
+def test_non_email_channels_are_not_low_commitment(action_kind: str) -> None:
+    case, verdict, equipment, settings = make_inputs()
+    result = decide(case, verdict, equipment, action_kind, settings)
+    assert result.conditions["low_commitment_action"] is False
+    assert result.outcome != PolicyOutcome.AUTO_SEND
+
+
+def test_lessor_email_is_low_commitment() -> None:
+    case, verdict, equipment, settings = make_inputs()
+    result = decide(case, verdict, equipment, "lessor_request", settings)
+    assert result.conditions["low_commitment_action"] is True
+
+
 def test_not_covered_is_blocked() -> None:
     case, verdict, equipment, settings = make_inputs()
     verdict = verdict.model_copy(update={"value": VerdictValue.NOT_COVERED})
-    result = decide(case, verdict, equipment, "repair_request", settings)
+    result = decide(case, verdict, equipment, "warranty_claim_email", settings)
     assert result.outcome == PolicyOutcome.BLOCKED
     assert "verdict_not_covered" in result.reasons

@@ -123,6 +123,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cases/{case_id}/manual-takeover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request Manual Takeover */
+        post: operations["request_manual_takeover_api_cases__case_id__manual_takeover_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cases/{case_id}/manual-proof": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Manual Proof */
+        post: operations["submit_manual_proof_api_cases__case_id__manual_proof_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/cases/{case_id}/checklist": {
         parameters: {
             query?: never;
@@ -352,7 +386,7 @@ export interface components {
          * CaseStatus
          * @enum {string}
          */
-        CaseStatus: "prepared" | "awaiting_validation" | "sending" | "sent" | "failed" | "tracked" | "resolved" | "cancelled";
+        CaseStatus: "prepared" | "awaiting_validation" | "sending" | "sent" | "failed" | "manual_takeover" | "tracked" | "resolved" | "cancelled";
         /**
          * Channel
          * @enum {string}
@@ -460,6 +494,24 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** ManualProofRequest */
+        ManualProofRequest: {
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            person_id: string;
+            /** Proof */
+            proof: string;
+        };
+        /** ManualTakeoverRequest */
+        ManualTakeoverRequest: {
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            person_id: string;
         };
         /** PolicyDecision */
         PolicyDecision: {
@@ -613,6 +665,9 @@ export interface components {
              */
             id?: string;
             value: components["schemas"]["VerdictValue"];
+            channel?: components["schemas"]["Channel"] | null;
+            /** Target Url */
+            target_url?: string | null;
             /** Rule Id */
             rule_id?: string | null;
             /** Rule Version */
@@ -828,6 +883,76 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["RejectionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Case"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_manual_takeover_api_cases__case_id__manual_takeover_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ManualTakeoverRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Case"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_manual_proof_api_cases__case_id__manual_proof_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ManualProofRequest"];
             };
         };
         responses: {

@@ -125,6 +125,8 @@ verdicts = Table(
     Base.metadata,
     Column("id", String(36), primary_key=True),
     Column("value", String(64), nullable=False),
+    Column("channel", String(64)),
+    Column("target_url", Text),
     Column("rule_id", String(255)),
     Column("rule_version", String(64)),
     Column("checks", JSON, nullable=False),

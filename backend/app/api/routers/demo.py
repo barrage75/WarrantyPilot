@@ -6,7 +6,14 @@ from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_app_settings, get_orchestrator, get_session
-from app.contracts.enums import CaseStatus, EventType, IncidentKind, IncidentReportedVia
+from app.contracts.enums import (
+    CaseStatus,
+    Channel,
+    EventType,
+    IncidentKind,
+    IncidentReportedVia,
+    RealityBadge,
+)
 from app.contracts.models import Case, DataChecklist, utc_now
 from app.core.journal import append_event
 from app.core.orchestrator import Orchestrator
@@ -91,7 +98,7 @@ async def create_fake_case(
     }
     session.execute(insert(incidents).values(**incident))
     services = request.app.state.services
-    adapter = services["action_adapter"]
+    adapter = services["action_adapters"].get(Channel.EMAIL_RESELLER)
     session.execute(
         insert(cases).values(
             id=str(case_id),
@@ -100,8 +107,8 @@ async def create_fake_case(
             status=CaseStatus.PREPARED.value,
             verdict_id=None,
             policy_id=None,
-            channel=adapter.channel.value,
-            badge=adapter.badge.value,
+            channel=Channel.EMAIL_RESELLER.value,
+            badge=adapter.badge.value if adapter is not None else RealityBadge.SIMULATED.value,
             created_at=now.isoformat(),
             updated_at=now.isoformat(),
         )

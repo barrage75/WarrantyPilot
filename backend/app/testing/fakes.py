@@ -48,6 +48,7 @@ class FakeRulesEngine:
             return self.verdict.model_copy(deep=True)
         return Verdict(
             value=VerdictValue.COVERED,
+            channel=Channel.EMAIL_RESELLER,
             rule_id="fake-standard-warranty",
             rule_version="1",
             checks=[RuleCheck(name="fake_rule_match", passed=True, detail="Fake rule matched.")],
@@ -85,12 +86,20 @@ class FakeActionAdapter:
         )
 
 
-class FailingActionAdapter(FakeActionAdapter):
+class FakeEmailAdapter(FakeActionAdapter):
+    channel = Channel.EMAIL_RESELLER
+
+
+class FakeBrowserAdapter(FakeActionAdapter):
+    channel = Channel.BROWSER_PORTAL
+
+
+class FailingActionAdapter(FakeEmailAdapter):
     def __init__(self) -> None:
         super().__init__(result="failure")
 
 
-class CrashingActionAdapter(FakeActionAdapter):
+class CrashingActionAdapter(FakeEmailAdapter):
     def __init__(self) -> None:
         super().__init__(result="crash")
 

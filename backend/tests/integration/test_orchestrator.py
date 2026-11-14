@@ -1,6 +1,7 @@
 from sqlalchemy import select
 
-from app.contracts.enums import CaseStatus, EventType
+from app.contracts.enums import CaseStatus, Channel, EventType, VerdictValue
+from app.contracts.models import Verdict
 from app.core.journal import append_event, verify
 from app.core.orchestrator import Orchestrator
 from app.core.status import recover_interrupted_sends
@@ -8,7 +9,8 @@ from app.core.tables import action_results, actions, case_steps, cases, events
 from app.testing.fakes import (
     CrashingActionAdapter,
     FailingActionAdapter,
-    FakeActionAdapter,
+    FakeBrowserAdapter,
+    FakeEmailAdapter,
     FakeExtractor,
     FakeFollowUp,
     FakeRulesEngine,
@@ -16,12 +18,12 @@ from app.testing.fakes import (
 from tests.integration.helpers import create_case
 
 
-def make_orchestrator(factory, app_settings, adapter):
+def make_orchestrator(factory, app_settings, adapter=None, rules_engine=None):
     return Orchestrator(
         session_factory=factory,
         extractor=FakeExtractor(),
-        rules_engine=FakeRulesEngine(),
-        action_adapter=adapter,
+        rules_engine=rules_engine or FakeRulesEngine(),
+        action_adapters={adapter.channel: adapter} if adapter is not None else {},
         follow_up=FakeFollowUp(),
         app_settings=app_settings,
     )
@@ -44,7 +46,7 @@ async def test_case_runs_from_prepared_through_resolved(session_factory, app_set
         email="allowed@example.test",
         allowlist=["allowed@example.test"],
     )
-    adapter = FakeActionAdapter()
+    adapter = FakeEmailAdapter()
     orchestrator = make_orchestrator(session_factory, app_settings, adapter)
 
     pending = await orchestrator.run(case.id)
@@ -101,8 +103,8 @@ async def test_failure_can_retry_once_with_a_new_idempotency_key(
     approve(session_factory, case.id, person_id)
     assert (await orchestrator.run(case.id)).status == CaseStatus.FAILED
 
-    retry = FakeActionAdapter()
-    orchestrator.action_adapter = retry
+    retry = FakeEmailAdapter()
+    orchestrator.action_adapters[retry.channel] = retry
     assert (await orchestrator.run(case.id)).status == CaseStatus.RESOLVED
     assert len(failing.calls) == 1
     assert len(retry.calls) == 1
@@ -118,6 +120,22 @@ async def test_failure_can_retry_once_with_a_new_idempotency_key(
             .all()
         )
     assert results == ["failure", "success"]
+
+
+async def test_exhausted_retries_escalate_to_manual_takeover(session_factory, app_settings) -> None:
+    case, person_id = create_case(
+        session_factory,
+        email="allowed@example.test",
+        allowlist=["allowed@example.test"],
+    )
+    adapter = FailingActionAdapter()
+    orchestrator = make_orchestrator(session_factory, app_settings, adapter)
+    assert (await orchestrator.run(case.id)).status == CaseStatus.AWAITING_VALIDATION
+    approve(session_factory, case.id, person_id)
+
+    assert (await orchestrator.run(case.id)).status == CaseStatus.FAILED
+    assert (await orchestrator.run(case.id)).status == CaseStatus.MANUAL_TAKEOVER
+    assert len(adapter.calls) == 2
 
 
 async def test_interrupted_send_is_failed_and_not_replayed(session_factory, app_settings) -> None:
@@ -152,7 +170,7 @@ async def test_interrupted_send_is_failed_and_not_replayed(session_factory, app_
 
 async def test_pause_prevents_adapter_execution(session_factory, app_settings) -> None:
     case, _ = create_case(session_factory, paused=True)
-    adapter = FakeActionAdapter()
+    adapter = FakeEmailAdapter()
     result = await make_orchestrator(session_factory, app_settings, adapter).run(case.id)
     assert result.status == CaseStatus.PREPARED
     assert adapter.calls == []
@@ -166,7 +184,7 @@ async def test_email_outside_allowlist_is_refused_before_adapter(
         email="blocked@example.test",
         allowlist=["allowed@example.test"],
     )
-    adapter = FakeActionAdapter()
+    adapter = FakeEmailAdapter()
     orchestrator = make_orchestrator(session_factory, app_settings, adapter)
     await orchestrator.run(case.id)
     approve(session_factory, case.id, person_id)
@@ -176,3 +194,93 @@ async def test_email_outside_allowlist_is_refused_before_adapter(
     with session_factory() as session:
         result_status = session.execute(select(action_results.c.status)).scalar_one()
     assert result_status == "failure"
+
+
+async def test_missing_channel_adapter_records_failure_without_raising(
+    session_factory, app_settings
+) -> None:
+    case, person_id = create_case(session_factory)
+    verdict = Verdict(
+        value=VerdictValue.COVERED,
+        channel=Channel.API,
+        explanation_fr="Couvert",
+        explanation_en="Covered",
+    )
+    orchestrator = make_orchestrator(
+        session_factory,
+        app_settings,
+        rules_engine=FakeRulesEngine(verdict),
+    )
+    assert (await orchestrator.run(case.id)).status == CaseStatus.AWAITING_VALIDATION
+    approve(session_factory, case.id, person_id)
+
+    result = await orchestrator.run(case.id)
+
+    assert result.status == CaseStatus.FAILED
+    with session_factory() as session:
+        action = session.execute(select(actions)).mappings().one()
+        action_result = session.execute(select(action_results)).mappings().one()
+    assert action["channel"] == Channel.API.value
+    assert action["kind"] == "api_claim"
+    assert action_result["status"] == "failure"
+    assert action_result["error"] == "no_adapter_for_channel"
+
+
+async def test_browser_adapter_uses_verdict_channel_and_url(session_factory, app_settings) -> None:
+    case, person_id = create_case(session_factory)
+    verdict = Verdict(
+        value=VerdictValue.COVERED,
+        channel=Channel.BROWSER_PORTAL,
+        target_url="http://localhost:8001/claim",
+        explanation_fr="Couvert",
+        explanation_en="Covered",
+    )
+    adapter = FakeBrowserAdapter()
+    orchestrator = make_orchestrator(
+        session_factory,
+        app_settings,
+        adapter,
+        FakeRulesEngine(verdict),
+    )
+    assert (await orchestrator.run(case.id)).status == CaseStatus.AWAITING_VALIDATION
+    approve(session_factory, case.id, person_id)
+
+    result = await orchestrator.run(case.id)
+
+    assert result.status == CaseStatus.RESOLVED
+    with session_factory() as session:
+        action = session.execute(select(actions)).mappings().one()
+    assert action["channel"] == Channel.BROWSER_PORTAL.value
+    assert action["kind"] == "portal_claim"
+    assert action["payload"]["url"] == "http://localhost:8001/claim"
+
+
+async def test_case_channel_is_used_when_verdict_channel_is_missing(
+    session_factory, app_settings
+) -> None:
+    case, person_id = create_case(
+        session_factory,
+        email="allowed@example.test",
+        allowlist=["allowed@example.test"],
+    )
+    verdict = Verdict(
+        value=VerdictValue.COVERED,
+        explanation_fr="Couvert",
+        explanation_en="Covered",
+    )
+    adapter = FakeEmailAdapter()
+    orchestrator = make_orchestrator(
+        session_factory,
+        app_settings,
+        adapter,
+        FakeRulesEngine(verdict),
+    )
+    assert (await orchestrator.run(case.id)).status == CaseStatus.AWAITING_VALIDATION
+    approve(session_factory, case.id, person_id)
+
+    result = await orchestrator.run(case.id)
+
+    assert result.status == CaseStatus.RESOLVED
+    with session_factory() as session:
+        action = session.execute(select(actions)).mappings().one()
+    assert action["channel"] == case.channel.value
