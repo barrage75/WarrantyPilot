@@ -9,6 +9,7 @@ test("fleet uses seeded equipment, server filters, pagination and an Escape-safe
  expect(items).toHaveLength(230);
  await page.goto("/parc");
  await expect(page.getByTestId("equipment-tile")).toHaveCount(24);
+ await page.getByRole("navigation").getByRole("link", { name: "Parc", exact: true }).click();
  await page.getByRole("button", { name: "Page suivante", exact: true }).click();
  await expect(page.getByRole("status")).toContainText("2 / 10");
  await page.getByRole("button", { name: "Expire bientôt", exact: true }).click();
