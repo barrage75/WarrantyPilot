@@ -27,4 +27,26 @@ describe("technical labels", () => {
   expect(isTechnicalValue("DELL-REP-123456")).toBe(false);
   expect(isTechnicalValue("SVC-FAKE-01")).toBe(false);
  });
+ it.each([
+  "20/11/2025", "11/20/2025", "1/2/2025",
+  "Date de facture : 20/11/2025 (date estimée)",
+  "Date d'achat : 21/11/2026", "Invoice date: 11/20/2025",
+  "Date:20/11/2025.", "Achat le 20/11/2025...", "20/11/2025,11/20/2025",
+  "Date de facture : 20/11/2025 à 09:30:08",
+ ])("keeps standalone dates human-readable: %s", value => {
+  expect(isTechnicalValue(value)).toBe(false);
+ });
+ it.each([
+  "/tmp/x.pdf", "runtime/browser/case/step.png", "C:\\runtime\\browser\\step.png",
+  "/20/11/2025", "./20/11/2025", "runtime/browser/20/11/2025", "20/11/2025.pdf",
+  "invoice-20/11/2025", "invoice.20/11/2025", "20/11/2025-invoice", "20/11/2025:invoice",
+  "Date de facture : 20/11/2025 ; fichier /tmp/x.pdf",
+  "Date: 11/20/2025 ; runtime/browser/case/step.png",
+  "https://example.test/20/11/2025", "20/11/2025 ; https://example.test/invoice.pdf",
+  "Date : 20/11/2025 ; 2994dff0-6a5d-421a-b61b-c7b71c49dce9",
+  "rule_id=dell-laptop", "invoice_date=20/11/2025", "expected = 20/11/2025",
+  "source: /tmp/x.pdf", "camille@example.test",
+ ])("keeps real paths and other technical content collapsed: %s", value => {
+  expect(isTechnicalValue(value)).toBe(true);
+ });
 });
