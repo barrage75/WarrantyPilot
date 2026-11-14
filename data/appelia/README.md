@@ -17,9 +17,9 @@ uv run --project backend python data/appelia/generate.py
 Avec l'environnement virtuel du backend activé, la commande équivalente est
 `python data/appelia/generate.py`.
 
-Le dossier `invoices/` contient 50 PDF ordinaires et 10 factures Factur-X au
-profil EN16931. Le cinquantième PDF ordinaire est une seconde copie exacte de la
-facture 001, pour le scénario de doublon. Les dix XML CII embarqués contiennent
+Le dossier `invoices/` contient 48 PDF ordinaires et 12 factures Factur-X au
+profil EN16931. La facture 050 est une copie exacte Factur-X de la facture 001,
+pour le scénario de doublon. Les XML CII embarqués contiennent
 les numéros de série dans la description de ligne (`ram:Description`) : le modèle
 CII conserve cette preuve avec le modèle et le SKU; les SKU figurent aussi dans
 `ram:SellerAssignedID`.
@@ -34,6 +34,10 @@ Le piège 7 répète le numéro de la facture avec une date différente sur le b
 livraison; `traps.json` conserve les deux faits `invoice_date` et leur provenance.
 `documents/` contient le contrat de location, deux certificats Warranty+, le
 contrat Dell ProSupport et le bon de livraison associé au piège 7.
+
+L'opérateur informatique de démonstration est Karim Benali
+(`responsable informatique`, `karim.benali.002@appelia.example`), dont l'identifiant
+stable est `97225c38-d686-5d99-a6cf-53e18aa92e8d`.
 
 Les factures Dell indiquent la durée de garantie sur chaque ligne et
 `annotations.json` la reprend dans `warranty_term_months`. Le cas de démonstration
@@ -51,7 +55,7 @@ from data.appelia.load import load_dataset
 dataset = load_dataset()
 ```
 
-Le loader passe les dix factures Factur-X par le registre d'extracteurs et expose
+Le loader passe les douze factures Factur-X par le registre d'extracteurs et expose
 les faits et droits déduits des preuves de location, Warranty+ et ProSupport.
 
 Les PDF sont produits avec des métadonnées à date fixe pour que la génération

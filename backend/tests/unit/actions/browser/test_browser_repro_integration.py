@@ -72,7 +72,8 @@ async def test_scripted_driver_files_the_request_up_to_the_case_number(repro, tm
     shots = [path for _, path in steps if path]
     assert len(shots) >= 4 and all(Path(p).exists() for p in shots)
     assert any("Connexion" in text for text, _ in steps)
-    assert steps[-1][0].startswith("[scripted] Dossier Dell créé")
+    assert any(text.startswith("[scripted] Dossier Dell créé") for text, _ in steps)
+    assert steps[-1][0].startswith("[scripted] Dossier créé (")
 
 
 async def test_repeated_action_never_creates_a_second_case(repro, tmp_path) -> None:

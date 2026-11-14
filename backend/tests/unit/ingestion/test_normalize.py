@@ -1,24 +1,28 @@
-import json
 from datetime import date
-from pathlib import Path
+from decimal import Decimal
 from typing import Any
 from uuid import UUID, uuid4
 
+from data.appelia.load import load_dataset
+
 from app.api.routers.scan import _evaluate_equipment
 from app.contracts.enums import (
+    CaseStatus,
+    Channel,
     FactField,
     FactSource,
     IncidentKind,
     IncidentReportedVia,
+    PolicyOutcome,
+    RealityBadge,
     VerdictValue,
 )
-from app.contracts.models import Equipment, Fact, Incident, Provenance
+from app.contracts.models import Case, Equipment, Fact, Incident, Provenance, Settings
 from app.core.orchestrator import Orchestrator
+from app.core.policy import decide
 from app.ingestion import fields as invoice_fields
 from app.ingestion.normalize import normalize_facts
 from app.rules import DEFAULT_RULES_DIR, DEMO_REFERENCE_DATE, DeterministicRulesEngine, load_rules
-
-APPELIA_DIRECTORY = Path(__file__).resolve().parents[4] / "data" / "appelia"
 
 
 def _fact(document_id: UUID, field: str, value: object) -> Fact:
@@ -151,43 +155,44 @@ def test_line_without_serial_matches_by_model() -> None:
     assert _evaluate(normalized, equipment, incident).value == VerdictValue.COVERED
 
 
-def test_demo_paul_scan_and_orchestrator_have_the_same_verdict() -> None:
-    traps = json.loads((APPELIA_DIRECTORY / "traps.json").read_text(encoding="utf-8"))
-    equipment_data = json.loads((APPELIA_DIRECTORY / "equipment.json").read_text(encoding="utf-8"))
-    annotations = json.loads((APPELIA_DIRECTORY / "annotations.json").read_text(encoding="utf-8"))
-    demo_case = next(item for item in traps["demo_cases"] if item["id"] == "demo-paul-martin")
-    equipment_record = next(
-        item for item in equipment_data if item["id"] == demo_case["equipment_id"]
-    )
-    annotation = next(item for item in annotations if item["filename"] == demo_case["documents"][0])
-    equipment = Equipment(
-        id=UUID(equipment_record["id"]),
-        brand=equipment_record["brand"],
-        model=equipment_record["model"],
-        serial=equipment_record["serial"],
-        category=equipment_record["category"],
-        assigned_to=UUID(equipment_record["assigned_to"]),
-        purchase_price=equipment_record["purchase_price"],
-        currency=equipment_record["currency"],
-        in_loan_stock=equipment_record["in_loan_stock"],
-        purchase_date=date.fromisoformat(equipment_record["purchase_date"]),
-        invoice_number=equipment_record["invoice_number"],
-        delivery_date=date.fromisoformat(equipment_record["delivery_date"]),
+def test_demo_paul_scan_and_orchestrator_agree_on_covered_auto_send() -> None:
+    dataset = load_dataset()
+    demo_case = next(item for item in dataset.demo_cases if item["id"] == "demo-paul-martin")
+    equipment = next(
+        item for item in dataset.equipment if str(item.id) == demo_case["equipment_id"]
     )
     incident = Incident(
         kind=IncidentKind.FAILURE,
-        reporter_id=equipment.assigned_to,
+        reporter_id=equipment.assigned_to or dataset.people[0].id,
         equipment_id=equipment.id,
         description=demo_case["description"],
         reported_via=IncidentReportedVia.CHAT,
     )
-    facts = _invoice_facts(annotation, uuid4())
     engine = DeterministicRulesEngine(DEMO_REFERENCE_DATE)
     rules = load_rules(DEFAULT_RULES_DIR)
+    rights = [right for right in dataset.rights if right.equipment_id == equipment.id]
 
     orchestrator_verdict = Orchestrator._evaluate_verdict(
-        engine, equipment, facts, incident, rules, []
+        engine, equipment, list(dataset.facts), incident, rules, rights
     )
-    scan_verdict = _evaluate_equipment(engine, equipment, facts, incident, rules, [])
+    scan_verdict = _evaluate_equipment(
+        engine, equipment, list(dataset.facts), incident, rules, rights
+    )
 
-    assert orchestrator_verdict.value == scan_verdict.value
+    assert orchestrator_verdict.value == scan_verdict.value == VerdictValue.COVERED
+    assert orchestrator_verdict.channel == scan_verdict.channel == Channel.EMAIL_RESELLER
+    case = Case(
+        incident_id=incident.id,
+        equipment_id=equipment.id,
+        status=CaseStatus.PREPARED,
+        channel=Channel.EMAIL_RESELLER,
+        badge=RealityBadge.REPRODUCTION,
+    )
+    policy = decide(
+        case,
+        orchestrator_verdict,
+        equipment,
+        "warranty_claim_email",
+        Settings(auto_send_threshold_eur=Decimal("500")),
+    )
+    assert policy.outcome == PolicyOutcome.AUTO_SEND

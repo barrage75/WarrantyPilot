@@ -84,6 +84,11 @@ async def test_browser_steps_are_persisted_in_the_case_timeline(
     assert step_events
     assert step_events[0].actor == "agent"
     assert step_events[0].payload == {
+        "action_id": str(action.id),
         "text": "[scripted] Dossier Dell créé",
         "screenshot_path": str(screenshot_path),
+        "screenshot_name": "capture.png",
+        "screenshot_action_id": str(action.id),
+        "screenshot_url": (f"/api/cases/{case.id}/screenshots/capture.png?action_id={action.id}"),
     }
+    assert step_events[-1].payload["case_number"] == "FAKE0001"

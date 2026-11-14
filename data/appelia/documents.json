@@ -4,8 +4,8 @@
     "filename": "invoices/invoice-001.pdf",
     "kind": "invoice",
     "mime": "application/pdf",
-    "source": "upload",
-    "sha256": "70266a30e4b2fa18127bbd67de84a05aa0f0f83076ab48b967e26c2009dec355"
+    "source": "facturx",
+    "sha256": "3265c276bb8d8ef472caa89c74ddc1688c7e57e4efae93d7785e975b4ddd4ca6"
   },
   {
     "id": "1cedba04-447e-5c5a-a38d-d6e4a7a466e9",
@@ -396,8 +396,8 @@
     "filename": "invoices/invoice-050.pdf",
     "kind": "invoice",
     "mime": "application/pdf",
-    "source": "upload",
-    "sha256": "70266a30e4b2fa18127bbd67de84a05aa0f0f83076ab48b967e26c2009dec355"
+    "source": "facturx",
+    "sha256": "3265c276bb8d8ef472caa89c74ddc1688c7e57e4efae93d7785e975b4ddd4ca6"
   },
   {
     "id": "6b725de9-2deb-59c0-8b4f-7d267b0e8dad",

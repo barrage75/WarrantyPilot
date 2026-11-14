@@ -43,6 +43,7 @@ class ExpiringRight(APIModel):
     equipment: str
     right: RightType
     ends_at: str
+    days_left: int
 
 
 class ScanSummary(APIModel):
@@ -141,6 +142,7 @@ async def _run_scan(application: Any, scan_id: str) -> None:
                             equipment=f"{item.brand} {item.model}",
                             right=right.right_type.value,
                             ends_at=right.end_date.isoformat(),
+                            days_left=(right.end_date - today).days,
                         )
                     )
 

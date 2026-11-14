@@ -320,6 +320,61 @@
         }
       }
     },
+    "/api/cases/{case_id}/screenshots/{name}": {
+      "get": {
+        "summary": "Get Case Screenshot",
+        "operationId": "get_case_screenshot_api_cases__case_id__screenshots__name__get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Case Id"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "action_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Action Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "image/png": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/cases/{case_id}/validate": {
       "post": {
         "summary": "Validate Case",
@@ -1884,13 +1939,18 @@
           "endsAt": {
             "type": "string",
             "title": "Endsat"
+          },
+          "daysLeft": {
+            "type": "integer",
+            "title": "Daysleft"
           }
         },
         "type": "object",
         "required": [
           "equipment",
           "right",
-          "endsAt"
+          "endsAt",
+          "daysLeft"
         ],
         "title": "ExpiringRight"
       },

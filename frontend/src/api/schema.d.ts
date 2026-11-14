@@ -157,6 +157,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cases/{case_id}/screenshots/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Case Screenshot */
+        get: operations["get_case_screenshot_api_cases__case_id__screenshots__name__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/cases/{case_id}/validate": {
         parameters: {
             query?: never;
@@ -836,6 +853,8 @@ export interface components {
             right: components["schemas"]["RightType"];
             /** Endsat */
             endsAt: string;
+            /** Daysleft */
+            daysLeft: number;
         };
         /** FakeCaseRequest */
         FakeCaseRequest: {
@@ -1384,6 +1403,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CaseActionHistory"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_case_screenshot_api_cases__case_id__screenshots__name__get: {
+        parameters: {
+            query: {
+                action_id: string;
+            };
+            header?: never;
+            path: {
+                case_id: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": unknown;
                 };
             };
             /** @description Validation Error */

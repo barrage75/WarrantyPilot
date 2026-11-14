@@ -618,7 +618,7 @@
         "purchase_price": "230.00",
         "currency": "EUR",
         "in_loan_stock": false,
-        "purchase_date": "2024-12-20",
+        "purchase_date": "2025-03-20",
         "delivery_date": "2024-12-23",
         "ship_date": null
       },
@@ -637,12 +637,12 @@
           "equipment_id": "0f0eb340-18d0-58ea-b6c3-0c75d9f742b5",
           "document_id": "6f84a1e6-8fa5-5ec2-8a15-fc69d7005247",
           "field": "purchase_date",
-          "value": "2024-12-20",
+          "value": "2025-03-20",
           "provenance": {
             "id": "e197fe77-3537-5c9a-9a8d-ab15bf030d52",
             "document_id": "6f84a1e6-8fa5-5ec2-8a15-fc69d7005247",
             "page": 1,
-            "excerpt": "Achat : 2024-12-20"
+            "excerpt": "Achat : 2025-03-20"
           },
           "confidence": 0.99,
           "source": "structured"
@@ -652,12 +652,12 @@
           "equipment_id": "0f0eb340-18d0-58ea-b6c3-0c75d9f742b5",
           "document_id": "6f84a1e6-8fa5-5ec2-8a15-fc69d7005247",
           "field": "invoice_date",
-          "value": "2024-12-20",
+          "value": "2025-03-20",
           "provenance": {
             "id": "0ab32169-5dd7-5773-b193-de025faed352",
             "document_id": "6f84a1e6-8fa5-5ec2-8a15-fc69d7005247",
             "page": 1,
-            "excerpt": "Facture n° APP-2024-0001 du 2024-12-20"
+            "excerpt": "Facture n° APP-2025-0001 du 2025-03-20"
           },
           "confidence": 0.99,
           "source": "structured"

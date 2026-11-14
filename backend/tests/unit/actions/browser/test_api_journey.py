@@ -112,17 +112,27 @@ def test_dell_chat_validation_files_one_portal_case(
             .mappings()
             .one()
         )
-        event_types = (
-            session.execute(select(events.c.type).where(events.c.case_id == case_id))
-            .scalars()
-            .all()
-        )
+        event_rows = session.execute(
+            select(events.c.type, events.c.payload).where(events.c.case_id == case_id)
+        ).all()
     proof = json.loads(result["proof"])
     assert action["channel"] == Channel.BROWSER_PORTAL.value
     assert action["idempotency_key"] == f"case:{case_id}:browser_portal:7XK4L93"
     assert result["status"] == "success"
     assert proof["case_number"]
     assert [item["number"] for item in dell_repro.cases()] == [proof["case_number"]]
+    assert any(
+        event_type == EventType.ACTION_STEP.value
+        and payload.get("case_number") == proof["case_number"]
+        and payload["screenshot_url"].startswith("/api/cases/")
+        for event_type, payload in event_rows
+    )
+    assert any(
+        event_type == EventType.ACTION_SUCCEEDED.value
+        and payload["case_number"] == proof["case_number"]
+        for event_type, payload in event_rows
+    )
+    event_types = [event_type for event_type, _ in event_rows]
     assert EventType.ACTION_STEP.value in event_types
     assert EventType.ACTION_SUCCEEDED.value in event_types
     assert EventType.STATUS_CHANGED.value in event_types

@@ -71,7 +71,7 @@ def test_facturx_xml_matches_annotations() -> None:
         item for item in _read_json("annotations.json") if item["format"] == "facturx"
     ]
     suppliers = {item["id"]: item for item in _read_json("suppliers.json")}
-    assert len(annotations) == 10
+    assert len(annotations) == 12
 
     for annotation in annotations:
         reader = PdfReader(str(DATA_DIRECTORY / annotation["filename"]))
@@ -274,6 +274,27 @@ def test_loader_validates_contract_models() -> None:
     assert all(
         isinstance(item, Document) and item.untrusted for item in dataset.documents
     )
+    paul_case = next(
+        item for item in dataset.demo_cases if item["id"] == "demo-paul-martin"
+    )
+    paul_equipment = next(
+        item for item in dataset.equipment_records if item["id"] == paul_case["equipment_id"]
+    )
+    paul_invoice = next(
+        item for item in dataset.annotations if item["filename"] == paul_case["documents"][0]
+    )
+    assert paul_invoice["format"] == "facturx"
+    assert paul_invoice["invoice_date"] == "2025-03-20"
+    assert paul_equipment["purchase_date"] == "2025-03-20"
+    assert paul_equipment["delivery_date"] == "2025-03-24"
+    paul_invoice_dates = [
+        fact.value
+        for fact in dataset.facts
+        if fact.equipment_id is not None
+        and str(fact.equipment_id) == paul_equipment["id"]
+        and fact.field == "invoice_date"
+    ]
+    assert paul_invoice_dates and set(paul_invoice_dates) == {"2025-03-20"}
     assert all(
         item["condition"] in {"new", "refurbished"} for item in equipment_records
     )
@@ -338,6 +359,8 @@ def test_loader_validates_contract_models() -> None:
     people_by_name = {person.name: person for person in dataset.people}
     assert people_by_name["Paul Martin"].role == "technicien plateau"
     assert people_by_name["Karim Benali"].role == "responsable informatique"
+    assert str(people_by_name["Karim Benali"].id) == "97225c38-d686-5d99-a6cf-53e18aa92e8d"
+    assert people_by_name["Karim Benali"].email == "karim.benali.002@appelia.example"
     assert people_by_name["Claire Dubois"].role == "DAF"
 
 

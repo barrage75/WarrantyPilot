@@ -358,7 +358,7 @@ def build_equipment(people: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "Evolve2 65",
             "demo-paul",
             paul,
-            duplicate_invoice_date,
+            date(2025, 3, 20),
             24,
             0,
             False,
@@ -539,6 +539,7 @@ def build_equipment(people: list[dict[str, Any]]) -> list[dict[str, Any]]:
             scenario=scenario,
             person=special_person,
             purchase_date=purchase,
+            delivery_date=date(2025, 3, 24) if scenario == "demo-paul" else ...,
             warranty_months=warranty,
             warranty_plus_months=plus,
             refurbished=refurbished,
@@ -1777,14 +1778,20 @@ def generate_dataset(output_directory: Path | None = None) -> None:
     invoice_directory_names: dict[str, str] = {}
     invoice_annotations: list[dict[str, Any]] = []
     invoice_paths: dict[str, Path] = {}
+    paul_equipment_id = next(
+        item["id"] for item in equipment if item["scenario"] == "demo-paul"
+    )
 
     for index, invoice in enumerate(invoice_records):
         if index < 49:
             filename = f"invoice-{index + 1:03d}.pdf"
-            invoice_format = "pdf"
         else:
             filename = f"invoice-{index + 2:03d}.pdf"
-            invoice_format = "facturx"
+        invoice_format = (
+            "facturx"
+            if index >= 49 or paul_equipment_id in invoice["equipment_ids"]
+            else "pdf"
+        )
         relative_filename = f"invoices/{filename}"
         path = output / relative_filename
         if invoice_format == "pdf":
@@ -1814,7 +1821,9 @@ def generate_dataset(output_directory: Path | None = None) -> None:
     (output / duplicate_filename).write_bytes(
         invoice_paths[first_invoice["invoice_number"]].read_bytes()
     )
-    duplicate_annotation = make_annotations(first_invoice, duplicate_filename, "pdf")
+    duplicate_annotation = make_annotations(
+        first_invoice, duplicate_filename, invoice_annotations[0]["format"]
+    )
     duplicate_annotation["duplicate_of"] = "invoices/invoice-001.pdf"
 
     support_files = _make_support_documents(output, equipment)

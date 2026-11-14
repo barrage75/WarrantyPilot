@@ -1,4 +1,5 @@
 import time
+from datetime import date
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -95,6 +96,7 @@ def test_chat_asks_when_reporter_has_multiple_matching_assets(
 
 
 def test_scan_runs_in_background_and_reports_document_progress(db_engine, app_settings) -> None:
+    app_settings.demo_today = date(2026, 12, 20)
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
         _reset(client)
@@ -117,6 +119,12 @@ def test_scan_runs_in_background_and_reports_document_progress(db_engine, app_se
     assert result["realizedSavingsEur"] == 0
     assert result["invoices"] == 60
     assert result["badge"] == "reproduction"
+    assert result["expiring"]
+    assert any(item["daysLeft"] == 25 for item in result["expiring"])
+    assert all(
+        item["daysLeft"] == (date.fromisoformat(item["endsAt"]) - app_settings.demo_today).days
+        for item in result["expiring"]
+    )
 
 
 def test_purchase_guard_requires_reason_and_realizes_savings_after_both_conditions(

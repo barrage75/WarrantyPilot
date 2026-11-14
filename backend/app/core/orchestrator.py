@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
@@ -75,6 +76,17 @@ from app.core.tables import (
     settings as settings_table,
 )
 from app.ingestion.normalize import normalize_facts
+
+
+def _case_number_from_proof(proof: str | None) -> str | None:
+    if proof is None:
+        return None
+    try:
+        payload = json.loads(proof)
+    except json.JSONDecodeError:
+        return None
+    case_number = payload.get("case_number") if isinstance(payload, dict) else None
+    return case_number if isinstance(case_number, str) and case_number else None
 
 
 class Orchestrator:
@@ -174,15 +186,19 @@ class Orchestrator:
                 )
                 if current_status != CaseStatus.SENT:
                     self._set_status(session, case, sent_status)
+                    event_payload: dict[str, Any] = {
+                        "action_id": str(success_result.action_id),
+                        "proof": success_result.proof,
+                        "recovered": True,
+                    }
+                    case_number = _case_number_from_proof(success_result.proof)
+                    if case_number is not None:
+                        event_payload["case_number"] = case_number
                     append_event(
                         session,
                         EventType.ACTION_SUCCEEDED,
                         case_id=str(case_id),
-                        payload={
-                            "action_id": str(success_result.action_id),
-                            "proof": success_result.proof,
-                            "recovered": True,
-                        },
+                        payload=event_payload,
                     )
                     append_event(
                         session,
@@ -827,11 +843,18 @@ class Orchestrator:
                 current = CaseStatus.SENDING
                 sent = transition(current, CaseStatus.SENT, action_result=result)
                 self._set_status(session, case, sent)
+                event_payload: dict[str, Any] = {
+                    "action_id": str(action.id),
+                    "proof": result.proof,
+                }
+                case_number = _case_number_from_proof(result.proof)
+                if case_number is not None:
+                    event_payload["case_number"] = case_number
                 append_event(
                     session,
                     EventType.ACTION_SUCCEEDED,
                     case_id=str(case.id),
-                    payload={"action_id": str(action.id), "proof": result.proof},
+                    payload=event_payload,
                 )
                 append_event(
                     session,
