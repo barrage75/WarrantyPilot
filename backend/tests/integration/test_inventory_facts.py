@@ -15,7 +15,7 @@ from app.contracts.models import Fact, Provenance
 from app.core import tables
 from app.core.warranty import inventory_verdict, rules_engine, stored_inventory
 from app.ingestion.facturx import FacturXExtractor
-from tests.auth_helpers import KARIM_ID, login
+from tests.auth_helpers import SAMY_ID, login
 
 
 def test_scan_progress_tracks_extraction_and_honors_injected_extractor(
@@ -46,7 +46,7 @@ def test_scan_progress_tracks_extraction_and_honors_injected_extractor(
 
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
-        login(client, person_id=KARIM_ID)
+        login(client, person_id=SAMY_ID)
         assert client.post("/api/demo/reset", json={"confirm": "RESET"}).status_code == 200
         application.state.services["extractor"] = Extractor()
         application.state.scans["progress"] = {
@@ -99,7 +99,7 @@ def test_scan_progress_tracks_extraction_and_honors_injected_extractor(
 def test_indexed_inventory_preserves_all_seed_verdicts(db_engine, app_settings, session_factory):
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
-        login(client, person_id=KARIM_ID)
+        login(client, person_id=SAMY_ID)
         assert client.post("/api/demo/reset", json={"confirm": "RESET"}).status_code == 200
         with session_factory() as session:
             equipment, indexed, rights = stored_inventory(session)
@@ -129,7 +129,7 @@ def test_indexed_inventory_preserves_all_seed_verdicts(db_engine, app_settings, 
 def test_seed_and_scan_persist_invoice_facts_idempotently(db_engine, app_settings, session_factory):
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
-        login(client, person_id=KARIM_ID)
+        login(client, person_id=SAMY_ID)
         assert client.post("/api/demo/reset", json={"confirm": "RESET"}).status_code == 200
         seeded = client.get("/api/equipment/overview").json()
         assert Counter(item["verdict"] for item in seeded) == {
@@ -186,7 +186,7 @@ def test_unscoped_suspicious_fact_only_affects_linked_equipment(
 ):
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
-        login(client, person_id=KARIM_ID)
+        login(client, person_id=SAMY_ID)
         client.post("/api/demo/reset", json={"confirm": "RESET"})
         baseline = client.get("/api/equipment/overview").json()
         targets = [item for item in baseline if item["verdict"] == "covered"][:2]

@@ -111,7 +111,7 @@ def test_advance_authenticates_closes_last_case_and_ticks(monkeypatch):
     def request(opener, url, data=None):
         calls.append((opener, url, data))
         if url.endswith("/auth/people"):
-            return [{"id": "karim", "name": "Karim Benali"}]
+            return [{"id": "samy", "name": "Samy Benzeguir"}]
         if url.endswith("/__test__/cases"):
             return cases
         if "/advance/" in url:
@@ -123,7 +123,7 @@ def test_advance_authenticates_closes_last_case_and_ticks(monkeypatch):
     assert len({id(opener) for opener, _, _ in calls}) == 1
     assert calls[1][1:] == (
         f"{demo.API}/auth/login",
-        {"person_id": "karim", "password": "local-test"},
+        {"person_id": "samy", "password": "local-test"},
     )
     assert [url for _, url, _ in calls if "/advance/" in url] == [
         f"{demo.DELL}/__test__/advance/new"
@@ -137,7 +137,7 @@ def test_advance_empty_portal_logs_out(monkeypatch):
 
     def request(opener, url, data=None):
         calls.append(url)
-        return [{"id": "karim", "name": "Karim Benali"}] if url.endswith("/auth/people") else []
+        return [{"id": "samy", "name": "Samy Benzeguir"}] if url.endswith("/auth/people") else []
 
     monkeypatch.setattr(demo, "request_json", request)
     with pytest.raises(demo.DemoError, match="Aucun dossier Dell"):

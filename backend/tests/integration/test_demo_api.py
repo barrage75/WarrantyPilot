@@ -23,14 +23,14 @@ from app.core.tables import (
     rights,
     suppliers,
 )
-from tests.auth_helpers import KARIM_ID, login
+from tests.auth_helpers import SAMY_ID, login
 from tests.integration.helpers import create_case
 
 
 def test_reset_preflight_and_health_endpoints(db_engine, app_settings) -> None:
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
-        login(client, person_id=KARIM_ID)
+        login(client, person_id=SAMY_ID)
         adapters = application.state.services["action_adapters"]
         assert isinstance(adapters[Channel.EMAIL_RESELLER], EmailActionAdapter)
         assert adapters[Channel.EMAIL_RESELLER].transport.name == "smtp-local"
@@ -70,7 +70,7 @@ def test_manual_takeover_requires_human_proof(db_engine, session_factory, app_se
         )
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
-        operator = login(client, person_id=KARIM_ID)
+        operator = login(client, person_id=SAMY_ID)
         takeover = client.post(
             f"/api/cases/{case.id}/manual-takeover",
             json={},
@@ -136,7 +136,7 @@ def test_startup_recovers_interrupted_send(
     application = create_app(app_settings=app_settings, app_engine=db_engine)
 
     with TestClient(application) as client:
-        login(client, person_id=KARIM_ID)
+        login(client, person_id=SAMY_ID)
         recovered = client.get(f"/api/cases/{case.id}")
 
     assert recovered.status_code == 200

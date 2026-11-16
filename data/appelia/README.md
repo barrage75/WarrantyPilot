@@ -35,9 +35,9 @@ livraison; `traps.json` conserve les deux faits `invoice_date` et leur provenanc
 `documents/` contient le contrat de location, deux certificats Warranty+, le
 contrat Dell ProSupport et le bon de livraison associé au piège 7.
 
-L'opérateur informatique de démonstration est Karim Benali
-(`responsable informatique`, `karim.benali.002@appelia.example`), dont l'identifiant
-stable est `97225c38-d686-5d99-a6cf-53e18aa92e8d`.
+L'opérateur informatique de démonstration est Samy Benzeguir
+(`responsable informatique`, `samy.benzeguir@appelia.example`), dont l'identifiant
+stable est `0366886f-898d-51be-87ad-2cb539f58c9a`.
 
 ### Rôles d'accès (lot SEC1)
 
@@ -46,14 +46,15 @@ poste au reset (`app.core.auth.access_role_for_job`) :
 
 | Personne | Poste (`role`) | Rôle d'accès (`access_role`) |
 | --- | --- | --- |
-| Karim Benali | `responsable informatique` | `admin` (réglages, reset, étiquette transporteur) |
+| Samy Benzeguir | `responsable informatique` | `admin` (réglages, reset, étiquette transporteur) |
 | Paul (technicien) | `technicien plateau` | `operator` |
 | Claire (DAF) | `DAF` | `operator` |
 | Autres collaborateurs | `collaborateur` | aucun (pas de connexion) |
 
-Connexion : `POST /api/auth/login` avec `{person_id, password}`. Le mot de passe de
-démonstration vient de `WP_DEMO_PASSWORD` ; il est obligatoire hors `WP_ENV=dev`.
-En développement uniquement, le défaut documenté est `appelia-demo`.
+Connexion : `POST /api/auth/login` avec `{person_id, password}`. En développement,
+n'importe quel mot de passe, y compris vide, fonctionne par défaut
+(`WP_DEMO_ANY_PASSWORD=true`). Hors `WP_ENV=dev`, le mot de passe défini par
+`WP_DEMO_PASSWORD` reste obligatoire et comparé strictement.
 
 Le reset de démonstration règle `auto_send_threshold_eur` à 300 € pour montrer
 l'envoi automatique du cas Paul. Le modèle `Settings` conserve son défaut prudent

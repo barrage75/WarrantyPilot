@@ -32,7 +32,7 @@
   "save": "Enregistrer",
   "simulated": "Simulation — aucune action réelle n’est exécutée.",
   "loginTitle": "Connexion opérateur",
-  "loginHelp": "Choisissez votre nom puis saisissez le mot de passe de démonstration (WP_DEMO_PASSWORD).",
+  "loginHelp": "Démo : n'importe quel mot de passe fonctionne.",
   "password": "Mot de passe",
   "login": "Se connecter",
   "logout": "Se déconnecter",

@@ -22,7 +22,7 @@ async function contrastRatio(button: Locator) {
  });
 }
 
-test("Karim manages real settings and confirms demo reset in responsive bento tiles", async ({ page }) => {
+test("Samy manages real settings and confirms demo reset in responsive bento tiles", async ({ page }) => {
  await resetFromUi(page);
  await page.goto("/settings");
  const threshold = page.getByLabel("Seuil d’envoi automatique (€)", { exact: true });
@@ -44,7 +44,7 @@ test("Karim manages real settings and confirms demo reset in responsive bento ti
    await page.setViewportSize({ width, height });
    await page.evaluate(() => window.scrollTo(0, 0));
    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-   if (width === 1440 || width === 390) await page.screenshot({ path: screenshotPath("settings-demo", `${name}-karim-${width}x${height}.png`), animations: "disabled" });
+  if (width === 1440 || width === 390) await page.screenshot({ path: screenshotPath("settings-demo", `${name}-samy-${width}x${height}.png`), animations: "disabled" });
   }
  }
  await page.setViewportSize({ width: 390, height: 844 });
@@ -55,7 +55,7 @@ test("Karim manages real settings and confirms demo reset in responsive bento ti
  await reset.hover();
  await expect.poll(() => contrastRatio(reset)).toBeGreaterThanOrEqual(4.5);
  console.log(`Reset button contrast: ${resetContrast.toFixed(2)}:1`);
- await page.screenshot({ path: screenshotPath("settings-demo", "demo-danger-karim-390x844.png"), animations: "disabled" });
+ await page.screenshot({ path: screenshotPath("settings-demo", "demo-danger-samy-390x844.png"), animations: "disabled" });
  let resets = 0;
  page.on("request", request => { if (request.method() === "POST" && request.url().endsWith("/api/demo/reset")) resets++; });
  await reset.click();
@@ -67,7 +67,7 @@ test("Karim manages real settings and confirms demo reset in responsive bento ti
  await confirmButton.hover();
  await expect.poll(() => contrastRatio(confirmButton)).toBeGreaterThanOrEqual(4.5);
  console.log(`Confirm button contrast: ${confirmContrast.toFixed(2)}:1`);
- await page.screenshot({ path: screenshotPath("settings-demo", "demo-confirmation-karim-390x844.png"), animations: "disabled" });
+ await page.screenshot({ path: screenshotPath("settings-demo", "demo-confirmation-samy-390x844.png"), animations: "disabled" });
  await dialog.getByRole("button", { name: "Annuler", exact: true }).click();
  await expect(dialog).not.toBeVisible(); expect(resets).toBe(0);
  await reset.click();

@@ -12,7 +12,7 @@ const overview = {
  model: equipment.model,
  serial: equipment.serial,
  category: equipment.category,
- assigned_to: { id: "person-1", name: "Karim Benali" },
+ assigned_to: { id: "person-1", name: "Samy Benzeguir" },
  purchase_date: "2025-11-20",
  warranty_end: "2028-11-19",
  days_left: 400,
@@ -77,7 +77,7 @@ it("keeps the decision queue in one card with compact rows and collapsed disclos
  expect(region.querySelectorAll("article")).toHaveLength(0);
  expect(row).toHaveClass("border-accent");
  expect(within(row).getByRole("link", { name: "Dell Latitude 7440" })).toHaveAttribute("href", "/cases/case-1");
- expect(within(row).getByText("Karim Benali · 7XK4L93")).toBeInTheDocument();
+ expect(within(row).getByText("Samy Benzeguir · 7XK4L93")).toBeInTheDocument();
  expect(within(row).getByRole("button", { name: "Valider" })).toBeInTheDocument();
  expect(within(row).getByRole("button", { name: "Rejeter" })).toBeInTheDocument();
  expect(within(row).getByText("Détails", { selector: "summary" }).parentElement).not.toHaveAttribute("open");

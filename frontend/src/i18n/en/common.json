@@ -32,7 +32,7 @@
   "save": "Save",
   "simulated": "Simulation — no real action is executed.",
   "loginTitle": "Operator sign-in",
-  "loginHelp": "Choose your name, then enter the demo password (WP_DEMO_PASSWORD).",
+  "loginHelp": "Demo: any password works.",
   "password": "Password",
   "login": "Sign in",
   "logout": "Sign out",

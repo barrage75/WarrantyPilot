@@ -41,6 +41,8 @@ def hash_token(token: str) -> str:
 
 
 def password_matches(candidate: str, settings: AppSettings) -> bool:
+    if settings.environment == "dev" and settings.demo_any_password:
+        return True
     expected = settings.active_demo_password()
     return hmac.compare_digest(candidate.encode("utf-8"), expected.encode("utf-8"))
 

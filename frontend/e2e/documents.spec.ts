@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
-import { KARIM, loginUi } from "./helpers";
+import { SAMY, loginUi } from "./helpers";
 import { screenshotPath } from "./screenshot-path";
 
 test("upload an Appelia Factur-X invoice and check the inbox against the real API", async ({ page }) => {
@@ -90,7 +90,7 @@ test("polls a non-empty L7 Maildir and shows the created case", async ({ page })
  const peopleResponse = await page.request.get("/api/people");
  expect(peopleResponse.ok()).toBeTruthy();
  const people = await peopleResponse.json() as { id: string; email: string | null }[];
- const reporter = people.find(person => person.id === KARIM);
+ const reporter = people.find(person => person.id === SAMY);
  expect(reporter?.email).toBeTruthy();
  const inbox = resolve(process.env.WP_E2E_RUNTIME_DIR ?? ".playwright-runtime", "inbox");
  execFileSync("uv", ["run", "--project", ".", "python", "-c", [

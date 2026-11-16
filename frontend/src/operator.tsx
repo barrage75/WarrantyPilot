@@ -28,7 +28,7 @@ export function LoginScreen() {
  const people = useQuery({ queryKey: ["auth", "people"], queryFn: () => localRequest<LoginPerson[]>("/auth/people"), retry: false });
  const [personId, setPersonId] = useState(""), [password, setPassword] = useState(""), [failed, setFailed] = useState(false);
  const login = useMutation({ mutationFn: () => localRequest<SessionUser>("/auth/login", "POST", { person_id: personId, password }), onSuccess: user => { setPassword(""); cache.setQueryData(["auth", "me"], user); }, onError: () => setFailed(true) });
- function submit(event: FormEvent) { event.preventDefault(); setFailed(false); if (personId && password) login.mutate(); }
+ function submit(event: FormEvent) { event.preventDefault(); setFailed(false); if (personId) login.mutate(); }
  return <main className="flex min-h-screen items-center justify-center bg-canvas p-4 sm:p-6"><Card className="w-full max-w-2xl space-y-5">
   <header className="text-center">
    <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-accent text-white"><ShieldCheck size={26}/></span>
@@ -43,10 +43,10 @@ export function LoginScreen() {
     {people.data?.map(person => <option key={person.id} value={person.id}>{person.name} · {t("roles." + person.role)}</option>)}
    </select>
    <label htmlFor={passwordField} className="block font-medium">{t("password")}</label>
-   <input id={passwordField} type="password" autoComplete="current-password" className="block min-h-10 w-full rounded-xl border border-line px-3 py-2" value={password} onChange={event => setPassword(event.target.value)} required/>
+   <input id={passwordField} type="password" autoComplete="current-password" className="block min-h-10 w-full rounded-xl border border-line px-3 py-2" value={password} onChange={event => setPassword(event.target.value)}/>
    {people.isError && <p role="alert" className="text-bad">{t("peopleError")}</p>}
    {failed && <p role="alert" className="text-bad">{t("loginFailed")}</p>}
-   <Button disabled={!personId || !password || login.isPending}>{t("login")}</Button>
+   <Button disabled={!personId || login.isPending}>{t("login")}</Button>
   </form>
  </Card></main>;
 }

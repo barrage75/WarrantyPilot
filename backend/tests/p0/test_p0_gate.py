@@ -18,7 +18,7 @@ from app.actions.email.local_smtp_server import LocalSmtpServer
 from app.api.main import create_app
 from app.contracts.enums import CaseStatus, EventType
 from app.core.settings import AppSettings
-from tests.auth_helpers import KARIM_ID, open_test_session
+from tests.auth_helpers import SAMY_ID, open_test_session
 
 
 def _json(response: httpx.Response) -> Any:
@@ -78,7 +78,7 @@ async def test_p0_gate(
                 session_factory=session_factory,
             )
             async with application.router.lifespan_context(application):
-                _, token = open_test_session(application, person_id=KARIM_ID)
+                _, token = open_test_session(application, person_id=SAMY_ID)
                 transport = httpx.ASGITransport(app=application)
                 async with httpx.AsyncClient(
                     transport=transport,
@@ -152,7 +152,7 @@ async def test_p0_gate(
                             f"/api/chat/conversations/{dell_conversation['id']}/messages",
                             json={
                                 "text": "Le PC 7XK4L93 de Clément ne démarre plus",
-                                "reporter_id": KARIM_ID,
+                                "reporter_id": SAMY_ID,
                             },
                         )
                     )

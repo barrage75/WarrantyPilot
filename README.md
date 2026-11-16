@@ -112,8 +112,8 @@ Les suivants prennent quelques secondes. Le navigateur s'ouvre seul sur
 
 | Quoi | Détail |
 |---|---|
-| 👤 **Connexion** | **Karim Benali** (administrateur) ou **Paul Martin** (opérateur) |
-| 🔑 **Mot de passe** | `appelia-demo` par défaut, affiché dans la console (`WP_DEMO_PASSWORD` dans `.env`) |
+| 👤 **Connexion** | **Samy Benzeguir** (administrateur) ou **Paul Martin** (opérateur) |
+| 🔑 **Mot de passe** | N’importe quel mot de passe en démo locale (`WP_DEMO_ANY_PASSWORD=true` par défaut en développement) |
 | 🎬 **Scénario** | [`docs/demo/SCRIPT_3MIN.md`](docs/demo/SCRIPT_3MIN.md) |
 | ⏹️ **Arrêter** | <kbd>Ctrl</kbd>+<kbd>C</kbd> dans la console (répondez `O` si Windows le demande) |
 

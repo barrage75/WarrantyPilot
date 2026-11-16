@@ -25,7 +25,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 class LoginRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     person_id: UUID
-    password: str = Field(min_length=1, max_length=256)
+    password: str = Field(max_length=256)
 
 
 class LoginPerson(BaseModel):

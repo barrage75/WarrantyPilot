@@ -33,7 +33,7 @@ from app.core.tables import (
 from app.rules import DEFAULT_RULES_DIR, DeterministicRulesEngine, load_rules
 from app.rules.classifier import KeywordIncidentClassifier
 from app.testing.fakes import FakeExtractor, FakeFollowUp
-from tests.auth_helpers import KARIM_ID, open_test_session
+from tests.auth_helpers import SAMY_ID, open_test_session
 
 
 @pytest.mark.asyncio
@@ -85,7 +85,7 @@ async def test_paul_case_auto_sends_after_demo_reset_with_message_id_proof(
             services=services,
         )
 
-        _, token = open_test_session(application, person_id=KARIM_ID)
+        _, token = open_test_session(application, person_id=SAMY_ID)
         async with (
             application.router.lifespan_context(application),
             httpx.AsyncClient(
