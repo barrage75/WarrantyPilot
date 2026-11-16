@@ -11,6 +11,7 @@ import { Tile as Card } from "@/components/bento/Tile";
 import { EmptyState } from "@/components/bento/EmptyState";
 import { Pill } from "@/components/bento/Pill";
 import { StatusDot } from "@/components/bento/StatusDot";
+import { EquipmentIcon } from "@/components/bento/EquipmentIcon";
 import { UploadProgress } from "@/components/documents/UploadProgress";
 import { DocumentFacts } from "@/components/documents/DocumentFacts";
 
@@ -89,7 +90,7 @@ export default function Documents() {
   </Card>;
  }
  return <div className="space-y-5 text-ink">
-  <h1 className="text-4xl font-bold tracking-tight">{t("title")}</h1>
+  <header className="flex items-center gap-3"><EquipmentIcon category="folder" size={40}/><h1 className="text-4xl font-bold tracking-tight">{t("title")}</h1></header>
   <Card className="space-y-4">
    <h2 className="text-xl font-semibold">{t("uploadTitle")}</h2>
    <label htmlFor="document-file" role="button" tabIndex={busy ? -1 : 0} aria-label={t("drop")} aria-describedby="document-formats" aria-disabled={!!busy} onClick={event => { if (busy) event.preventDefault(); }} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); if (!busy) input.current?.click(); } }} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); if (!busy) void upload(event.dataTransfer.files[0]); }} className="flex min-h-48 w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-[20px] border-2 border-dashed border-idle bg-canvas p-6 text-center font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent aria-disabled:cursor-not-allowed aria-disabled:opacity-50">

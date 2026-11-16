@@ -27,10 +27,10 @@ it("localizes the warranty ring label and maps its coverage color", () => {
 });
 
 it("maps equipment categories to transparent illustration assets and falls back to a package", () => {
- const { container } = render(<><EquipmentIcon category="headset"/><EquipmentIcon category="screen"/><EquipmentIcon category="unknown-kind"/></>);
+ const { container } = render(<><EquipmentIcon category="headset"/><EquipmentIcon category="screen"/><EquipmentIcon category="calendar"/><EquipmentIcon category="shield"/><EquipmentIcon category="folder"/><EquipmentIcon category="unknown-kind"/></>);
  const icons = Array.from(container.querySelectorAll("img"));
- expect(icons.map(icon => icon.getAttribute("src"))).toEqual(expect.arrayContaining([expect.stringContaining("headphones"), expect.stringContaining("monitor"), expect.stringContaining("package")]));
- expect(icons).toHaveLength(3);
+ expect(icons.map(icon => icon.getAttribute("src"))).toEqual(expect.arrayContaining([expect.stringContaining("headphones"), expect.stringContaining("monitor"), expect.stringContaining("calendar"), expect.stringContaining("shield"), expect.stringContaining("folder"), expect.stringContaining("package")]));
+ expect(icons).toHaveLength(6);
  for (const icon of icons) {
   expect(icon).toHaveAttribute("alt", "");
   expect(icon).toHaveAttribute("aria-hidden", "true");
@@ -54,12 +54,14 @@ it("fetches notifications, counts urgent items and navigates to their case", asy
 });
 
 it("renders status and number components accessibly", () => {
- const { container } = render(<><StatusDot tone="active" label="Agent actif"/><NumberTicker value={1200} currency="EUR"/></>);
+ const amount = 75587.42;
+ const { container } = render(<><StatusDot tone="active" label="Agent actif"/><NumberTicker value={amount} currency="EUR"/></>);
  expect(screen.getByRole("img", { name: "Agent actif" })).toBeInTheDocument();
  expect(container.querySelector(".animate-ping")).not.toBeNull();
  const ticker = container.querySelector('[aria-live="off"]');
- expect(ticker).toHaveAttribute("aria-label", new Intl.NumberFormat("fr", { style: "currency", currency: "EUR" }).format(1200));
- expect(ticker?.textContent?.replace(/\s+/g, " ")).toBe(new Intl.NumberFormat("fr", { style: "currency", currency: "EUR" }).format(1200).replace(/\s+/g, " "));
+ const formatted = new Intl.NumberFormat("fr", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(amount);
+ expect(ticker).toHaveAttribute("aria-label", formatted);
+ expect(ticker?.textContent?.replace(/\s+/g, " ")).toBe(formatted.replace(/\s+/g, " "));
 });
 
 it("keeps every PillNav link keyboard-accessible when hiding the native scrollbar", async () => {

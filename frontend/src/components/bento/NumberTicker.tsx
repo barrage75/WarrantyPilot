@@ -19,7 +19,7 @@ export function NumberTicker({ value, currency }: { value: number; currency?: "E
   frame = requestAnimationFrame(tick);
   return () => cancelAnimationFrame(frame);
  }, [animate, value]);
- const format = (amount: number) => new Intl.NumberFormat(i18n.language, currency ? { style: "currency", currency } : { maximumFractionDigits: 0 }).format(amount);
+ const format = (amount: number) => new Intl.NumberFormat(i18n.language, currency ? { style: "currency", currency, maximumFractionDigits: 0 } : { maximumFractionDigits: 0 }).format(amount);
  const finalValue = format(value);
  return <span aria-live="off" aria-label={finalValue}>{format(animate ? display : value)}</span>;
 }

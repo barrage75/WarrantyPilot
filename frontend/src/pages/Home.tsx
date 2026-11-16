@@ -11,9 +11,9 @@ import { HumanActions } from "@/components/case/HumanActions";
 import { StatusBadge, VerdictBadge } from "@/components/Badges";
 import { CaseRealityPill as RealityPill } from "@/components/case/CaseRealityPill";
 import { Tile } from "@/components/bento/Tile";
+import { Pill } from "@/components/bento/Pill";
 import { EmptyState } from "@/components/bento/EmptyState";
 import { EquipmentIcon } from "@/components/bento/EquipmentIcon";
-import { WarrantyRing } from "@/components/bento/WarrantyRing";
 import { NumberTicker } from "@/components/bento/NumberTicker";
 import { DecisionBeam } from "@/components/parc/DecisionBeam";
 import { NotificationList } from "@/components/parc/NotificationList";
@@ -37,22 +37,26 @@ export function Decisions() {
  const pending = query.isPending || checklists.some(q => q.isPending && q.fetchStatus !== "idle");
  const checklistError = checklists.find(q => q.isError && !(q.error instanceof ApiError && q.error.status === 404))?.error;
  const beamId = queue.find(item => item.status === "awaiting_validation")?.id;
- return <div role="region" className="min-w-0 space-y-4" aria-labelledby="decisions-heading"><h2 id="decisions-heading" className="text-xl font-semibold tracking-tight">{t("heading")}</h2>
+ return <Tile role="region" className="min-w-0 space-y-4 p-4 sm:p-5" aria-labelledby="decisions-heading">
+  <header className="flex items-center justify-between gap-3"><h2 id="decisions-heading" className="text-xl font-semibold tracking-tight">{t("heading")}</h2><Pill className="font-semibold tabular-nums" aria-label={t("queueCount", { count: queue.length })}><NumberTicker value={queue.length}/></Pill></header>
   {query.isError && <p role="alert" className="text-bad">{t(apiErrorKey(query.error))}</p>}{!!checklistError && <p role="alert" className="text-bad">{t(apiErrorKey(checklistError))}</p>}
   {pending && <p role="status">{t("common:loading")}</p>}
-  {!pending && !query.isError && !checklistError && queue.length === 0 && <Tile><EmptyState title={t("empty")} description={t("emptyHelp")}/></Tile>}
-  <div className="space-y-3">{queue.map(item => {
+  {!pending && !query.isError && !checklistError && queue.length === 0 && <div className="rounded-xl bg-canvas p-4"><EmptyState title={t("empty")} description={t("emptyHelp")}/></div>}
+  <div className="divide-y divide-line">{queue.map(item => {
    const device = equipment.data?.find(device => device.id === item.equipment_id), warranty = overview.data?.find(device => device.equipment_id === item.equipment_id);
    const label = warranty?.label ?? ([device?.brand, device?.model].filter(Boolean).join(" ") || t("common:unknown"));
    return <DecisionBeam key={item.id} active={!!beamId && item.id === beamId}>
-    <div className="flex min-w-0 flex-wrap items-center gap-3">
-     <EquipmentIcon category={device?.category ?? "package"} size={48}/>
-     <div className="min-w-0 flex-1"><Link className="font-semibold text-ink underline underline-offset-4" to={`/cases/${item.id}`}>{label}</Link><p className="mt-1 text-sm text-muted">{[warranty?.assigned_to?.name, device?.serial].filter(Boolean).join(" · ")}</p></div>
-     {warranty && <WarrantyRing daysLeft={warranty.days_left} coverage={warranty.coverage}/>}
-     <div className="flex w-full basis-full flex-wrap items-center gap-2"><StatusBadge value={item.status}/><RealityPill value={item.badge}/></div>
-    </div>
-    <div className="flex flex-wrap items-center justify-between gap-3">
-     <details className="min-w-32 flex-1 rounded-xl bg-canvas px-3 py-2">
+    <div className="space-y-3">
+     <div className="flex min-w-0 flex-wrap items-center gap-3 md:flex-nowrap">
+      <EquipmentIcon category={device?.category ?? "package"} size={40}/>
+      <div className="min-w-0 flex-1">
+       <div className="flex flex-wrap items-center gap-x-2 gap-y-1"><Link className="font-semibold text-ink underline underline-offset-4" to={`/cases/${item.id}`}>{label}</Link><StatusBadge value={item.status}/><RealityPill value={item.badge}/></div>
+       <p className="mt-1 text-sm text-muted">{[warranty?.assigned_to?.name, device?.serial].filter(Boolean).join(" · ")}</p>
+      </div>
+      <div className="w-full md:ml-auto md:w-auto md:shrink-0"><div className="flex flex-wrap items-center gap-2 md:justify-end"><HumanActions item={item} beam={false} section="decision"/><Link className="inline-flex min-h-9 items-center text-sm font-semibold text-accent underline underline-offset-4" to={`/cases/${item.id}`}>{t("detail")}</Link></div></div>
+     </div>
+     <div className="grid gap-2 sm:grid-cols-2">
+      <details className="min-w-0 rounded-xl bg-canvas px-3 py-2">
       <summary className="cursor-pointer text-sm font-semibold">{t("details")}</summary>
       <div className="mt-3 space-y-2 text-sm">
        {item.verdict && <><VerdictBadge value={item.verdict.value}/><p className="text-ink">{i18n.language.startsWith("fr") ? item.verdict.explanation_fr : item.verdict.explanation_en}</p></>}
@@ -60,12 +64,12 @@ export function Decisions() {
        <ul className="space-y-1 text-muted">{item.policy?.reasons?.map(reason => <li key={reason}>{t(`caseDetail:reasons.${reason}`, { defaultValue: technicalLabel(reason, i18n.language) })}</li>)}</ul>
      </div>
      </details>
-     <details className="min-w-32 flex-1 rounded-xl bg-canvas px-3 py-2 text-sm"><summary className="cursor-pointer font-semibold">{t("caseDetail:evidence")} ({item.verdict?.evidence?.length ?? 0})</summary>{!item.verdict?.evidence?.length ? <p className="mt-1 text-muted">{t("caseDetail:none")}</p> : <ul className="mt-2 space-y-2">{item.verdict.evidence.map((evidence, index) => <li key={evidence.id ?? index} className="border-l-2 border-accent pl-3">{evidence.document_id && <p>{t("caseDetail:document")} {evidence.document_id.slice(0, 8)}{evidence.page != null && <> · {t("caseDetail:page")} {evidence.page}</>}</p>}{!isTechnicalValue(evidence.excerpt) && <blockquote className="mt-1 text-muted">{evidence.excerpt}</blockquote>}<details className="mt-1"><summary className="cursor-pointer text-muted">{t("caseDetail:technicalDetails")}</summary><pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(evidence, null, 2)}</pre></details></li>)}</ul>}</details>
-     <div className="flex flex-wrap items-center gap-2"><HumanActions item={item} beam={false}/><Link className="text-sm font-semibold text-accent underline underline-offset-4" to={`/cases/${item.id}`}>{t("detail")}</Link></div>
+      <details className="min-w-0 rounded-xl bg-canvas px-3 py-2 text-sm"><summary className="cursor-pointer font-semibold">{t("caseDetail:evidence")} ({item.verdict?.evidence?.length ?? 0})</summary>{!item.verdict?.evidence?.length ? <p className="mt-1 text-muted">{t("caseDetail:none")}</p> : <ul className="mt-2 space-y-2">{item.verdict.evidence.map((evidence, index) => <li key={evidence.id ?? index} className="border-l-2 border-accent pl-3">{evidence.document_id && <p>{t("caseDetail:document")} {evidence.document_id.slice(0, 8)}{evidence.page != null && <> · {t("caseDetail:page")} {evidence.page}</>}</p>}{!isTechnicalValue(evidence.excerpt) && <blockquote className="mt-1 text-muted">{evidence.excerpt}</blockquote>}<details className="mt-1"><summary className="cursor-pointer text-muted">{t("caseDetail:technicalDetails")}</summary><pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(evidence, null, 2)}</pre></details></li>)}</ul>}</details>
+     </div>
     </div>
    </DecisionBeam>;
   })}</div>
- </div>;
+ </Tile>;
 }
 
 export default function Home() {
@@ -87,11 +91,12 @@ export default function Home() {
    </div>
    <img src={heroImage} alt="" aria-hidden="true" className="hidden h-52 w-full object-contain md:block lg:h-56"/>
   </header>
-  <section aria-label={t("overview")} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-   {kpis.map(({ label, value, to, icon }) => <Tile key={label} className="p-4">
-    <Link to={to} className="flex min-w-0 items-center gap-3 rounded-xl focus-visible:ring-2 focus-visible:ring-accent">
-     <EquipmentIcon category={icon} size={56}/>
-     <span className="min-w-0"><span className="block text-2xl font-semibold tabular-nums">{value === undefined ? "—" : <NumberTicker value={value} currency={icon === "laptop" || icon === "package" ? "EUR" : undefined}/>}</span><span className="mt-1 block text-sm leading-snug text-muted">{label}</span></span>
+  <section aria-label={t("overview")} className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-4">
+   {kpis.map(({ label, value, to, icon }) => <Tile key={label} className="p-3 sm:p-4">
+    <Link to={to} className="flex min-w-0 items-center gap-2 rounded-xl focus-visible:ring-2 focus-visible:ring-accent sm:gap-3">
+     <EquipmentIcon category={icon} size={36} className="sm:hidden"/>
+     <EquipmentIcon category={icon} size={48} className="hidden sm:block"/>
+     <span className="min-w-0"><span className="block text-xl font-semibold tabular-nums sm:text-2xl">{value === undefined ? "—" : <NumberTicker value={value} currency={icon === "laptop" || icon === "package" ? "EUR" : undefined}/>}</span><span className="mt-1 block text-xs leading-snug text-muted sm:text-sm">{label}</span></span>
     </Link>
    </Tile>)}
   </section>

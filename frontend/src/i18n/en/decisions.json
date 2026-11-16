@@ -1,7 +1,8 @@
 {
   "title": "Decisions"
 ,
-  "heading": "What needs your decision",
+  "heading": "To decide",
+  "queueCount": "Cases to decide: {{count}}",
   "empty": "Nothing to decide",
   "emptyHelp": "Cases requiring your attention will appear here.",
   "equipment": "Equipment",

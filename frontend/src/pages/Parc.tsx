@@ -7,7 +7,6 @@ import { Tile } from "@/components/bento/Tile";
 import { EquipmentIcon } from "@/components/bento/EquipmentIcon";
 import { EmptyState } from "@/components/bento/EmptyState";
 import { Button } from "@/components/ui/button";
-import { FleetSummary } from "@/components/parc/FleetSummary";
 import { FleetDistribution } from "@/components/parc/FleetDistribution";
 import { EquipmentSheet } from "@/components/parc/EquipmentSheet";
 import { useOverview, type Coverage, type FleetEquipment } from "@/components/parc/data";
@@ -28,7 +27,8 @@ export default function Parc() {
  const trigger = useRef<HTMLButtonElement | null>(null);
  const coverage = coverages.includes(params.get("coverage") as Coverage) ? params.get("coverage") as Coverage : undefined;
  const verdict = verdicts.includes(params.get("verdict") as Verdict) ? params.get("verdict") as Verdict : undefined;
- const deferred = useDeferredValue(search), query = useOverview(coverage, deferred);
+ const totalOverview = useOverview(), deferred = useDeferredValue(search), query = useOverview(coverage, deferred);
+ const totalCount = totalOverview.data?.length ?? 0;
  const items = query.data ?? [], filtered = verdict ? items.filter(item => item.verdict === verdict) : items;
  const pages = Math.max(1, Math.ceil(filtered.length / pageSize)), current = Math.min(page, pages - 1);
  const visible = filtered.slice(current * pageSize, (current + 1) * pageSize);
@@ -42,21 +42,27 @@ export default function Parc() {
   return t("warrantyUntil", { date });
  }
  return <div className="space-y-6">
-  <header className="flex flex-wrap items-end justify-between gap-4"><div><h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("heading")}</h1><p className="mt-2 text-sm text-muted">{t("summary")}</p></div><Button variant="outline" asChild><Link to="/documents">{t("addInvoice")}</Link></Button><div className="w-full"><FleetSummary/></div></header>
-  <div className="flex flex-wrap items-center justify-between gap-4">
-   <div className="flex min-w-0 flex-1 flex-wrap gap-4">
-    <div role="group" aria-label={t("filterVerdict")} className="flex min-w-0 flex-wrap items-center gap-1.5">
-     {([undefined, ...verdicts] as const).map(value => {
-      const count = value ? items.filter(item => item.verdict === value).length : items.length;
+  <header className="space-y-4">
+   <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("heading", { count: totalOverview.data ? totalCount : "—" })}</h1>
+   <div className="flex min-w-0 flex-wrap items-center gap-3">
+    <label className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-line bg-surface px-3 focus-within:ring-2 focus-within:ring-accent"><Search size={18} className="shrink-0 text-muted"/><input type="search" aria-label={t("search")} placeholder={t("search")} value={search} onChange={event => changeQuery("q", event.target.value)} className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none focus-visible:outline-none"/></label>
+    <Button variant="outline" className="shrink-0" asChild><Link to="/documents">{t("addInvoice")}</Link></Button>
+   </div>
+  </header>
+  <div className="space-y-3">
+   <div role="group" aria-label={t("filterVerdict")} className="flex min-w-0 flex-wrap items-center gap-1.5">
+    {([undefined, ...verdicts] as const).map(value => {
+      const count = value ? items.filter(item => item.verdict === value).length : totalCount;
       const active = verdict === value;
-      return <button key={value ?? "all-verdicts"} type="button" aria-pressed={active} onClick={() => changeQuery("verdict", value)} className={`min-h-9 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${active ? "bg-accent text-white" : "bg-surface text-ink hover:bg-accent-soft"}`}>{value ? t(`enums:VerdictValue.${value}`) : t("verdictAll")} <span className={active ? "text-white/80" : "text-muted"}>{count}</span></button>;
-     })}
-    </div>
+      return <button key={value ?? "all-verdicts"} type="button" aria-pressed={active} onClick={() => changeQuery("verdict", value)} className={`min-h-9 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${active ? "bg-accent text-white" : "bg-surface text-ink hover:bg-accent-soft"}`}>{value ? t(`enums:VerdictValue.${value}`) : t("verdictAll")} <span className={active ? "text-white/80" : "text-muted"}>{totalOverview.isPending && !value ? "—" : count}</span></button>;
+    })}
+   </div>
+   <div className="flex flex-wrap items-center gap-1.5">
+    <span className="mr-1 text-sm text-muted">{t("filterCoverage")}</span>
     <div role="group" aria-label={t("filter")} className="flex flex-wrap gap-1.5">
-     {([undefined, ...coverages] as const).map(value => <button key={value ?? "all-coverage"} type="button" aria-pressed={coverage === value} onClick={() => filter(value)} className={`min-h-9 rounded-full px-3 py-1.5 text-sm font-medium ${coverage === value ? "bg-accent text-white" : "bg-surface text-ink hover:bg-accent-soft"}`}>{t(value ? `coverage.${value}` : "all")}</button>)}
+     {([undefined, ...coverages] as const).map(value => <button key={value ?? "all-coverage"} type="button" aria-pressed={coverage === value} onClick={() => filter(value)} className={`min-h-9 rounded-full px-3 py-1.5 text-sm font-medium ${coverage === value ? "bg-accent text-white" : "bg-surface text-ink hover:bg-accent-soft"}`}>{t(value ? `coverage.${value}` : "allCoverage")}</button>)}
     </div>
    </div>
-   <label className="flex min-h-10 w-full items-center gap-2 rounded-xl border border-line bg-surface px-3 focus-within:ring-2 focus-within:ring-accent sm:w-72"><Search size={18} className="shrink-0 text-muted"/><input type="search" aria-label={t("search")} placeholder={t("search")} value={search} onChange={event => changeQuery("q", event.target.value)} className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none focus-visible:outline-none"/></label>
   </div>
   {query.isPending && <p role="status">{t("common:loading")}</p>}
   {query.isError && <div role="alert" className="rounded-[20px] border border-line bg-surface p-6"><p className="mb-3 text-bad">{t("error")}</p><Button onClick={() => void query.refetch()}>{t("common:refresh")}</Button></div>}

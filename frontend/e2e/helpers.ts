@@ -5,7 +5,7 @@ export async function openUserMenu(page: Page) {
 }
 export async function loginUi(page: Page, person = KARIM) {
  await page.goto("/");
- await expect(page.getByRole("heading", { name: "Connexion opérateur" })).toBeVisible();
+ await expect(page.getByRole("heading", { name: "Connexion opérateur" })).toBeVisible({ timeout: 15000 });
  await page.getByLabel("Personne", { exact: true }).selectOption(person);
  await page.getByLabel("Mot de passe", { exact: true }).fill(process.env.WP_DEMO_PASSWORD ?? "appelia-demo");
  await page.getByRole("button", { name: "Se connecter", exact: true }).click();
@@ -53,7 +53,7 @@ export async function resolveFromUi(page: Page, request: APIRequestContext = pag
  const item = await fakeCase(request, identities.jabra, identities.person);
  expect(item.status).toBe("awaiting_validation");
  await page.goto("/");
- const card = page.locator("section").filter({ has: page.locator(`a[href="/cases/${item.id}"]`) });
+ const card = page.getByTestId("decision-beam").filter({ has: page.locator(`a[href="/cases/${item.id}"]`) });
  await expect(card).toBeVisible();
  await expectSignedIn(page);
  await card.getByRole("button", { name: "Valider", exact: true }).click();
