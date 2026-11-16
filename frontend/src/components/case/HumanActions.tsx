@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { PendingValidationButton } from "./PendingValidationButton";
 type Case = Pick<components["schemas"]["Case"], "id" | "status">;
-function ErrorMessage({ error }: { error: unknown }) { const { t } = useTranslation(); return <p role="alert" className="py-3 text-red-800">{t(apiErrorKey(error))}</p>; }
+function ErrorMessage({ error }: { error: unknown }) { const { t } = useTranslation(); return <p role="alert" className="py-3 text-bad">{t(apiErrorKey(error))}</p>; }
 export function HumanActions({ item, beam = true, section = "all" }: { item: Case; beam?: boolean; section?: "all" | "decision" | "resolution" }) {
  const { t } = useTranslation(["caseDetail", "common"]);
  const { personId } = useOperator();
@@ -25,7 +25,7 @@ export function HumanActions({ item, beam = true, section = "all" }: { item: Cas
   action.mutate(value, { onSuccess: () => { toast.success(t("actionSuccess")); setReject(false); setReason(""); setProof(""); setNote(""); setResolutionNote(""); }, onError: error => toast.error(t(apiErrorKey(error))) });
  }
  return <div className="space-y-3">
- {!personId && <p className="text-sm text-amber-900">{t("common:identityRequired")}</p>}
+ {!personId && <p className="text-sm text-ink">{t("common:identityRequired")}</p>}
  <div className="flex flex-wrap gap-2">
  {section !== "resolution" && item.status === "awaiting_validation" && <><PendingValidationButton caseId={item.id ?? ""} disabled={disabled} onError={setValidationError} beam={beam}/><Button variant="outline" disabled={disabled} onClick={() => setReject(true)}>{t("reject")}</Button></>}
  {section !== "resolution" && item.status === "failed" && <Button disabled={disabled} onClick={() => submit({ kind: "manual-takeover" })}>{t("takeover")}</Button>}

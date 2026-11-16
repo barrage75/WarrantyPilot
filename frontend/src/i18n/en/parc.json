@@ -1,6 +1,8 @@
 {
  "title":"Fleet", "heading":"Your fleet, warranty by warranty", "summary":"Your fleet in numbers", "equipmentCount":"equipment", "coveredAmount":"covered", "realizedAmount":"recovered", "summaryError":"Some totals are unavailable.",
- "filter":"Filter by warranty", "all":"All equipment", "search":"Name, person or serial number…", "error":"Unable to load the fleet.", "empty":"No equipment found", "emptyHelp":"Try a different name or warranty filter.",
+ "filter":"Filter by warranty", "filterVerdict":"Filter by verdict", "filterCoverage":"Warranty end", "verdictAll":"All equipment", "all":"All equipment", "search":"Name, person or serial number…", "addInvoice":"Add an invoice", "error":"Unable to load the fleet.", "empty":"No equipment found", "emptyHelp":"Try a different name or warranty filter.", "serial":"Serial number", "assigned":"Assigned to", "warranty":"Warranty end", "coverageLabel":"Coverage",
+ "warrantyUntil":"Until {{date}}", "warrantyExpiring":"Ends {{date}} · {{days}} days", "warrantyEnded":"Ended {{date}}",
+ "distribution":{"title":"Fleet distribution","total":"{{count}} pieces of equipment","error":"Unable to load fleet distribution."},
  "coverage":{"active":"Covered", "expiring_soon":"Expiring soon", "expired":"Warranty expired", "leased":"Leased", "unknown":"Check warranty"},
  "unassigned":"Unassigned", "caseInProgress":"Case in progress", "pagination":"Fleet pages", "previous":"Previous page", "next":"Next page", "page":"{{page}} / {{pages}} · {{count}} equipment", "close":"Close equipment details", "purchaseDate":"Purchase date", "warrantyEnd":"Warranty ends", "unknown":"Not recorded", "invoice":"View invoice", "openCase":"Open case", "reportFault":"Report a fault", "faultMessage":"I would like to report a fault with equipment serial number {{serial}}."
 }

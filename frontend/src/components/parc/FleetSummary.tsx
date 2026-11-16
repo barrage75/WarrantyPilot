@@ -9,6 +9,6 @@ export function FleetSummary() {
   <Pill className="gap-1">{overview.data ? <NumberTicker value={overview.data.length}/> : "—"} {t("equipmentCount")}</Pill>
   <Pill className="gap-1">{savings.data ? <NumberTicker value={savings.data.covered_equipment_eur} currency="EUR"/> : "—"} {t("coveredAmount")}</Pill>
   <Pill className="gap-1">{savings.data ? <NumberTicker value={savings.data.realized_savings_eur} currency="EUR"/> : "—"} {t("realizedAmount")}</Pill>
-  {(overview.isError || savings.isError) && <span role="alert" className="w-full text-red-800">{t("summaryError")}</span>}
+  {(overview.isError || savings.isError) && <span role="alert" className="w-full text-bad">{t("summaryError")}</span>}
  </div>;
 }

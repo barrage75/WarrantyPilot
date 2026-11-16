@@ -73,7 +73,7 @@ test("uploads a new unique Factur-X invoice with facts and no duplicate row", as
  await page.getByText("Voir les faits extraits", { exact: true }).click();
  await expect(page.getByText("Nom du fournisseur")).toBeVisible();
  await expect(page.getByText("Ligne 2 · Modèle")).toBeVisible();
- await page.getByText("Détails techniques", { exact: true }).click();
+ await page.getByRole("definition").filter({ hasText: "https://" }).getByText("Détails techniques", { exact: true }).click();
  for (const width of [360, 768, 1280, 1440, 1920]) {
   await page.setViewportSize({ width, height: 900 });
   await expectNoHorizontalOverflow(page);

@@ -1,7 +1,16 @@
-import { Headphones, Keyboard, Laptop, Monitor, Mouse, Package, Printer, Smartphone, Tablet } from "lucide-react";
 import type { ComponentProps } from "react";
 
-const icons = { laptop: Laptop, headphones: Headphones, printer: Printer, monitor: Monitor, smartphone: Smartphone, keyboard: Keyboard, mouse: Mouse, tablet: Tablet, package: Package };
+import laptop from "@/assets/iso/laptop.webp";
+import monitor from "@/assets/iso/monitor.webp";
+import headphones from "@/assets/iso/headphones.webp";
+import printer from "@/assets/iso/printer.webp";
+import smartphone from "@/assets/iso/smartphone.webp";
+import keyboard from "@/assets/iso/keyboard.webp";
+import mouse from "@/assets/iso/mouse.webp";
+import tablet from "@/assets/iso/tablet.webp";
+import packageIcon from "@/assets/iso/package.webp";
+
+const icons = { laptop, headphones, printer, monitor, smartphone, keyboard, mouse, tablet, package: packageIcon };
 const categories: Record<string, keyof typeof icons> = {
  laptop: "laptop", computer: "laptop", notebook: "laptop", pc: "laptop", ordinateur: "laptop",
  headphones: "headphones", headphone: "headphones", headset: "headphones", casque: "headphones",
@@ -11,8 +20,7 @@ const categories: Record<string, keyof typeof icons> = {
  keyboard: "keyboard", clavier: "keyboard", mouse: "mouse", souris: "mouse",
  tablet: "tablet", tablette: "tablet",
 };
-export function EquipmentIcon({ category, size = 56, ...props }: Omit<ComponentProps<"svg">, "children"> & { category: string; size?: number }) {
+export function EquipmentIcon({ category, size = 56, className, ...props }: Omit<ComponentProps<"img">, "src" | "alt" | "width" | "height"> & { category: string; size?: number }) {
  const key = categories[category.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase()] ?? "package";
- const Icon = icons[key];
- return <Icon aria-hidden="true" data-icon={key} size={size} strokeWidth={1.75} {...props}/>;
+ return <img src={icons[key]} width={size} height={size} alt="" aria-hidden="true" data-icon={key} className={`shrink-0 object-contain ${className ?? ""}`} style={{ width: size, height: size }} {...props}/>;
 }

@@ -12,9 +12,12 @@ function stableValue(value: unknown): string {
 export function formatDocumentFact(fact: Pick<DocumentFact, "field" | "value">, language: string) {
  const translations = resources[language.startsWith("fr") ? "fr" : "en"].documents as { factLabels: Record<string, string>; factLine: string; yes: string; no: string };
  const labels = translations.factLabels;
- const field = /^lines\[\d+\]\.(.+)$/i.exec(fact.field)?.[1] ?? fact.field;
+ const line = /^lines\[(\d+)\]\.(.+)$/i.exec(fact.field);
+ const field = line?.[2] ?? fact.field;
  const known = Object.hasOwn(labels, field);
- const label = known ? labels[field] : field.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[_.[\]]+/g, " ").trim().replace(/^./, first => first.toLocaleUpperCase(language));
+ const fieldLabel = known ? labels[field] : field.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[_.[\]]+/g, " ").trim().replace(/^./, first => first.toLocaleUpperCase(language));
+ const lineLabel = line ? translations.factLine.replace("{{number}}", String(Number(line[1]) + 1)) : undefined;
+ const label = lineLabel ? `${lineLabel} · ${fieldLabel}` : fieldLabel;
  let formatted = fact.value == null ? "—" : typeof fact.value === "object" ? JSON.stringify(fact.value) : String(fact.value);
  if (typeof fact.value === "boolean") formatted = translations[fact.value ? "yes" : "no"];
  if (/(?:^|_)date$/.test(field) && typeof fact.value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(fact.value)) {

@@ -1,6 +1,7 @@
 import { useQueries } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { ChevronRight, Wrench } from "lucide-react";
 import { useCases } from "@/api/hooks";
 import { ApiError, client, unwrap } from "@/api/client";
 import { apiErrorKey } from "@/api/errors";
@@ -13,11 +14,15 @@ import { Tile } from "@/components/bento/Tile";
 import { EmptyState } from "@/components/bento/EmptyState";
 import { EquipmentIcon } from "@/components/bento/EquipmentIcon";
 import { WarrantyRing } from "@/components/bento/WarrantyRing";
+import { NumberTicker } from "@/components/bento/NumberTicker";
 import { DecisionBeam } from "@/components/parc/DecisionBeam";
 import { NotificationList } from "@/components/parc/NotificationList";
-import { FleetSummary } from "@/components/parc/FleetSummary";
-import { useOverview } from "@/components/parc/data";
+import { FleetDistribution } from "@/components/parc/FleetDistribution";
+import { useOverview, useSavings } from "@/components/parc/data";
 import { isTechnicalValue, technicalLabel } from "@/i18n/technical";
+import { Button } from "@/components/ui/button";
+import { CaseStatus } from "@/components/case/CaseStatus";
+import heroImage from "@/assets/iso/hero.webp";
 
 export function Decisions() {
  const { t, i18n } = useTranslation("decisions");
@@ -32,33 +37,90 @@ export function Decisions() {
  const pending = query.isPending || checklists.some(q => q.isPending && q.fetchStatus !== "idle");
  const checklistError = checklists.find(q => q.isError && !(q.error instanceof ApiError && q.error.status === 404))?.error;
  const beamId = queue.find(item => item.status === "awaiting_validation")?.id;
- return <div className="space-y-5"><h2 className="text-xl font-semibold tracking-tight">{t("heading")}</h2>
-  {query.isError && <p role="alert" className="text-red-800">{t(apiErrorKey(query.error))}</p>}{!!checklistError && <p role="alert" className="text-red-800">{t(apiErrorKey(checklistError))}</p>}
+ return <div role="region" className="min-w-0 space-y-4" aria-labelledby="decisions-heading"><h2 id="decisions-heading" className="text-xl font-semibold tracking-tight">{t("heading")}</h2>
+  {query.isError && <p role="alert" className="text-bad">{t(apiErrorKey(query.error))}</p>}{!!checklistError && <p role="alert" className="text-bad">{t(apiErrorKey(checklistError))}</p>}
   {pending && <p role="status">{t("common:loading")}</p>}
   {!pending && !query.isError && !checklistError && queue.length === 0 && <Tile><EmptyState title={t("empty")} description={t("emptyHelp")}/></Tile>}
-  <div className="space-y-4">{queue.map(item => {
+  <div className="space-y-3">{queue.map(item => {
    const device = equipment.data?.find(device => device.id === item.equipment_id), warranty = overview.data?.find(device => device.equipment_id === item.equipment_id);
    const label = warranty?.label ?? ([device?.brand, device?.model].filter(Boolean).join(" ") || t("common:unknown"));
    return <DecisionBeam key={item.id} active={!!beamId && item.id === beamId}>
-    <div className="flex items-start justify-between gap-4"><EquipmentIcon category={device?.category ?? "package"} size={48}/>{warranty && <WarrantyRing daysLeft={warranty.days_left} coverage={warranty.coverage}/>}</div>
-    <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><Link className="font-semibold text-ink underline underline-offset-4" to={`/cases/${item.id}`}>{label}</Link>{device?.serial && <p className="mt-1 break-all text-sm text-muted">{device.serial}</p>}</div><div className="flex flex-wrap gap-2"><StatusBadge value={item.status}/><RealityPill value={item.badge}/></div></div>
-    <div className="flex flex-wrap items-center gap-3"><HumanActions item={item} beam={false}/><Link className="inline-block text-sm font-semibold text-ink underline underline-offset-4" to={`/cases/${item.id}`}>{t("detail")}</Link></div>
-    {item.verdict && <><VerdictBadge value={item.verdict.value}/><p>{i18n.language.startsWith("fr") ? item.verdict.explanation_fr : item.verdict.explanation_en}</p></>}
-    <p className="text-sm text-muted">{t(`enums:Channel.${item.channel}`)}</p>
-    <ul className="space-y-1 text-sm text-muted">{item.policy?.reasons?.map(reason => <li key={reason}>{t(`caseDetail:reasons.${reason}`, { defaultValue: technicalLabel(reason, i18n.language) })}</li>)}</ul>
-    <details className="rounded-2xl bg-canvas p-4"><summary className="cursor-pointer text-sm font-semibold">{t("caseDetail:evidence")} ({item.verdict?.evidence?.length ?? 0})</summary>{!item.verdict?.evidence?.length ? <p className="mt-2 text-sm text-ink/70">{t("caseDetail:none")}</p> : <ul className="mt-3 space-y-3 text-sm">{item.verdict.evidence.map((evidence, index) => <li key={evidence.id ?? index} className="border-l-2 border-accent pl-3">{evidence.document_id && <p>{t("caseDetail:document")} {evidence.document_id.slice(0, 8)}{evidence.page != null && <> · {t("caseDetail:page")} {evidence.page}</>}</p>}{!isTechnicalValue(evidence.excerpt) && <blockquote className="mt-1 text-ink/70">{evidence.excerpt}</blockquote>}<details className="mt-1"><summary className="cursor-pointer text-ink/70">{t("caseDetail:technicalDetails")}</summary><pre className="overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(evidence, null, 2)}</pre></details></li>)}</ul>}</details>
+    <div className="flex min-w-0 flex-wrap items-center gap-3">
+     <EquipmentIcon category={device?.category ?? "package"} size={48}/>
+     <div className="min-w-0 flex-1"><Link className="font-semibold text-ink underline underline-offset-4" to={`/cases/${item.id}`}>{label}</Link><p className="mt-1 text-sm text-muted">{[warranty?.assigned_to?.name, device?.serial].filter(Boolean).join(" · ")}</p></div>
+     {warranty && <WarrantyRing daysLeft={warranty.days_left} coverage={warranty.coverage}/>}
+     <div className="flex w-full basis-full flex-wrap items-center gap-2"><StatusBadge value={item.status}/><RealityPill value={item.badge}/></div>
+    </div>
+    <div className="flex flex-wrap items-center justify-between gap-3">
+     <details className="min-w-32 flex-1 rounded-xl bg-canvas px-3 py-2">
+      <summary className="cursor-pointer text-sm font-semibold">{t("details")}</summary>
+      <div className="mt-3 space-y-2 text-sm">
+       {item.verdict && <><VerdictBadge value={item.verdict.value}/><p className="text-ink">{i18n.language.startsWith("fr") ? item.verdict.explanation_fr : item.verdict.explanation_en}</p></>}
+       <p className="text-muted">{t(`enums:Channel.${item.channel}`)}</p>
+       <ul className="space-y-1 text-muted">{item.policy?.reasons?.map(reason => <li key={reason}>{t(`caseDetail:reasons.${reason}`, { defaultValue: technicalLabel(reason, i18n.language) })}</li>)}</ul>
+     </div>
+     </details>
+     <details className="min-w-32 flex-1 rounded-xl bg-canvas px-3 py-2 text-sm"><summary className="cursor-pointer font-semibold">{t("caseDetail:evidence")} ({item.verdict?.evidence?.length ?? 0})</summary>{!item.verdict?.evidence?.length ? <p className="mt-1 text-muted">{t("caseDetail:none")}</p> : <ul className="mt-2 space-y-2">{item.verdict.evidence.map((evidence, index) => <li key={evidence.id ?? index} className="border-l-2 border-accent pl-3">{evidence.document_id && <p>{t("caseDetail:document")} {evidence.document_id.slice(0, 8)}{evidence.page != null && <> · {t("caseDetail:page")} {evidence.page}</>}</p>}{!isTechnicalValue(evidence.excerpt) && <blockquote className="mt-1 text-muted">{evidence.excerpt}</blockquote>}<details className="mt-1"><summary className="cursor-pointer text-muted">{t("caseDetail:technicalDetails")}</summary><pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(evidence, null, 2)}</pre></details></li>)}</ul>}</details>
+     <div className="flex flex-wrap items-center gap-2"><HumanActions item={item} beam={false}/><Link className="text-sm font-semibold text-accent underline underline-offset-4" to={`/cases/${item.id}`}>{t("detail")}</Link></div>
+    </div>
    </DecisionBeam>;
   })}</div>
  </div>;
 }
 
 export default function Home() {
- const { t } = useTranslation("home"), { user } = useOperator(), expiring = useOverview("expiring_soon");
- return <div className="space-y-7"><header className="flex flex-wrap items-end justify-between gap-4"><div><p className="mb-2 text-sm text-ink/70">{t("greeting", { name: user?.name.split(" ")[0] ?? "" })}</p><h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("heading")}</h1></div><FleetSummary/></header>
-  <div className="grid items-start gap-5 xl:grid-cols-3"><div className="min-w-0 xl:col-span-2"><Decisions/></div><Tile className="min-w-0"><h2 className="mb-5 text-xl font-semibold tracking-tight">{t("watch")}</h2><NotificationList/></Tile></div>
-  <Tile><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-semibold tracking-tight">{t("expiring")}</h2><Link className="text-sm font-medium underline underline-offset-4" to="/parc?coverage=expiring_soon">{t("viewFleet")}</Link></div>
-   {expiring.isPending && <p role="status">{t("common:loading")}</p>}{expiring.isError && <p role="alert" className="text-red-800">{t("expiringError")}</p>}{expiring.data?.length === 0 && <EmptyState title={t("noExpiring")}/>}
-   <div className="flex flex-wrap gap-3">{expiring.data?.slice(0, 8).map(item => <Link key={item.equipment_id} to={`/parc?q=${encodeURIComponent(item.serial)}`} className="flex max-w-full items-center gap-3 rounded-full bg-canvas py-2 pl-3 pr-5"><EquipmentIcon category={item.category} size={24}/><span className="min-w-0 text-sm"><span className="block truncate font-semibold">{item.label}</span><span className="block truncate text-ink/70">{[item.assigned_to?.name, item.serial].filter(Boolean).join(" · ")}</span><span className="text-ink/70">{t("days", { count: item.days_left ?? 0 })}</span></span></Link>)}</div>
-  </Tile>
+ const { t } = useTranslation(["home", "common"]), { user } = useOperator();
+ const expiring = useOverview("expiring_soon"), overview = useOverview(), savings = useSavings(), casesQuery = useCases(), equipment = useEquipment();
+ const avoidable = savings.data?.purchase_guard_lines.filter(line => !line.realized).reduce((sum, line) => sum + line.amount_eur, 0) ?? 0;
+ const verifyCount = overview.data?.filter(item => item.verdict === "to_verify").length ?? 0;
+ const openCases = (casesQuery.data ?? []).filter(item => !["resolved", "cancelled"].includes(item.status)).slice(0, 5);
+ const kpis = [
+  { label: t("covered"), value: savings.data?.covered_equipment_eur, to: "/dashboard", icon: "laptop" },
+  { label: t("avoidable"), value: savings.data ? avoidable : undefined, to: "/purchase-guard", icon: "package" },
+  { label: t("expiringKpi"), value: expiring.data?.length, to: "/parc?coverage=expiring_soon", icon: "calendar" },
+  { label: t("toVerify"), value: overview.data ? verifyCount : undefined, to: "/parc?verdict=to_verify", icon: "shield" },
+ ] as const;
+ return <div className="space-y-7">
+  <header className="grid items-center gap-5 md:grid-cols-[minmax(0,1fr)_minmax(240px,420px)]">
+   <div className="min-w-0"><h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("greeting", { name: user?.name.split(" ")[0] ?? "" })}</h1><p className="mt-2 max-w-xl text-muted">{t("heading")}</p>
+    <div className="mt-5 flex flex-wrap items-center gap-3"><Button asChild><Link to="/chat"><Wrench size={17}/>{t("reportFault")}<ChevronRight size={16}/></Link></Button><span className="rounded-full bg-idle-soft px-3 py-1.5 text-xs font-medium text-muted">{t("demoData")}</span></div>
+   </div>
+   <img src={heroImage} alt="" aria-hidden="true" className="hidden h-52 w-full object-contain md:block lg:h-56"/>
+  </header>
+  <section aria-label={t("overview")} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+   {kpis.map(({ label, value, to, icon }) => <Tile key={label} className="p-4">
+    <Link to={to} className="flex min-w-0 items-center gap-3 rounded-xl focus-visible:ring-2 focus-visible:ring-accent">
+     <EquipmentIcon category={icon} size={56}/>
+     <span className="min-w-0"><span className="block text-2xl font-semibold tabular-nums">{value === undefined ? "—" : <NumberTicker value={value} currency={icon === "laptop" || icon === "package" ? "EUR" : undefined}/>}</span><span className="mt-1 block text-sm leading-snug text-muted">{label}</span></span>
+    </Link>
+   </Tile>)}
+  </section>
+  <div className="grid items-start gap-5 xl:grid-cols-2"><Decisions/>
+   <Tile className="min-w-0"><div className="mb-4 flex items-center justify-between gap-3"><h2 className="text-xl font-semibold tracking-tight">{t("inProgress")}</h2><Link className="text-sm font-semibold text-accent underline underline-offset-4" to="/cases">{t("viewCases")}</Link></div>
+    {casesQuery.isPending && <p role="status">{t("common:loading")}</p>}{casesQuery.isError && <p role="alert">{t("casesError")}</p>}
+    {!casesQuery.isPending && openCases.length === 0 && <EmptyState title={t("noneInProgress")}/>}
+    <ul className="divide-y divide-line">{openCases.map(item => {
+     const device = equipmentMeta(item.equipment_id, equipment.data);
+     return <li key={item.id}><Link to={`/cases/${item.id}`} className="flex min-w-0 items-center gap-3 py-3 first:pt-0">
+      <EquipmentIcon category={device.category} size={44}/><span className="min-w-0 flex-1"><span className="block truncate font-semibold">{device.label}</span><span className="block truncate text-sm text-muted">{t(`enums:Channel.${item.channel}`)}</span><span className="mt-2 flex flex-wrap items-center gap-2"><CaseStatus status={item.status}/><RealityPill value={item.badge}/></span></span><ChevronRight size={16} className="shrink-0 text-muted"/>
+     </Link></li>;
+    })}</ul>
+   </Tile>
+  </div>
+  <div className="grid items-start gap-5 xl:grid-cols-2">
+   <Tile className="min-w-0"><h2 className="mb-4 text-xl font-semibold tracking-tight">{t("watch")}</h2><NotificationList/></Tile>
+   <Tile className="min-w-0"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-semibold tracking-tight">{t("expiring")}</h2><Link className="text-sm font-medium text-accent underline underline-offset-4" to="/parc?coverage=expiring_soon">{t("viewFleet")}</Link></div>
+    {expiring.isPending && <p role="status">{t("common:loading")}</p>}{expiring.isError && <p role="alert" className="text-bad">{t("expiringError")}</p>}{expiring.data?.length === 0 && <EmptyState title={t("noExpiring")}/>}
+    <ul className="divide-y divide-line">{expiring.data?.slice(0, 6).map(item => <li key={item.equipment_id}><Link to={`/parc?q=${encodeURIComponent(item.serial)}`} className="flex items-center gap-3 py-3 first:pt-0">
+     <EquipmentIcon category={item.category} size={40}/><span className="min-w-0 flex-1"><span className="block truncate font-semibold">{item.label}</span><span className="block truncate text-sm text-muted">{[item.assigned_to?.name, item.serial].filter(Boolean).join(" · ")}</span></span><span className="shrink-0 text-sm font-medium text-warn">{t("days", { count: item.days_left ?? 0 })}</span>
+    </Link></li>)}</ul>
+   </Tile>
+  </div>
+  <FleetDistribution/>
  </div>;
+}
+
+function equipmentMeta(id: string | null | undefined, equipment?: { id?: string | null; brand?: string; model?: string; category?: string }[]) {
+ const item = equipment?.find(device => device.id === id);
+ return { label: item ? `${item.brand} ${item.model}` : "—", category: item?.category ?? "package" };
 }

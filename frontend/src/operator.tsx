@@ -5,6 +5,7 @@ import { LogOut, ShieldCheck } from "lucide-react";
 import { ApiError, localRequest } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import heroImage from "@/assets/iso/hero.webp";
 import { OperatorContext, useOperator, type SessionUser } from "./operator-state";
 type LoginPerson = { id: string; name: string; role: "admin" | "operator" };
 async function fetchMe(): Promise<SessionUser | null> {
@@ -28,19 +29,23 @@ export function LoginScreen() {
  const [personId, setPersonId] = useState(""), [password, setPassword] = useState(""), [failed, setFailed] = useState(false);
  const login = useMutation({ mutationFn: () => localRequest<SessionUser>("/auth/login", "POST", { person_id: personId, password }), onSuccess: user => { setPassword(""); cache.setQueryData(["auth", "me"], user); }, onError: () => setFailed(true) });
  function submit(event: FormEvent) { event.preventDefault(); setFailed(false); if (personId && password) login.mutate(); }
- return <main className="flex min-h-screen items-center justify-center bg-slate-100 p-6"><Card className="w-full max-w-md space-y-4">
-  <h1 className="flex items-center gap-2 text-2xl font-semibold"><ShieldCheck className="text-teal-700"/>{t("loginTitle")}</h1>
-  <p className="text-sm text-slate-600">{t("loginHelp")}</p>
+ return <main className="flex min-h-screen items-center justify-center bg-canvas p-4 sm:p-6"><Card className="w-full max-w-2xl space-y-5">
+  <header className="text-center">
+   <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-accent text-white"><ShieldCheck size={26}/></span>
+   <p className="text-lg font-bold">{t("product")}</p><h1 className="mt-3 text-2xl font-semibold">{t("loginTitle")}</h1>
+   <p className="mx-auto mt-2 max-w-md text-sm text-muted">{t("loginHelp")}</p>
+   <img src={heroImage} alt="" aria-hidden="true" className="mx-auto mt-3 hidden h-36 w-full max-w-sm object-contain sm:block"/>
+  </header>
   <form className="space-y-3" onSubmit={submit}>
    <label htmlFor={personField} className="block font-medium">{t("operator")}</label>
-   <select id={personField} className="block w-full rounded-md border border-slate-300 bg-white p-2" disabled={!people.data} value={personId} onChange={event => setPersonId(event.target.value)} required>
+   <select id={personField} className="block min-h-10 w-full rounded-xl border border-line bg-surface px-3 py-2" disabled={!people.data} value={personId} onChange={event => setPersonId(event.target.value)} required>
     <option value="">{t(people.isPending ? "loading" : "choosePerson")}</option>
     {people.data?.map(person => <option key={person.id} value={person.id}>{person.name} · {t("roles." + person.role)}</option>)}
    </select>
    <label htmlFor={passwordField} className="block font-medium">{t("password")}</label>
-   <input id={passwordField} type="password" autoComplete="current-password" className="block w-full rounded-md border border-slate-300 p-2" value={password} onChange={event => setPassword(event.target.value)} required/>
-   {people.isError && <p role="alert" className="text-red-800">{t("peopleError")}</p>}
-   {failed && <p role="alert" className="text-red-800">{t("loginFailed")}</p>}
+   <input id={passwordField} type="password" autoComplete="current-password" className="block min-h-10 w-full rounded-xl border border-line px-3 py-2" value={password} onChange={event => setPassword(event.target.value)} required/>
+   {people.isError && <p role="alert" className="text-bad">{t("peopleError")}</p>}
+   {failed && <p role="alert" className="text-bad">{t("loginFailed")}</p>}
    <Button disabled={!personId || !password || login.isPending}>{t("login")}</Button>
   </form>
  </Card></main>;

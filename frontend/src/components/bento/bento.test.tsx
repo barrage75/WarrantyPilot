@@ -26,11 +26,15 @@ it("localizes the warranty ring label and maps its coverage color", () => {
  expect(container.querySelector("[data-color=ok]")).toBeInTheDocument();
 });
 
-it("maps equipment categories to lucide icons and falls back to a package", () => {
+it("maps equipment categories to transparent illustration assets and falls back to a package", () => {
  const { container } = render(<><EquipmentIcon category="headset"/><EquipmentIcon category="screen"/><EquipmentIcon category="unknown-kind"/></>);
- expect(container.querySelector('[data-icon="headphones"]')).toBeInTheDocument();
- expect(container.querySelector('[data-icon="monitor"]')).toBeInTheDocument();
- expect(container.querySelector('[data-icon="package"]')).toBeInTheDocument();
+ const icons = Array.from(container.querySelectorAll("img"));
+ expect(icons.map(icon => icon.getAttribute("src"))).toEqual(expect.arrayContaining([expect.stringContaining("headphones"), expect.stringContaining("monitor"), expect.stringContaining("package")]));
+ expect(icons).toHaveLength(3);
+ for (const icon of icons) {
+  expect(icon).toHaveAttribute("alt", "");
+  expect(icon).toHaveAttribute("aria-hidden", "true");
+ }
 });
 
 function CurrentPath() { return <span data-testid="current-path">{useLocation().pathname}</span>; }
