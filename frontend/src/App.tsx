@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { NotificationBell, PillNav } from "@/components/bento";
 import { CommandPalette } from "@/components/command/CommandPalette";
 import laptopImage from "@/assets/iso/laptop.webp";
+import horizontalLogo from "@/assets/brand/warranty-logo-horizontal.webp";
 import "./i18n";
 import { OperatorProvider, SessionBadge } from "./operator";
 import { useOperator } from "./operator-state";
@@ -62,9 +63,9 @@ function Shell() {
  const navItems = pages.filter(([, path]) => isAdmin || !adminPages.has(path)).map(([ns, path, icon]) => ({ to: path, end: path === "/", icon, label: t(ns + ":title") }));
  return <BrowserRouter><div className="min-h-screen min-w-0 bg-canvas">
  <header className="relative z-30 flex flex-wrap items-center gap-x-3 gap-y-4 border-b border-line bg-surface px-4 py-3 sm:px-6 lg:fixed lg:inset-y-0 lg:left-0 lg:w-[264px] lg:flex-col lg:items-stretch lg:gap-8 lg:border-b-0 lg:border-r lg:px-6 lg:py-7">
-  <Link to="/" className="flex min-w-0 items-center gap-3">
-   <span aria-hidden="true" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent text-white"><ShieldCheck size={22} strokeWidth={2}/></span>
-   <span className="min-w-0"><span className="block text-lg font-bold tracking-tight text-ink">{t("product")}</span><span className="hidden max-w-[190px] text-xs leading-snug text-muted sm:block">{t("tagline")}</span></span>
+  <Link to="/" className="flex min-w-0 flex-col items-start gap-1">
+   <img src={horizontalLogo} alt={t("product")} className="h-7 w-auto"/>
+   <span className="hidden max-w-[190px] text-xs leading-snug text-muted sm:block">{t("tagline")}</span>
   </Link>
   <div className="ml-auto flex shrink-0 items-center gap-2 lg:fixed lg:right-8 lg:top-4 lg:bg-surface">
    <CommandPalette/><NotificationBell/><UserMenu/>

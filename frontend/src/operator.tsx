@@ -1,11 +1,12 @@
 import { useId, useState, type FormEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut, ShieldCheck } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { ApiError, localRequest } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import heroImage from "@/assets/iso/hero.webp";
+import verticalLogo from "@/assets/brand/warranty-logo-vertical.webp";
 import { OperatorContext, useOperator, type SessionUser } from "./operator-state";
 type LoginPerson = { id: string; name: string; role: "admin" | "operator" };
 async function fetchMe(): Promise<SessionUser | null> {
@@ -31,8 +32,8 @@ export function LoginScreen() {
  function submit(event: FormEvent) { event.preventDefault(); setFailed(false); if (personId) login.mutate(); }
  return <main className="flex min-h-screen items-center justify-center bg-canvas p-4 sm:p-6"><Card className="w-full max-w-2xl space-y-5">
   <header className="text-center">
-   <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-accent text-white"><ShieldCheck size={26}/></span>
-   <p className="text-lg font-bold">{t("product")}</p><h1 className="mt-3 text-2xl font-semibold">{t("loginTitle")}</h1>
+   <img src={verticalLogo} alt={t("product")} className="mx-auto h-16 w-auto"/>
+   <h1 className="mt-3 text-2xl font-semibold">{t("loginTitle")}</h1>
    <p className="mx-auto mt-2 max-w-md text-sm text-muted">{t("loginHelp")}</p>
    <img src={heroImage} alt="" aria-hidden="true" className="mx-auto mt-3 hidden h-36 w-full max-w-sm object-contain sm:block"/>
   </header>
