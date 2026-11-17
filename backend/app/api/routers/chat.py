@@ -32,6 +32,7 @@ class ChatMessage(BaseModel):
     role: Literal["human", "assistant"]
     text: str | None = None
     text_key: str | None = Field(default=None, alias="textKey")
+    text_params: dict[str, str] | None = Field(default=None, alias="textParams")
 
 
 class ChatConversation(BaseModel):
@@ -41,6 +42,7 @@ class ChatConversation(BaseModel):
     conversation_id: str
     messages: list[ChatMessage]
     disclosure_text: str
+    disclosure_key: str | None = "aiDisclosure"
 
 
 class ChatMessageRequest(BaseModel):
@@ -128,12 +130,18 @@ async def send_message(
     case_id = result.case_id
     equipment_label = result.equipment_label
     questions = result.questions
+    reply_text_key: str | None = None
+    reply_text_params: dict[str, str] | None = None
     if case_id is not None:
         session.commit()
         await orchestrator.run(UUID(case_id))
         reply_text = f"J'ai identifié {equipment_label} et créé le dossier de garantie."
+        reply_text_key = "identifiedCreated"
+        reply_text_params = {"equipment": equipment_label or ""}
     else:
         reply_text = questions[0]
+        if reply_text == "Quel équipement est concerné ?":
+            reply_text_key = "equipmentQuestion"
     assistant: ChatLLM | None = request.app.state.services.get("chat_llm")
     if os.getenv("MISTRAL_API_KEY") and assistant is not None:
         rephrase: Callable[..., Awaitable[str]] = assistant.rephrase_reply
@@ -143,7 +151,15 @@ async def send_message(
             questions=questions,
             case_id=case_id,
         )
-    reply = ChatMessage(id=str(uuid4()), role="assistant", text=reply_text)
+        reply_text_key = None
+        reply_text_params = None
+    reply = ChatMessage(
+        id=str(uuid4()),
+        role="assistant",
+        text=reply_text,
+        text_key=reply_text_key,
+        text_params=reply_text_params,
+    )
     messages.append(reply)
     return ChatReply(
         message=reply,
