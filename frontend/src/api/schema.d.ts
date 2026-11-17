@@ -933,6 +933,11 @@ export interface components {
             messages: components["schemas"]["ChatMessage"][];
             /** Disclosure Text */
             disclosure_text: string;
+            /**
+             * Disclosure Key
+             * @default aiDisclosure
+             */
+            disclosure_key: string | null;
         };
         /** ChatMessage */
         ChatMessage: {
@@ -947,6 +952,10 @@ export interface components {
             text?: string | null;
             /** Textkey */
             textKey?: string | null;
+            /** Textparams */
+            textParams?: {
+                [key: string]: string;
+            } | null;
         };
         /** ChatMessageRequest */
         ChatMessageRequest: {

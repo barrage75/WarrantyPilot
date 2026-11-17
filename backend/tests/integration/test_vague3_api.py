@@ -53,6 +53,7 @@ def test_chat_discloses_ai_and_creates_deterministic_case(
         conversation = client.post("/api/chat/conversations")
         assert conversation.status_code == 200
         disclosure = conversation.json()["disclosure_text"]
+        assert conversation.json()["disclosure_key"] == "aiDisclosure"
         assert "intelligence artificielle" in disclosure
 
         result = client.post(
@@ -68,6 +69,11 @@ def test_chat_discloses_ai_and_creates_deterministic_case(
         assert body["equipment"] == "Jabra Evolve2 65"
         assert body["identified_equipment"] == "Jabra Evolve2 65"
         assert body["messages"][-1]["role"] == "assistant"
+        assert body["message"]["textKey"] == "identifiedCreated"
+        assert body["message"]["textParams"] == {"equipment": "Jabra Evolve2 65"}
+        assert body["message"]["text"] == (
+            "J'ai identifié Jabra Evolve2 65 et créé le dossier de garantie."
+        )
 
     with session_factory() as session:
         event = (
@@ -115,6 +121,7 @@ def test_chat_asks_when_reporter_has_multiple_matching_assets(
     assert result.status_code == 200
     assert result.json()["case_id"] is None
     assert result.json()["clarifying_questions"]
+    assert result.json()["message"]["textKey"] is None
 
 
 def test_chat_selects_foreign_equipment_by_exact_service_tag(
