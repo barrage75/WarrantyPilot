@@ -99,6 +99,17 @@ it("uses possible savings from the report when purchase guard lines are empty", 
  expect(avoidableKpi).toHaveTextContent(/120\s?€/);
 });
 
+it("shows the effective channel on in-progress cases", async () => {
+ stubHomeApi([{
+  ...caseItem,
+  channel: "manual",
+  verdict: { ...caseItem.verdict, channel: "email_reseller" },
+ }]);
+ renderWithApi(<Home/>);
+ const caseCard = await screen.findByRole("link", { name: /Dell Latitude 7440.*E-mail revendeur/ });
+ expect(caseCard).not.toHaveTextContent("Traitement manuel");
+});
+
 it("keeps the decision queue in one card with compact rows and collapsed disclosures", async () => {
  stubHomeApi([caseItem]);
  renderWithApi(<Decisions/>);

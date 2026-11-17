@@ -7,6 +7,7 @@ import { ApiError, client, unwrap } from "@/api/client";
 import { apiErrorKey } from "@/api/errors";
 import { useEquipment } from "@/api/resources";
 import { useOperator } from "@/operator-state";
+import { caseChannel } from "@/components/case/caseState";
 import { HumanActions } from "@/components/case/HumanActions";
 import { StatusBadge, VerdictBadge } from "@/components/Badges";
 import { CaseRealityPill as RealityPill } from "@/components/case/CaseRealityPill";
@@ -60,7 +61,7 @@ export function Decisions() {
       <summary className="cursor-pointer text-sm font-semibold">{t("details")}</summary>
       <div className="mt-3 space-y-2 text-sm">
        {item.verdict && <><VerdictBadge value={item.verdict.value}/><p className="text-ink">{i18n.language.startsWith("fr") ? item.verdict.explanation_fr : item.verdict.explanation_en}</p></>}
-       <p className="text-muted">{t(`enums:Channel.${item.channel}`)}</p>
+       <p className="text-muted">{t(`enums:Channel.${caseChannel(item)}`)}</p>
        <ul className="space-y-1 text-muted">{item.policy?.reasons?.map(reason => <li key={reason}>{t(`caseDetail:reasons.${reason}`, { defaultValue: technicalLabel(reason, i18n.language) })}</li>)}</ul>
      </div>
      </details>
@@ -107,7 +108,7 @@ export default function Home() {
     <ul className="divide-y divide-line">{openCases.map(item => {
      const device = equipmentMeta(item.equipment_id, equipment.data);
      return <li key={item.id}><Link to={`/cases/${item.id}`} className="flex min-w-0 items-center gap-3 py-3 first:pt-0">
-      <EquipmentIcon category={device.category} size={44}/><span className="min-w-0 flex-1"><span className="block truncate font-semibold">{device.label}</span><span className="block truncate text-sm text-muted">{t(`enums:Channel.${item.channel}`)}</span><span className="mt-2 flex flex-wrap items-center gap-2"><CaseStatus status={item.status}/><RealityPill value={item.badge}/></span></span><ChevronRight size={16} className="shrink-0 text-muted"/>
+      <EquipmentIcon category={device.category} size={44}/><span className="min-w-0 flex-1"><span className="block truncate font-semibold">{device.label}</span><span className="block truncate text-sm text-muted">{t(`enums:Channel.${caseChannel(item)}`)}</span><span className="mt-2 flex flex-wrap items-center gap-2"><CaseStatus status={item.status}/><RealityPill value={item.badge}/></span></span><ChevronRight size={16} className="shrink-0 text-muted"/>
      </Link></li>;
     })}</ul>
    </Tile>
