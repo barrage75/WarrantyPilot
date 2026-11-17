@@ -5,6 +5,7 @@ import { Route, Routes } from "react-router-dom";
 import Parc from "@/pages/Parc";
 import Dashboard from "@/pages/Dashboard";
 import { CommandPalette } from "@/components/command/CommandPalette";
+import { countByVerdict } from "@/components/parc/data";
 import { renderWithApi, stubHttp } from "@/test/http";
 import i18n from "@/i18n";
 
@@ -13,17 +14,36 @@ const report = { generated_at: "2026-11-14T09:00:00Z", company: "Appelia", cover
 beforeEach(async () => {
  await i18n.changeLanguage("fr");
  stubHttp(call => {
-  if (call.path === "/api/equipment/overview") return Response.json(equipment);
+  if (call.path === "/api/equipment/overview") {
+   const query = new URLSearchParams(call.search).get("q");
+   return Response.json(query ? equipment.filter(item => item.serial.includes(query)) : equipment);
+  }
   if (call.path === "/api/reports/savings") return Response.json(report);
   if (call.path === "/api/cases") return Response.json([{ id: "case-1", equipment_id: "device-0", status: "resolved" }]);
   return undefined;
  });
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+it("counts verdicts from each fleet item", () => {
+ expect(countByVerdict([{ verdict: "covered" }, { verdict: "covered" }, { verdict: "to_verify" }])).toEqual({
+  covered: 2,
+  likely_covered: 0,
+  to_verify: 1,
+  not_covered: 0,
+  out_of_manufacturer: 0,
+ });
+});
 it("paginates the fleet and opens an accessible sheet with document, case and serial links", async () => {
  renderWithApi(<Parc/>, "/parc");
  const tiles = await screen.findAllByTestId("equipment-tile");
  expect(tiles).toHaveLength(24);
+ expect(screen.getByRole("heading", { name: "Parc · 30 équipements" })).toBeInTheDocument();
+ expect(screen.getByRole("button", { name: /Tous les équipements 30/ })).toBeInTheDocument();
+ expect(screen.getByText("30 équipements au total")).toBeInTheDocument();
+ expect(screen.getByText("Échéance :", { exact: true })).toBeInTheDocument();
+ expect(screen.getByRole("button", { name: "Garantie active" })).toBeInTheDocument();
+ expect(screen.getByText("Équipement", { exact: true })).toBeInTheDocument();
+ expect(screen.getByText("Statut", { exact: true })).toBeInTheDocument();
  await userEvent.click(tiles[0]);
  const sheet = screen.getByRole("dialog");
  expect(within(sheet).getByRole("heading")).toHaveTextContent("Dell Latitude 0");
@@ -35,6 +55,13 @@ it("paginates the fleet and opens an accessible sheet with document, case and se
  await userEvent.click(screen.getByRole("button", { name: "Page suivante" }));
  expect(screen.getAllByTestId("equipment-tile")).toHaveLength(6);
  expect(screen.getByText("Dell Latitude 24")).toBeInTheDocument();
+});
+it("uses the search-filtered count for the all-verdict button", async () => {
+ renderWithApi(<Parc/>, "/parc?q=SERIAL-0");
+ await screen.findAllByTestId("equipment-tile");
+ expect(screen.getByRole("searchbox")).toHaveValue("SERIAL-0");
+ expect(screen.getByRole("heading", { name: "Parc · 30 équipements" })).toBeInTheDocument();
+ expect(screen.getByRole("button", { name: "Tous les équipements 1" })).toBeInTheDocument();
 });
 it("requests coverage and search filters through the API", async () => {
  renderWithApi(<Parc/>, "/parc");

@@ -12,7 +12,7 @@ export function UploadProgress({ name, waiting, state, duplicate, documentId, su
  const verified = !!state && !duplicate;
  const read = state === "extracted";
  const suspect = suspicious || state === "quarantined" || !!reason && !duplicate;
- return <div data-testid="upload-card" className="min-w-0 space-y-5 rounded-[28px] bg-canvas p-5 sm:p-6">
+ return <div data-testid="upload-card" className="min-w-0 space-y-5 rounded-[20px] bg-canvas p-5 sm:p-6">
   <div className="flex items-center gap-3"><span className="rounded-2xl bg-accent/10 p-3"><FileText aria-hidden="true" className="shrink-0"/></span><p className="min-w-0 break-all text-lg font-semibold">{name}</p></div>
   <ol className="grid grid-cols-3" aria-label={t("stepsTitle")}>
    {([ ["sent", !!state || !!duplicate], ["verified", verified], ["read", read] ] as const).map(([step, complete], index) => {

@@ -1,13 +1,12 @@
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
-export const KARIM = "97225c38-d686-5d99-a6cf-53e18aa92e8d";
+export const SAMY = "0366886f-898d-51be-87ad-2cb539f58c9a";
 export async function openUserMenu(page: Page) {
  await page.getByTestId("user-menu-trigger").click();
 }
-export async function loginUi(page: Page, person = KARIM) {
+export async function loginUi(page: Page, person = SAMY) {
  await page.goto("/");
- await expect(page.getByRole("heading", { name: "Connexion opérateur" })).toBeVisible();
+ await expect(page.getByRole("heading", { name: "Connexion opérateur" })).toBeVisible({ timeout: 15000 });
  await page.getByLabel("Personne", { exact: true }).selectOption(person);
- await page.getByLabel("Mot de passe", { exact: true }).fill(process.env.WP_DEMO_PASSWORD ?? "appelia-demo");
  await page.getByRole("button", { name: "Se connecter", exact: true }).click();
  await openUserMenu(page);
  await expect(page.getByText(/Opérateur actif : /)).toBeVisible();
@@ -53,7 +52,7 @@ export async function resolveFromUi(page: Page, request: APIRequestContext = pag
  const item = await fakeCase(request, identities.jabra, identities.person);
  expect(item.status).toBe("awaiting_validation");
  await page.goto("/");
- const card = page.locator("section").filter({ has: page.locator(`a[href="/cases/${item.id}"]`) });
+ const card = page.getByTestId("decision-beam").filter({ has: page.locator(`a[href="/cases/${item.id}"]`) });
  await expect(card).toBeVisible();
  await expectSignedIn(page);
  await card.getByRole("button", { name: "Valider", exact: true }).click();

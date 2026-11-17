@@ -9,6 +9,8 @@
   "polling": "Actualisation toutes les 2 s",
   "liveSse": "En direct (SSE)",
   "title": "Détail du dossier",
+  "equipmentTitle": "Équipement",
+  "equipmentUnknown": "Équipement non identifié",
   "validate": "Valider",
   "validationPending": "Envoi dans 5 s",
   "validationQueued": "Envoi prévu…",

@@ -32,7 +32,7 @@ Chaque réponse sépare **Fait vérifié** (code ou commande du dépôt, rejoué
 - Hypothèse : en production, proxy de sortie et isolation réseau.
 
 **9. L'API est-elle protégée ?**
-- Fait : session obligatoire après `POST /api/auth/login` (mot de passe `WP_DEMO_PASSWORD`, exigé hors `WP_ENV=dev`) ; rôles `admin` (Karim Benali) et `operator` ; reset et réglages réservés à l'admin (`require_admin`, `backend/app/api/dependencies.py`) avec confirmation `RESET`. Contrôle Host/Origin : constaté 401 sans session, 400 pour `Host: evil.example`, 403 pour `Origin: http://evil.example`. Un `person_id` différent de la session est refusé (403).
+- Fait : session obligatoire après `POST /api/auth/login` ; en démo locale, n'importe quel mot de passe fonctionne. Les rôles `admin` (Samy Benzeguir) et `operator` restent contrôlés côté serveur ; reset et réglages réservés à l'admin (`require_admin`, `backend/app/api/dependencies.py`) avec confirmation `RESET`. Contrôle Host/Origin : constaté 401 sans session, 400 pour `Host: evil.example`, 403 pour `Origin: http://evil.example`. Un `person_id` différent de la session est refusé (403).
 - Hypothèse : SSO de l'entreprise et mots de passe individuels avant un pilote ; aujourd'hui un mot de passe de démo partagé, services sur `127.0.0.1` seulement.
 
 **10. Que se passe-t-il si l'agent se trompe en plein envoi ?**

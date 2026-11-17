@@ -268,9 +268,9 @@ it.each(["fr", "en"])("formats generated evidence with document fact labels and 
  expect(await screen.findByText(extension)).toBeVisible();
  const euro = (amount: number) => new Intl.NumberFormat(language, { style: "currency", currency: "EUR" }).format(amount);
  expect(Array.from(container.querySelectorAll("blockquote"), quote => quote.textContent)).toEqual(fr ? [
-  extension, "Date de facture : 20/11/2025", "Total TTC : " + euro(1234.5), "Extension de garantie mentionnée : Oui", "Signal de sécurité suspect : Non", "Nom du fournisseur : —", "Numéro de série : 00123", "Prix unitaire HT : " + euro(12.5), "Numéro de série : 12345678901234567890",
+  extension, "Date de facture : 20/11/2025", "Total TTC : " + euro(1234.5), "Extension de garantie mentionnée : Oui", "Signal de sécurité suspect : Non", "Nom du fournisseur : —", "Numéro de série : 00123", "Ligne 1 · Prix unitaire HT : " + euro(12.5), "Numéro de série : 12345678901234567890",
  ] : [
-  extension, "Invoice date: 11/20/2025", "Total incl. VAT: " + euro(1234.5), "Warranty extension mentioned: Yes", "Suspicious security signal: No", "Supplier name: —", "Serial number: 00123", "Unit price excl. VAT: " + euro(12.5), "Serial number: 12345678901234567890",
+  extension, "Invoice date: 11/20/2025", "Total incl. VAT: " + euro(1234.5), "Warranty extension mentioned: Yes", "Suspicious security signal: No", "Supplier name: —", "Serial number: 00123", "Line 1 · Unit price excl. VAT: " + euro(12.5), "Serial number: 12345678901234567890",
  ]);
  expect(visibleText(container)).not.toContain("extension_months");
  const raw = Array.from(container.querySelectorAll("details pre")).find(pre => pre.textContent?.includes(excerpts[0]))!;

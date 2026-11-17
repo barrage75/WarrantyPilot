@@ -22,7 +22,7 @@ describe.each(["fr", "en"])("document facts in %s", language => {
   const groups = groupDocumentFacts([fact("lines[3].sku", "REF"), fact("invoice_number", "INV"), fact("lines[0].serial", "SN"), fact("lines[0].unit_price_ht", "12.5"), fact("lines[0].warranty_duration_months", 24)], language);
   expect(groups.map(group => group.label)).toEqual([undefined, fr ? "Ligne 1" : "Line 1", fr ? "Ligne 4" : "Line 4"]);
   expect(groups[0].facts[0].label).toBe(fr ? "Numéro de facture" : "Invoice number");
-  expect(groups[1].facts.map(item => item.label)).toEqual(fr ? ["Numéro de série", "Prix unitaire HT", "Durée de garantie (mois)"] : ["Serial number", "Unit price excl. VAT", "Warranty duration (months)"]);
+  expect(groups[1].facts.map(item => item.label)).toEqual(fr ? ["Ligne 1 · Numéro de série", "Ligne 1 · Prix unitaire HT", "Ligne 1 · Durée de garantie (mois)"] : ["Line 1 · Serial number", "Line 1 · Unit price excl. VAT", "Line 1 · Warranty duration (months)"]);
  });
  it("formats dates, booleans and euro amounts without changing identifiers", () => {
   const rows = groupDocumentFacts([fact("invoice_date", "2025-11-20"), fact("warranty_extension_mentioned", true), fact("lease_contract", false), fact("total_ttc", "1234.50"), fact("serial", "00123"), fact("unit_price_ht", 0)], language)[0].facts;
@@ -38,6 +38,6 @@ describe.each(["fr", "en"])("document facts in %s", language => {
   expect(groups[0].facts.map(row => row.formatted)).toEqual(["—", "2025-02-30", "not money", "invalid"]);
   expect(groups[0].facts[0].label).toBe("Foo bar");
   expect(groups[1].label).toBe(fr ? "Ligne 3" : "Line 3");
-  expect(groups[1].facts[0].label).toBe("Unknown field");
+  expect(groups[1].facts[0].label).toBe(fr ? "Ligne 3 · Unknown field" : "Line 3 · Unknown field");
  });
 });

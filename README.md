@@ -1,13 +1,15 @@
 <div align="center">
 
-# 🛡️ WarrantyPilot
+<img src="docs/images/warranty-logo-horizontal.png" alt="Warranty" width="240"/>
+
+# Warranty
 
 ### L'agent IA qui transforme les garanties oubliées en économies.
 
-WarrantyPilot repère l'équipement en panne, retrouve sa facture, vérifie la garantie
+Warranty repère l'équipement en panne, retrouve sa facture, vérifie la garantie
 et ouvre lui-même le dossier chez le fabricant. Vous gardez toujours la décision.
 
-[![CI](https://github.com/barrage75/gare/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/barrage75/gare/actions/workflows/ci.yml)
+[![CI](https://github.com/barrage75/WarrantyPilot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/barrage75/WarrantyPilot/actions/workflows/ci.yml)
 ![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
@@ -18,7 +20,7 @@ et ouvre lui-même le dossier chez le fabricant. Vous gardez toujours la décisi
 
 <br/>
 
-<img src="docs/images/accueil.png" alt="Accueil de WarrantyPilot" width="900"/>
+<img src="docs/images/accueil.png" alt="Accueil de Warranty" width="900"/>
 
 </div>
 
@@ -28,10 +30,10 @@ et ouvre lui-même le dossier chez le fabricant. Vous gardez toujours la décisi
 
 Une entreprise rachète chaque année du matériel encore sous garantie : la facture est
 introuvable, la durée de garantie est inconnue, et la démarche chez le fabricant est trop
-longue. **WarrantyPilot s'occupe de tout le travail administratif**, de la facture jusqu'au
+longue. **Warranty s'occupe de tout le travail administratif**, de la facture jusqu'au
 dossier résolu.
 
-## ✨ Ce que fait WarrantyPilot
+## ✨ Ce que fait Warranty
 
 | | Fonction | En pratique |
 |---|---|---|
@@ -61,16 +63,16 @@ flowchart LR
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/images/signalement.png" alt="Signalement d'une panne"/><p align="center"><b>Signalement</b> : une phrase suffit</p></td>
-    <td width="50%"><img src="docs/images/dossier.png" alt="Dossier de garantie"/><p align="center"><b>Dossier</b> : le parcours de l'agent, étape par étape</p></td>
-  </tr>
-  <tr>
+    <td width="50%"><img src="docs/images/dossiers.png" alt="Liste des dossiers"/><p align="center"><b>Dossiers</b> : le suivi des demandes de garantie</p></td>
     <td width="50%"><img src="docs/images/parc.png" alt="Parc d'équipements"/><p align="center"><b>Parc</b> : la garantie de chaque équipement</p></td>
-    <td width="50%"><img src="docs/images/garde-fou.png" alt="Garde-fou d'achat"/><p align="center"><b>Garde-fou</b> : réparer avant de racheter</p></td>
   </tr>
   <tr>
     <td width="50%"><img src="docs/images/documents.png" alt="Documents"/><p align="center"><b>Documents</b> : factures déposées ou reçues par e-mail</p></td>
+    <td width="50%"><img src="docs/images/dashboard.png" alt="Tableau de bord"/><p align="center"><b>Tableau de bord</b> : activité et économies suivies</p></td>
+  </tr>
+  <tr>
     <td width="50%"><img src="docs/images/journal.png" alt="Journal intègre"/><p align="center"><b>Journal</b> : chaque action vérifiable</p></td>
+    <td width="50%"><img src="docs/images/connexion.png" alt="Écran de connexion"/><p align="center"><b>Connexion</b> : une entrée simple vers la démo</p></td>
   </tr>
 </table>
 
@@ -87,7 +89,7 @@ flowchart LR
 
 ### Windows
 
-1. [Téléchargez le ZIP du projet](https://github.com/barrage75/gare/archive/refs/heads/main.zip)
+1. [Téléchargez le ZIP du projet](https://github.com/barrage75/WarrantyPilot/archive/refs/heads/main.zip)
    et **extrayez-le** (pas besoin de Git).
 2. Installez **uv**, qui gère Python pour vous. Dans PowerShell :
    ```powershell
@@ -112,8 +114,7 @@ Les suivants prennent quelques secondes. Le navigateur s'ouvre seul sur
 
 | Quoi | Détail |
 |---|---|
-| 👤 **Connexion** | **Karim Benali** (administrateur) ou **Paul Martin** (opérateur) |
-| 🔑 **Mot de passe** | `appelia-demo` par défaut, affiché dans la console (`WP_DEMO_PASSWORD` dans `.env`) |
+| 👤 **Connexion** | Choisir **Samy Benzeguir** (administrateur) ; n'importe quel mot de passe fonctionne en démo. |
 | 🎬 **Scénario** | [`docs/demo/SCRIPT_3MIN.md`](docs/demo/SCRIPT_3MIN.md) |
 | ⏹️ **Arrêter** | <kbd>Ctrl</kbd>+<kbd>C</kbd> dans la console (répondez `O` si Windows le demande) |
 
@@ -233,5 +234,5 @@ fictives locales. Ne committez jamais `.env`.
 ---
 
 <div align="center">
-<sub>WarrantyPilot · démonstration locale avec des données fictives · aucun fabricant réel n'est contacté</sub>
+<sub>Warranty · démonstration locale avec des données fictives · aucun fabricant réel n'est contacté</sub>
 </div>

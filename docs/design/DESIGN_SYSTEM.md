@@ -27,7 +27,7 @@ Le parc d'équipements est le héros : chaque équipement est une tuile, son ic�
 
 ## Structure
 ```
-[WarrantyPilot]   ( Parc | Dossiers | Documents | Garde-fou | Journal | … )   [🔔 n] [Karim ▾]
+[WarrantyPilot]   ( Parc | Dossiers | Documents | Garde-fou | Journal | … )   [🔔 n] [Samy ▾]
 Titre de page (4xl)                                   [pastille] [pastille] [pastille]
 ┌──────── tuile large (décision) ────────┐┌── tuile ──┐┌── tuile ──┐
 │ icône                         anneau   ││           ││           │

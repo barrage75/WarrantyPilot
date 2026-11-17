@@ -11,7 +11,7 @@ from app.contracts.models import ChecklistStep, DataChecklist, Verdict, utc_now
 from app.core.settings_store import read_settings, write_settings
 from app.core.tables import action_results, actions, data_checklists, equipment, events
 from app.testing.fakes import FakeExtractor, FakeFollowUp, FakeRulesEngine
-from tests.auth_helpers import KARIM_ID, login
+from tests.auth_helpers import SAMY_ID, login
 
 
 def test_dell_chat_validation_files_one_portal_case(
@@ -52,7 +52,7 @@ def test_dell_chat_validation_files_one_portal_case(
     )
 
     with TestClient(application) as client:
-        login(client, person_id=KARIM_ID)
+        login(client, person_id=SAMY_ID)
         assert client.post("/api/demo/reset", json={"confirm": "RESET"}).status_code == 200
         with session_factory.begin() as session:
             current = read_settings(session)

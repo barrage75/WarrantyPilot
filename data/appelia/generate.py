@@ -214,11 +214,12 @@ def build_people() -> list[dict[str, Any]]:
     rng = random.Random(RANDOM_SEED)
     required = [
         ("Paul", "Martin", "plateau", "technicien plateau"),
-        ("Karim", "Benali", "it", "responsable informatique"),
+        ("Samy", "Benzeguir", "it", "responsable informatique"),
         ("Claire", "Dubois", "direction", "DAF"),
     ]
     names = list(required)
     existing = {(first, last) for first, last, _, _ in names}
+    existing.add(("Karim", "Benali"))
     while len(names) < 200:
         first = rng.choice(FIRST_NAMES)
         last = rng.choice(LAST_NAMES)
@@ -235,12 +236,17 @@ def build_people() -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     for index, (first, last, required_service, required_role) in enumerate(names):
         service = required_service or services[index]
+        email = (
+            "samy.benzeguir@appelia.example"
+            if (first, last) == ("Samy", "Benzeguir")
+            else f"{slug(first)}.{slug(last)}.{index + 1:03d}@appelia.example"
+        )
         records.append(
             {
                 "id": stable_id("person", f"{index:03d}:{first}:{last}"),
                 "first_name": first,
                 "last_name": last,
-                "email": f"{slug(first)}.{slug(last)}.{index + 1:03d}@appelia.example",
+                "email": email,
                 "service": service,
                 "role": required_role or "collaborateur",
             }

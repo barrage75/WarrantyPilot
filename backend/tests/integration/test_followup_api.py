@@ -29,7 +29,7 @@ from app.core.tables import (
 )
 from app.followup.clock import utc_now as followup_now
 from app.followup.reminders import ReminderOutbox, ReminderPlanner, ReminderScheduler
-from tests.auth_helpers import KARIM_ID, login
+from tests.auth_helpers import SAMY_ID, login
 
 
 class StaticFollowUp:
@@ -41,7 +41,7 @@ class StaticFollowUp:
 
 
 def _reset(client: TestClient) -> None:
-    login(client, person_id=KARIM_ID)
+    login(client, person_id=SAMY_ID)
     assert client.post("/api/demo/reset", json={"confirm": "RESET"}).status_code == 200
 
 

@@ -26,7 +26,7 @@ export function NotificationBell() {
  const count = items.filter(item => item.severity === "critical" || item.severity === "warning").length;
  return <Popover.Root open={open} onOpenChange={setOpen}>
   <Popover.Trigger asChild><Button variant="outline" aria-label={t("notifications.button", { count })} className="relative h-11 w-11 p-0"><Bell size={18}/>{count > 0 && <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-bad px-1 text-[10px] font-bold text-white">{count > 99 ? "99+" : count}</span>}</Button></Popover.Trigger>
-  <Popover.Portal><Popover.Content align="end" sideOffset={10} className="z-50 w-[min(22rem,calc(100vw-2rem))] rounded-[28px] bg-surface p-4 text-ink outline-none ring-1 ring-line">
+  <Popover.Portal><Popover.Content align="end" sideOffset={10} className="z-50 w-[min(22rem,calc(100vw-2rem))] rounded-[20px] border border-line bg-surface p-4 text-ink shadow-[0_1px_2px_rgba(15,27,61,.04),0_6px_24px_rgba(37,99,235,.06)] outline-none">
    <div className="mb-3 flex items-center justify-between"><h2 className="font-semibold">{t("notifications.title")}</h2><span className="text-xs text-muted">{count}</span></div>
    {query.isPending ? <p role="status" className="py-5 text-center text-sm text-muted">{t("notifications.loading")}</p>
     : query.isError ? <p role="alert" className="py-5 text-center text-sm text-bad">{t("notifications.error")}</p>

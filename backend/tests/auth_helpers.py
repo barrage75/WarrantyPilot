@@ -8,7 +8,7 @@ from sqlalchemy import insert, select, update
 from app.core.auth import Operator, open_session
 from app.core.tables import people
 
-KARIM_ID = "97225c38-d686-5d99-a6cf-53e18aa92e8d"
+SAMY_ID = "0366886f-898d-51be-87ad-2cb539f58c9a"
 
 
 def login(
