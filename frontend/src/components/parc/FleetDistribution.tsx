@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Tile } from "@/components/bento/Tile";
-import { useOverview } from "./data";
+import { countByVerdict, useOverview } from "./data";
 
 const verdicts = [
  ["covered", "bg-accent"],
@@ -13,8 +13,8 @@ const verdicts = [
 
 export function FleetDistribution({ vertical = false }: { vertical?: boolean }) {
  const { t } = useTranslation(["parc", "enums"]);
- const query = useOverview(), items = query.data ?? [], total = items.length;
- const groups = verdicts.map(([value, color]) => ({ value, color, count: items.filter(item => item.verdict === value).length }));
+ const query = useOverview(), items = query.data ?? [], total = items.length, counts = countByVerdict(items);
+ const groups = verdicts.map(([value, color]) => ({ value, color, count: counts[value] }));
  return <Tile className="min-w-0 space-y-5">
   <header className="flex flex-wrap items-baseline justify-between gap-3">
    <h2 className="text-lg font-semibold">{t("distribution.title")}</h2>

@@ -6,14 +6,15 @@ import type { ReactNode } from "react";
 import { OperatorContext, type SessionUser } from "@/operator-state";
 export const person = "10000000-0000-4000-8000-000000000001";
 export const people = [{ id: person, name: "Camille Martin", email: "camille@example.test", role: "IT" }, { id: "10000000-0000-4000-8000-000000000009", name: "Alex Dupont", email: "alex@example.test", role: null }];
-export type Call = { method: string; path: string; body?: unknown };
+export type Call = { method: string; path: string; search?: string; body?: unknown };
 export type Handler = (call: Call) => Response | Promise<Response> | undefined;
 export function stubHttp(handler: Handler) {
  const calls: Call[] = [];
  vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
   const request = input instanceof Request ? input : new Request(new URL(String(input), window.location.origin), init);
   const text = request.method === "GET" ? "" : await request.text();
-  const call: Call = { method: request.method, path: new URL(request.url).pathname, ...(text ? { body: JSON.parse(text) as unknown } : {}) };
+  const url = new URL(request.url);
+  const call: Call = { method: request.method, path: url.pathname, ...(url.search ? { search: url.search } : {}), ...(text ? { body: JSON.parse(text) as unknown } : {}) };
   calls.push(call);
   const response = await handler(call);
   if (response) return response;

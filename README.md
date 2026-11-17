@@ -9,7 +9,7 @@
 Warranty repère l'équipement en panne, retrouve sa facture, vérifie la garantie
 et ouvre lui-même le dossier chez le fabricant. Vous gardez toujours la décision.
 
-[![CI](https://github.com/barrage75/gare/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/barrage75/gare/actions/workflows/ci.yml)
+[![CI](https://github.com/barrage75/WarrantyPilot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/barrage75/WarrantyPilot/actions/workflows/ci.yml)
 ![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
@@ -89,7 +89,7 @@ flowchart LR
 
 ### Windows
 
-1. [Téléchargez le ZIP du projet](https://github.com/barrage75/gare/archive/refs/heads/main.zip)
+1. [Téléchargez le ZIP du projet](https://github.com/barrage75/WarrantyPilot/archive/refs/heads/main.zip)
    et **extrayez-le** (pas besoin de Git).
 2. Installez **uv**, qui gère Python pour vous. Dans PowerShell :
    ```powershell

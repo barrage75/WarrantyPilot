@@ -2,20 +2,18 @@ import { useDeferredValue, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { components } from "@/api/schema";
 import { Tile } from "@/components/bento/Tile";
 import { EquipmentIcon } from "@/components/bento/EquipmentIcon";
 import { EmptyState } from "@/components/bento/EmptyState";
 import { Button } from "@/components/ui/button";
 import { FleetDistribution } from "@/components/parc/FleetDistribution";
 import { EquipmentSheet } from "@/components/parc/EquipmentSheet";
-import { useOverview, type Coverage, type FleetEquipment } from "@/components/parc/data";
+import { countByVerdict, useOverview, type Coverage, type FleetEquipment, type Verdict } from "@/components/parc/data";
 import { VerdictBadge } from "@/components/Badges";
 import { Pill } from "@/components/bento/Pill";
 
 const coverages = ["active", "expiring_soon", "expired", "leased", "unknown"] as const;
 const verdicts = ["covered", "likely_covered", "to_verify", "not_covered", "out_of_manufacturer"] as const;
-type Verdict = components["schemas"]["VerdictValue"];
 const pageSize = 24;
 export default function Parc() {
  const { t, i18n } = useTranslation(["parc", "enums"]);
@@ -29,7 +27,7 @@ export default function Parc() {
  const verdict = verdicts.includes(params.get("verdict") as Verdict) ? params.get("verdict") as Verdict : undefined;
  const totalOverview = useOverview(), deferred = useDeferredValue(search), query = useOverview(coverage, deferred);
  const totalCount = totalOverview.data?.length ?? 0;
- const items = query.data ?? [], filtered = verdict ? items.filter(item => item.verdict === verdict) : items;
+ const items = query.data ?? [], counts = countByVerdict(items), filtered = verdict ? items.filter(item => item.verdict === verdict) : items;
  const pages = Math.max(1, Math.ceil(filtered.length / pageSize)), current = Math.min(page, pages - 1);
  const visible = filtered.slice(current * pageSize, (current + 1) * pageSize);
  function changeQuery(key: string, value?: string) { const next = new URLSearchParams(paramsRef.current); if (value) next.set(key, value); else next.delete(key); paramsRef.current = next; setParams(next, { replace: key === "q" }); setPage(0); }
@@ -52,7 +50,7 @@ export default function Parc() {
   <div className="space-y-3">
    <div role="group" aria-label={t("filterVerdict")} className="flex min-w-0 flex-wrap items-center gap-1.5">
     {([undefined, ...verdicts] as const).map(value => {
-      const count = value ? items.filter(item => item.verdict === value).length : totalCount;
+      const count = value ? counts[value] : items.length;
       const active = verdict === value;
       return <button key={value ?? "all-verdicts"} type="button" aria-pressed={active} onClick={() => changeQuery("verdict", value)} className={`min-h-9 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${active ? "bg-accent text-white" : "bg-surface text-ink hover:bg-accent-soft"}`}>{value ? t(`enums:VerdictValue.${value}`) : t("verdictAll")} <span className={active ? "text-white/80" : "text-muted"}>{totalOverview.isPending && !value ? "—" : count}</span></button>;
     })}
