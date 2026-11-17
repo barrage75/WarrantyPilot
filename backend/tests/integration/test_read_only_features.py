@@ -19,7 +19,7 @@ from app.core.journal import append_event
 from app.core.settings_store import read_settings, write_settings
 from app.core.tables import action_results, actions, cases, equipment, events
 from app.followup.reminders import ReminderPlanner
-from tests.auth_helpers import KARIM_ID, login
+from tests.auth_helpers import SAMY_ID, login
 from tests.integration.helpers import create_case
 
 
@@ -35,12 +35,12 @@ def client(db_engine, app_settings):
 )
 def test_read_endpoints_require_session(client, path):
     assert client.get(f"/api/{path}").status_code == 401
-    login(client, role="operator", person_id=KARIM_ID)
+    login(client, role="operator", person_id=SAMY_ID)
     assert client.get(f"/api/{path}").status_code == 200
 
 
 def test_empty_database(client):
-    login(client, person_id=KARIM_ID)
+    login(client, person_id=SAMY_ID)
     assert client.get("/api/equipment/overview").json() == []
     assert client.get("/api/notifications").json() == []
     report = client.get("/api/reports/savings").json()
@@ -56,7 +56,7 @@ def test_empty_database(client):
 
 @pytest.mark.parametrize("value", ["=1+1", "+1", "-1", "@SUM(1,2)", "\t=1+1", "\r=1+1"])
 def test_savings_csv_escapes_formulas_and_uses_french_labels(client, session_factory, value):
-    login(client, person_id=KARIM_ID)
+    login(client, person_id=SAMY_ID)
     case, _ = create_case(session_factory)
     with session_factory.begin() as session:
         session.execute(
@@ -79,7 +79,7 @@ def test_savings_csv_escapes_formulas_and_uses_french_labels(client, session_fac
 
 
 def test_seed_overview_filters_and_timing(client):
-    login(client, person_id=KARIM_ID)
+    login(client, person_id=SAMY_ID)
     assert client.post("/api/demo/reset", json={"confirm": "RESET"}).status_code == 200
     start = time.perf_counter()
     response = client.get("/api/equipment/overview")
@@ -111,7 +111,7 @@ def test_seed_overview_filters_and_timing(client):
 
 
 def test_report_matches_scan_after_claim_and_purchase_flows(client, session_factory):
-    login(client, person_id=KARIM_ID)
+    login(client, person_id=SAMY_ID)
     assert client.post("/api/demo/reset", json={"confirm": "RESET"}).status_code == 200
     with session_factory.begin() as session:
         settings = read_settings(session)
@@ -125,7 +125,7 @@ def test_report_matches_scan_after_claim_and_purchase_flows(client, session_fact
     )
     for text, reporter in [
         (f"Mon casque Jabra {paul['serial']} ne charge plus", paul["assigned_to"]["id"]),
-        ("Le PC 7XK4L93 ne démarre plus", KARIM_ID),
+        ("Le PC 7XK4L93 ne démarre plus", SAMY_ID),
     ]:
         conversation = client.post("/api/chat/conversations").json()
         created = client.post(
@@ -200,7 +200,7 @@ def test_report_matches_scan_after_claim_and_purchase_flows(client, session_fact
 
 def test_notifications_stable_sorted_sourced_and_read_only(client, session_factory, app_settings):
     case, _ = create_case(session_factory)
-    login(client, person_id=KARIM_ID)
+    login(client, person_id=SAMY_ID)
     with session_factory.begin() as session:
         session.execute(update(cases).where(cases.c.id == str(case.id)).values(status="failed"))
         append_event(
@@ -241,7 +241,7 @@ def test_notifications_stable_sorted_sourced_and_read_only(client, session_facto
 
 
 def test_report_exposes_journal_failure(client, session_factory, app_settings):
-    login(client, person_id=KARIM_ID)
+    login(client, person_id=SAMY_ID)
     with session_factory.begin() as session:
         append_event(session, EventType.CHAT_DISCLOSURE, payload={})
     app_settings.anchor_file.parent.mkdir(parents=True, exist_ok=True)
@@ -250,7 +250,7 @@ def test_report_exposes_journal_failure(client, session_factory, app_settings):
 
 
 def test_expiring_seed_and_reminder_notifications(client, session_factory, app_settings):
-    login(client, person_id=KARIM_ID)
+    login(client, person_id=SAMY_ID)
     assert client.post("/api/demo/reset", json={"confirm": "RESET"}).status_code == 200
     app_settings.demo_today = app_settings.demo_today.replace(year=2027, month=3, day=1)
     client.app.state.reminder_scheduler.planner = ReminderPlanner(

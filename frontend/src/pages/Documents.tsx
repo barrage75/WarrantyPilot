@@ -11,6 +11,7 @@ import { Tile as Card } from "@/components/bento/Tile";
 import { EmptyState } from "@/components/bento/EmptyState";
 import { Pill } from "@/components/bento/Pill";
 import { StatusDot } from "@/components/bento/StatusDot";
+import { EquipmentIcon } from "@/components/bento/EquipmentIcon";
 import { UploadProgress } from "@/components/documents/UploadProgress";
 import { DocumentFacts } from "@/components/documents/DocumentFacts";
 
@@ -89,14 +90,14 @@ export default function Documents() {
   </Card>;
  }
  return <div className="space-y-5 text-ink">
-  <h1 className="text-4xl font-bold tracking-tight">{t("title")}</h1>
+  <header className="flex items-center gap-3"><EquipmentIcon category="folder" size={40}/><h1 className="text-4xl font-bold tracking-tight">{t("title")}</h1></header>
   <Card className="space-y-4">
    <h2 className="text-xl font-semibold">{t("uploadTitle")}</h2>
-   <label htmlFor="document-file" role="button" tabIndex={busy ? -1 : 0} aria-label={t("drop")} aria-describedby="document-formats" aria-disabled={!!busy} onClick={event => { if (busy) event.preventDefault(); }} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); if (!busy) input.current?.click(); } }} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); if (!busy) void upload(event.dataTransfer.files[0]); }} className="flex min-h-48 w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-[28px] border-2 border-dashed border-idle bg-canvas p-6 text-center font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent aria-disabled:cursor-not-allowed aria-disabled:opacity-50">
+   <label htmlFor="document-file" role="button" tabIndex={busy ? -1 : 0} aria-label={t("drop")} aria-describedby="document-formats" aria-disabled={!!busy} onClick={event => { if (busy) event.preventDefault(); }} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); if (!busy) input.current?.click(); } }} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); if (!busy) void upload(event.dataTransfer.files[0]); }} className="flex min-h-48 w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-[20px] border-2 border-dashed border-idle bg-canvas p-6 text-center font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent aria-disabled:cursor-not-allowed aria-disabled:opacity-50">
     <UploadCloud size={40} strokeWidth={1.75} aria-hidden="true"/>{t("drop")}
     <input ref={input} id="document-file" type="file" accept=".pdf,.xml" aria-label={t("choose")} aria-describedby="document-formats" tabIndex={-1} disabled={!!busy} className="sr-only" onChange={event => { void upload(event.target.files?.[0]); event.target.value = ""; }}/>
    </label>
-   <p className="text-sm text-slate-600" id="document-formats">{t("formats")}</p>
+   <p className="text-sm text-muted" id="document-formats">{t("formats")}</p>
    {filename && <UploadProgress name={filename} waiting={busy === "upload"} state={result?.state} duplicate={result?.duplicate} documentId={result?.document_id} suspicious={result?.suspicious || detail?.suspicious} reason={result?.reason} facts={result?.facts} error={validation ? t(validation) : error !== undefined && errorSource === "upload" ? errorText(error) : undefined}>
    {result?.state === "pending_extraction" && <p role="status">{t("results.pending_extraction")}</p>}
   {!!detail?.facts.length && <details><summary className="cursor-pointer font-semibold">{t("factsTitle")}</summary><DocumentFacts facts={detail.facts}/></details>}
@@ -104,7 +105,7 @@ export default function Documents() {
   </Card>
   <Card className="space-y-4"><h2 className="text-xl font-semibold">{t("inboxTitle")}</h2><Button disabled={!!busy} onClick={() => void poll()}>{t("poll")}</Button>
    {busy === "poll" && <p role="status" aria-live="polite" aria-busy="true">{t("polling")}</p>}
-   {error !== undefined && errorSource === "poll" && <p role="alert" className="text-red-800">{errorText(error)}</p>}
+   {error !== undefined && errorSource === "poll" && <p role="alert" className="text-bad">{errorText(error)}</p>}
    {summary && <div role="status" aria-live="polite"><h3 className="font-semibold">{t("summary")}</h3><ul className="mt-2 flex flex-wrap gap-x-6 gap-y-2">{pollStates.map(state => <li key={state}>{t("pollStates." + state, { count: summary[state] })}</li>)}</ul></div>}
   </Card>
   <section className="space-y-4" aria-label={t("listTitle")}><h2 className="text-xl font-semibold">{t("listTitle")}</h2>

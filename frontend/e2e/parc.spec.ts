@@ -14,7 +14,7 @@ test("fleet uses seeded equipment, server filters, pagination and an Escape-safe
  await expect(page.getByRole("status")).toContainText("2 / 10");
  await page.getByRole("button", { name: "Expire bientôt", exact: true }).click();
  await expect(page.getByTestId("equipment-tile")).toHaveCount(Math.min(24, items.filter(item => item.coverage === "expiring_soon").length));
- await page.getByRole("button", { name: "Tout le parc", exact: true }).click();
+ await page.getByRole("button", { name: "Toutes", exact: true }).click();
  const device = items.find(item => item.invoice_document_id)!;
  await page.getByRole("searchbox").fill(device.serial);
  await expect(page.getByTestId("equipment-tile")).toHaveCount(1);
@@ -70,7 +70,7 @@ test("home displays real decisions and notifications without horizontal overflow
  expect(item.status).toBe("awaiting_validation");
  await page.goto("/");
  await expect(page.getByRole("heading", { name: "À surveiller", exact: true })).toBeVisible();
- await expect(page.locator("section").filter({ has: page.locator(`a[href="/cases/${item.id}"]`) }).getByRole("button", { name: "Valider", exact: true })).toBeVisible();
+ await expect(page.getByTestId("decision-beam").filter({ has: page.locator(`a[href="/cases/${item.id}"]`) }).getByRole("button", { name: "Valider", exact: true })).toBeVisible();
  await expect(page.getByText("Un dossier attend votre validation.", { exact: true })).toBeVisible();
  for (const width of [360, 390, 768, 1440, 1920]) {
   await page.setViewportSize({ width, height: 900 });

@@ -24,6 +24,13 @@ it("paginates the fleet and opens an accessible sheet with document, case and se
  renderWithApi(<Parc/>, "/parc");
  const tiles = await screen.findAllByTestId("equipment-tile");
  expect(tiles).toHaveLength(24);
+ expect(screen.getByRole("heading", { name: "Parc · 30 équipements" })).toBeInTheDocument();
+ expect(screen.getByRole("button", { name: /Tous les équipements 30/ })).toBeInTheDocument();
+ expect(screen.getByText("30 équipements au total")).toBeInTheDocument();
+ expect(screen.getByText("Échéance :", { exact: true })).toBeInTheDocument();
+ expect(screen.getByRole("button", { name: "Garantie active" })).toBeInTheDocument();
+ expect(screen.getByText("Équipement", { exact: true })).toBeInTheDocument();
+ expect(screen.getByText("Statut", { exact: true })).toBeInTheDocument();
  await userEvent.click(tiles[0]);
  const sheet = screen.getByRole("dialog");
  expect(within(sheet).getByRole("heading")).toHaveTextContent("Dell Latitude 0");

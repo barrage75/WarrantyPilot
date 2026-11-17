@@ -299,9 +299,9 @@ def request_json(
 
 def backend_info(command: list[str], env: dict[str, str]) -> dict[str, Any]:
     code = (
-        "import json; from app.core.settings import AppSettings, DEV_DEMO_PASSWORD; "
+        "import json; from app.core.settings import AppSettings; "
         "s=AppSettings(); print(json.dumps(dict(database=s.database_url, "
-        "password=s.active_demo_password(), default_password=DEV_DEMO_PASSWORD, "
+        "password=s.active_demo_password(), "
         "environment=s.environment, demo=s.demo_mode, "
         "gmail=bool(s.gmail_client_id or s.gmail_client_secret or s.gmail_refresh_token))))"
     )
@@ -331,11 +331,11 @@ def backend_info(command: list[str], env: dict[str, str]) -> dict[str, Any]:
 def advance(info: dict[str, Any]) -> None:
     opener = local_opener()
     people = request_json(opener, f"{API}/auth/people")
-    karim = next((person for person in people if person["name"] == "Karim Benali"), None)
-    if not karim:
-        raise DemoError("Karim Benali est absent : relancez la démo avec --reset.")
+    samy = next((person for person in people if person["name"] == "Samy Benzeguir"), None)
+    if not samy:
+        raise DemoError("Samy Benzeguir est absent : relancez la démo avec --reset.")
     request_json(
-        opener, f"{API}/auth/login", {"person_id": karim["id"], "password": info["password"]}
+        opener, f"{API}/auth/login", {"person_id": samy["id"], "password": info["password"]}
     )
     try:
         cases = request_json(opener, f"{DELL}/__test__/cases")
@@ -492,14 +492,9 @@ def launch(args: argparse.Namespace) -> None:
             ROOT / "frontend",
         )
         supervisor.ready(vite, 5173, FRONT)
-        password = (
-            info["default_password"]
-            if info["password"] == info["default_password"]
-            else "celui configuré dans WP_DEMO_PASSWORD"
-        )
         print(
-            f"\nWarrantyPilot est prêt : {FRONT}\nConnexion : Karim Benali\n"
-            f"Mot de passe : {password}\n"
+            f"\nWarrantyPilot est prêt : {FRONT}\nConnexion : Samy Benzeguir\n"
+            "Mot de passe : n'importe lequel\n"
             "Portail Dell : reproduction locale, aucun envoi à Dell.\n"
             "Arrêt : Ctrl+C. Journaux : runtime/logs/\n",
             flush=True,

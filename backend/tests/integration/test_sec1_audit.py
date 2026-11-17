@@ -20,7 +20,7 @@ from app.core.settings import (
 )
 from app.core.settings_store import read_settings
 from app.core.tables import events
-from tests.auth_helpers import KARIM_ID, login
+from tests.auth_helpers import SAMY_ID, login
 from tests.integration.helpers import create_case
 from tests.unit.test_policy import make_inputs
 
@@ -45,6 +45,7 @@ def test_c2_mutating_route_without_session_is_401(client) -> None:
 
 
 def test_c2_login_sets_httponly_strict_cookie_and_me(client, session_factory) -> None:
+    client.app.state.app_settings.demo_any_password = False
     operator = login(client, role="operator")
     client.headers.pop("Authorization")
     wrong = client.post(
@@ -63,6 +64,16 @@ def test_c2_login_sets_httponly_strict_cookie_and_me(client, session_factory) ->
     assert me.json()["person_id"] == operator.person_id
     assert client.post("/api/auth/logout").status_code == 204
     assert client.get("/api/auth/me").status_code == 401
+
+
+def test_c2_login_accepts_empty_password_in_dev(client) -> None:
+    operator = login(client, role="operator")
+    client.headers.pop("Authorization")
+    response = client.post(
+        "/api/auth/login", json={"person_id": operator.person_id, "password": ""}
+    )
+    assert response.status_code == 200
+    assert response.json()["person_id"] == operator.person_id
 
 
 def test_c2_people_route_is_public_and_minimal(client) -> None:
@@ -117,7 +128,7 @@ def test_c1_admin_settings_are_capped_journaled_and_restricted(client, session_f
 def test_h1_reset_requires_admin_and_confirmation(client, app_settings) -> None:
     login(client, role="operator")
     assert client.post("/api/demo/reset", json={"confirm": "RESET"}).status_code == 403
-    login(client, person_id=KARIM_ID)
+    login(client, person_id=SAMY_ID)
     assert client.post("/api/demo/reset").status_code == 400
     assert client.post("/api/demo/reset", json={"confirm": "yes"}).status_code == 400
     assert client.post("/api/demo/reset", json={"confirm": "RESET"}).status_code == 200
@@ -158,7 +169,7 @@ def test_h2_foreign_origin_is_403(client) -> None:
 
 # H3 — purchase decision attributed to a free-form person.
 def test_h3_purchase_decision_actor_comes_from_session(client, session_factory) -> None:
-    login(client, person_id=KARIM_ID)
+    login(client, person_id=SAMY_ID)
     assert client.post("/api/demo/reset", json={"confirm": "RESET"}).status_code == 200
     operator = login(client, role="operator")
     purchase = client.get("/api/purchase-requests").json()[0]
@@ -349,7 +360,7 @@ def test_b4_pytest_is_patched() -> None:
     assert (major, minor, patch) >= (9, 0, 3)
 
 
-def test_c2_people_only_seed_lets_karim_sign_in_as_admin(tmp_path) -> None:
+def test_c2_people_only_seed_lets_samy_sign_in_as_admin(tmp_path) -> None:
     from app.core.db import make_engine
     from app.core.reset import seed_operators
     from app.core.tables import people
@@ -360,7 +371,7 @@ def test_c2_people_only_seed_lets_karim_sign_in_as_admin(tmp_path) -> None:
         assert seed_operators(engine) == 0
         with engine.connect() as connection:
             role = connection.execute(
-                select(people.c.access_role).where(people.c.id == KARIM_ID)
+                select(people.c.access_role).where(people.c.id == SAMY_ID)
             ).scalar_one()
     finally:
         engine.dispose()

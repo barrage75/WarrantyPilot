@@ -1,9 +1,11 @@
 {
   "title": "Décisions"
 ,
-  "heading": "Ce qui demande votre décision",
+  "heading": "À décider",
+  "queueCount": "Nombre de dossiers à décider : {{count}}",
   "empty": "Rien à décider",
   "emptyHelp": "Les dossiers nécessitant votre intervention apparaîtront ici.",
   "equipment": "Équipement",
-  "detail": "Voir le détail"
+  "detail": "Voir le détail",
+  "details": "Détails"
 }

@@ -23,7 +23,7 @@ from app.core.tables import (
     verdicts,
 )
 from app.testing.fakes import FakeRulesEngine
-from tests.auth_helpers import KARIM_ID, login
+from tests.auth_helpers import SAMY_ID, login
 
 
 def _reset(client: TestClient) -> None:
@@ -42,7 +42,7 @@ def test_chat_discloses_ai_and_creates_deterministic_case(
 ) -> None:
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
-        login(client, person_id=KARIM_ID)
+        login(client, person_id=SAMY_ID)
         _reset(client)
         with session_factory.begin() as session:
             settings = read_settings(session)
@@ -85,7 +85,7 @@ def test_chat_asks_when_reporter_has_multiple_matching_assets(
 ) -> None:
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
-        login(client, person_id=KARIM_ID)
+        login(client, person_id=SAMY_ID)
         _reset(client)
         paul_id = _paul_id(session_factory)
         with session_factory.begin() as session:
@@ -122,14 +122,14 @@ def test_chat_selects_foreign_equipment_by_exact_service_tag(
 ) -> None:
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
-        login(client, person_id=KARIM_ID)
+        login(client, person_id=SAMY_ID)
         _reset(client)
         conversation = client.post("/api/chat/conversations").json()
         result = client.post(
             f"/api/chat/conversations/{conversation['id']}/messages",
             json={
                 "text": "Le PC 7XK4L93 de Clément ne démarre plus",
-                "reporter_id": KARIM_ID,
+                "reporter_id": SAMY_ID,
             },
         )
         assert result.status_code == 200, result.text
@@ -168,9 +168,9 @@ def test_chat_selects_foreign_equipment_by_exact_service_tag(
             .one()
         )
 
-    assert incident["reporter_id"] == KARIM_ID
+    assert incident["reporter_id"] == SAMY_ID
     assert case["equipment_id"] == dell["id"]
-    assert dell["assigned_to"] != KARIM_ID
+    assert dell["assigned_to"] != SAMY_ID
     assert case["status"] == CaseStatus.AWAITING_VALIDATION.value
     assert verdict["value"] in {"covered", "likely_covered"}
     assert verdict["channel"] == "browser_portal"
@@ -185,7 +185,7 @@ def test_unknown_service_tag_produces_clarifying_question(
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     reporter_id = str(uuid4())
     with TestClient(application) as client:
-        login(client, person_id=KARIM_ID)
+        login(client, person_id=SAMY_ID)
         _reset(client)
         with session_factory.begin() as session:
             session.execute(
@@ -224,7 +224,7 @@ def test_scan_runs_in_background_and_reports_document_progress(scan_engine, app_
     app_settings.database_url = str(scan_engine.url)
     application = create_app(app_settings=app_settings, app_engine=scan_engine)
     with TestClient(application) as client:
-        login(client, person_id=KARIM_ID)
+        login(client, person_id=SAMY_ID)
         _reset(client)
         started = client.post("/api/scan")
         assert started.status_code == 202
@@ -258,7 +258,7 @@ def test_purchase_guard_requires_reason_and_realizes_savings_after_both_conditio
 ) -> None:
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
-        login(client, person_id=KARIM_ID)
+        login(client, person_id=SAMY_ID)
         _reset(client)
         recommendations = client.get("/api/purchase-requests").json()
         assert len(recommendations) == 1
@@ -295,7 +295,7 @@ def test_purchase_guard_requires_reason_and_realizes_savings_after_both_conditio
                 .mappings()
                 .one()
             )
-        assert cancellation_event["actor"] == f"human:{KARIM_ID}"
+        assert cancellation_event["actor"] == f"human:{SAMY_ID}"
 
         with session_factory.begin() as session:
             session.execute(
@@ -314,7 +314,7 @@ def test_purchase_cancellation_requires_existing_person(
 ) -> None:
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
-        login(client, person_id=KARIM_ID)
+        login(client, person_id=SAMY_ID)
         _reset(client)
         purchase = client.get("/api/purchase-requests").json()[0]
         suspended = client.post(
@@ -333,7 +333,7 @@ def test_purchase_cancellation_requires_existing_person(
 def test_purchase_guard_allows_keep_only_with_reason(db_engine, app_settings) -> None:
     application = create_app(app_settings=app_settings, app_engine=db_engine)
     with TestClient(application) as client:
-        login(client, person_id=KARIM_ID)
+        login(client, person_id=SAMY_ID)
         _reset(client)
         purchase = client.get("/api/purchase-requests").json()[0]
         kept = client.post(
@@ -359,7 +359,7 @@ def test_manual_verdict_requires_human_takeover_and_proof(
         explanation_en="Human verification is required.",
     )
     with TestClient(application) as client:
-        operator = login(client, person_id=KARIM_ID)
+        operator = login(client, person_id=SAMY_ID)
         _reset(client)
         application.state.services["rules_engine"] = FakeRulesEngine(verdict)
         person_id = _paul_id(session_factory)

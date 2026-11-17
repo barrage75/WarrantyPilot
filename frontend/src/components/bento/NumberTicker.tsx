@@ -12,14 +12,14 @@ export function NumberTicker({ value, currency }: { value: number; currency?: "E
   const start = performance.now();
   let frame = 0;
   const tick = (now: number) => {
-   const progress = Math.min((now - start) / 800, 1);
+   const progress = Math.min(Math.max((now - start) / 800, 0), 1);
    setDisplay(value * (1 - (1 - progress) ** 3));
    if (progress < 1) frame = requestAnimationFrame(tick);
   };
   frame = requestAnimationFrame(tick);
   return () => cancelAnimationFrame(frame);
  }, [animate, value]);
- const format = (amount: number) => new Intl.NumberFormat(i18n.language, currency ? { style: "currency", currency } : { maximumFractionDigits: 0 }).format(amount);
+ const format = (amount: number) => new Intl.NumberFormat(i18n.language, currency ? { style: "currency", currency, maximumFractionDigits: 0 } : { maximumFractionDigits: 0 }).format(amount);
  const finalValue = format(value);
  return <span aria-live="off" aria-label={finalValue}>{format(animate ? display : value)}</span>;
 }

@@ -1,17 +1,27 @@
 @import "tailwindcss";
 @theme {
  --font-sans: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
- --color-canvas: #F2F2F4;
+ --color-canvas: #F4F7FC;
  --color-surface: #FFFFFF;
- --color-ink: #18181B;
- --color-muted: #71717A;
- --color-line: #E4E4E7;
- --color-accent: #6366F1;
- --color-focus: #6366F1;
- --color-ok: #10B981;
+ --color-ink: #0F1B3D;
+ --color-muted: #5B6B86;
+ --color-line: #E2E8F2;
+ --color-accent: #2563EB;
+ --color-accent-strong: #1D4ED8;
+ --color-accent-soft: #EAF1FE;
+ --color-focus: #2563EB;
+ --color-ok: #16A34A;
+ --color-ok-soft: #DCFCE7;
  --color-warn: #F59E0B;
- --color-bad: #EF4444;
- --color-idle: #A1A1AA;
+ --color-warn-soft: #FEF3C7;
+ --color-probable: #F97316;
+ --color-probable-soft: #FFEDD5;
+ --color-bad: #DC2626;
+ --color-bad-soft: #FEE2E2;
+ --color-idle: #94A3B8;
+ --color-idle-soft: #F1F5F9;
+ --color-violet: #7C3AED;
+ --color-violet-soft: #EDE9FE;
 }
 body { margin: 0; background: var(--color-canvas); color: var(--color-ink); min-width: 320px; font-family: var(--font-sans); }
 button, select { cursor: pointer; }

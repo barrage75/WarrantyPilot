@@ -44,6 +44,7 @@ class AppSettings(BaseSettings):
     demo_mode: bool = True
     demo_today: date = date(2026, 11, 20)
     demo_password: SecretStr | None = None
+    demo_any_password: bool = True
     session_ttl_hours: int = Field(default=8, ge=1, le=24)
     max_auto_threshold_eur: Decimal = Field(default=Decimal("1000"), ge=0)
     journal_archive_dir: Path = Path("runtime/journal-archive")

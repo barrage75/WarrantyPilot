@@ -2,7 +2,7 @@
 
 Tout tourne en local sur `127.0.0.1`. L'API exige une session (`/api/auth/login`, SEC1) et refuse un `Host` ou une `Origin` étrangers (constaté : `Host: evil.example` → 400, `Origin: http://evil.example` → 403, sans session → 401). Données fictives uniquement. Ne jamais afficher le mot de passe de démo ni le jeton GitHub.
 
-Repères : API `http://127.0.0.1:8001/api` (`WP_API`), front `http://127.0.0.1:5173`, SMTP `127.0.0.1:2525`, portail Dell reproduit `http://127.0.0.1:8100`. Karim Benali = `admin` (`WP_ADMIN_ID` du `Makefile`), Paul Martin et Claire Dubois = `operator`. Mot de passe : `WP_DEMO_PASSWORD` (défaut `appelia-demo` uniquement en `WP_ENV=dev`, `backend/app/core/settings.py`).
+Repères : API `http://127.0.0.1:8001/api` (`WP_API`), front `http://127.0.0.1:5173`, SMTP `127.0.0.1:2525`, portail Dell reproduit `http://127.0.0.1:8100`. Samy Benzeguir = `admin` (`WP_ADMIN_ID` du `Makefile`), Paul Martin et Claire Dubois = `operator`. En démo locale, n'importe quel mot de passe fonctionne.
 
 ## J-1
 
@@ -34,11 +34,11 @@ ls runtime/journal-archive/ | tail -1                  # le journal précédent 
 
 **Répétition à blanc obligatoire juste avant de passer devant le jury** : jouer le parcours complet (dont Dell : Signalement, checklist, « Valider », avancer le portail), puis refaire `make reset` et le reset du portail ci-dessus.
 
-`make seed` recrée la base sans passer par l'API (`python -m app.core.reset`) : à utiliser **API arrêtée**, par exemple si `make reset` échoue faute de session. Reset par l'interface : connecté en Karim, page **Démo** → **« Réinitialiser la démo »** → **« Confirmer la remise à zéro »** ; message « Démo réinitialisée. Le journal précédent a été archivé… ». Un opérateur (Paul) ne peut pas faire le reset.
+`make seed` recrée la base sans passer par l'API (`python -m app.core.reset`) : à utiliser **API arrêtée**, par exemple si `make reset` échoue faute de session. Reset par l'interface : connecté en Samy, page **Démo** → **« Réinitialiser la démo »** → **« Confirmer la remise à zéro »** ; message « Démo réinitialisée. Le journal précédent a été archivé… ». Un opérateur (Paul) ne peut pas faire le reset.
 
 ## Dossier Dell depuis l'écran Signalement
 
-Connecté en Karim : menu **« Signalement »** → `Le PC 7XK4L93 de Clément ne démarre plus` → **« Envoyer »** → **« Ouvrir le dossier créé #… »**. Le Service Tag exact identifie l'équipement quel que soit son propriétaire (#40). Vérifié le 14/11/2026 : dossier en 1,0 s, `awaiting_validation`, verdict « Couvert », checklist de 7 étapes, badge **SIMULÉ** puis **REPRODUCTION** après l'action portail.
+Connecté en Samy : menu **« Signalement »** → `Le PC 7XK4L93 de Clément ne démarre plus` → **« Envoyer »** → **« Ouvrir le dossier créé #… »**. Le Service Tag exact identifie l'équipement quel que soit son propriétaire (#40). Vérifié le 14/11/2026 : dossier en 1,0 s, `awaiting_validation`, verdict « Couvert », checklist de 7 étapes, badge **SIMULÉ** puis **REPRODUCTION** après l'action portail.
 
 ## Avancer le portail local (simule la clôture côté Dell)
 

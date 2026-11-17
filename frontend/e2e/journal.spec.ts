@@ -2,7 +2,7 @@ import { screenshotPath } from "./screenshot-path";
 import { expect, test } from "@playwright/test";
 import { demoIdentities, fakeCase, resetFromUi } from "./helpers";
 
-test("Karim reviews real case events and anchors the journal", async ({ page }) => {
+test("Samy reviews real case events and anchors the journal", async ({ page }) => {
  await resetFromUi(page);
  const identities = await demoIdentities(page.request);
  await fakeCase(page.request, identities.jabra, identities.person);
@@ -37,7 +37,7 @@ test("Karim reviews real case events and anchors the journal", async ({ page }) 
   await page.setViewportSize({ width, height });
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  if (width === 1440 || width === 390) await page.screenshot({ path: screenshotPath("journal", `seeded-karim-${width}x${height}.png`), animations: "disabled" });
+  if (width === 1440 || width === 390) await page.screenshot({ path: screenshotPath("journal", `seeded-samy-${width}x${height}.png`), animations: "disabled" });
  }
  const anchorResponse = page.waitForResponse(response => response.url().endsWith("/api/journal/anchor") && response.request().method() === "POST");
  await page.getByRole("button", { name: "Ancrer maintenant" }).click();

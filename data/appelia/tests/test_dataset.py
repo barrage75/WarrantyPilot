@@ -378,11 +378,11 @@ def test_loader_validates_contract_models() -> None:
     )
     people_by_name = {person.name: person for person in dataset.people}
     assert people_by_name["Paul Martin"].role == "technicien plateau"
-    assert people_by_name["Karim Benali"].role == "responsable informatique"
+    assert people_by_name["Samy Benzeguir"].role == "responsable informatique"
     assert (
-        str(people_by_name["Karim Benali"].id) == "97225c38-d686-5d99-a6cf-53e18aa92e8d"
+        str(people_by_name["Samy Benzeguir"].id) == "0366886f-898d-51be-87ad-2cb539f58c9a"
     )
-    assert people_by_name["Karim Benali"].email == "karim.benali.002@appelia.example"
+    assert people_by_name["Samy Benzeguir"].email == "samy.benzeguir@appelia.example"
     assert people_by_name["Claire Dubois"].role == "DAF"
 
 

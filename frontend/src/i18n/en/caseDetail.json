@@ -9,6 +9,8 @@
   "polling": "Refresh every 2 s",
   "liveSse": "Live (SSE)",
   "title": "Case details",
+  "equipmentTitle": "Equipment",
+  "equipmentUnknown": "Unidentified equipment",
   "validate": "Validate",
   "validationPending": "Sending in 5 s",
   "validationQueued": "Send queued…",

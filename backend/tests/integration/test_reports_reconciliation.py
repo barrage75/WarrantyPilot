@@ -9,7 +9,7 @@ from sqlalchemy import insert
 from app.api.main import create_app
 from app.contracts.enums import PurchaseGuardState
 from app.core.tables import purchase_requests
-from tests.auth_helpers import KARIM_ID, login
+from tests.auth_helpers import SAMY_ID, login
 from tests.integration.helpers import create_case
 
 
@@ -68,7 +68,7 @@ def _assert_reconciles(client):
 
 
 def test_report_lines_reconcile_with_totals_for_every_purchase_shape(client, session_factory):
-    login(client, person_id=KARIM_ID)
+    login(client, person_id=SAMY_ID)
     mixed, person_id = create_case(session_factory, email="mixed@example.test")
     kept_only, kept_person = create_case(session_factory, email="kept@example.test")
     bare, _ = create_case(session_factory, email="bare@example.test")
@@ -133,7 +133,7 @@ def test_report_lines_reconcile_with_totals_for_every_purchase_shape(client, ses
 
 
 def test_demo_report_shows_purchase_guard_line_and_reconciles(client):
-    login(client, person_id=KARIM_ID)
+    login(client, person_id=SAMY_ID)
     assert client.post("/api/demo/reset", json={"confirm": "RESET"}).status_code == 200
     report, _ = _assert_reconciles(client)
     assert report["possible_savings_eur"] == 120

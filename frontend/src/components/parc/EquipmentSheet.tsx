@@ -13,7 +13,7 @@ export function EquipmentSheet({ item, onClose, returnFocus }: { item: FleetEqui
  const date = (value: string | null) => value ? new Intl.DateTimeFormat(i18n.language, { dateStyle: "long" }).format(new Date(value)) : t("unknown");
  return <Dialog open={!!item} onOpenChange={open => { if (!open) onClose(); }}>
   {item && <DialogContent onCloseAutoFocus={event => { event.preventDefault(); returnFocus(); }} className="w-[min(95vw,42rem)] p-0">
-   <motion.div layoutId={reduced ? undefined : `equipment-${item.equipment_id}`} transition={{ duration: reduced ? 0 : 0.25 }} className="space-y-6 rounded-[28px] bg-surface p-6 sm:p-8">
+   <motion.div layoutId={reduced ? undefined : `equipment-${item.equipment_id}`} transition={{ duration: reduced ? 0 : 0.25 }} className="space-y-6 rounded-[20px] bg-surface p-6 sm:p-8">
     <div className="flex items-start justify-between gap-4"><EquipmentIcon category={item.category}/><div className="flex items-start gap-3"><WarrantyRing daysLeft={item.days_left} coverage={item.coverage}/><DialogClose asChild><Button variant="outline" className="h-10 w-10 p-0" aria-label={t("close")}><X size={18}/></Button></DialogClose></div></div>
     <div><DialogTitle>{item.label}</DialogTitle><DialogDescription>{item.assigned_to?.name ?? t("unassigned")} · {item.serial}</DialogDescription></div>
     <p className="text-sm text-muted">{t(`coverage.${item.coverage}`)}</p>
