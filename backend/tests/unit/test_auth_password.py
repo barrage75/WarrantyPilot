@@ -31,6 +31,17 @@ def test_development_demo_flag_can_disable_any_password() -> None:
     assert not password_matches("", settings)
 
 
+def test_development_any_password_requires_demo_mode() -> None:
+    settings = AppSettings(
+        environment="dev",
+        demo_mode=False,
+        demo_any_password=True,
+        demo_password="configured-secret",
+    )
+
+    assert not password_matches("wrong", settings)
+
+
 def test_any_password_flag_has_no_effect_outside_development(monkeypatch) -> None:
     monkeypatch.setenv("WP_ENV", "production")
     settings = AppSettings(

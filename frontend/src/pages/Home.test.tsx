@@ -39,17 +39,20 @@ const caseItem = {
 beforeEach(async () => { await i18n.changeLanguage("fr"); });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
-function stubHomeApi(cases: unknown[] = []) {
+function stubHomeApi(
+ cases: unknown[] = [],
+ savingsReport: Record<string, unknown> = {
+  covered_equipment_eur: 75587.42,
+  possible_savings_eur: 120,
+  realized_savings_eur: 0,
+  purchase_guard_lines: [{ amount_eur: 120, realized: false }],
+ },
+) {
  stubHttp(call => {
   if (call.path === "/api/cases") return Response.json(cases);
   if (call.path === "/api/equipment") return Response.json([equipment]);
   if (call.path === "/api/equipment/overview") return Response.json([overview]);
-  if (call.path === "/api/reports/savings") return Response.json({
-   covered_equipment_eur: 75587.42,
-   possible_savings_eur: 120,
-   realized_savings_eur: 0,
-   purchase_guard_lines: [{ amount_eur: 120, realized: false }],
-  });
+  if (call.path === "/api/reports/savings") return Response.json(savingsReport);
   if (call.path === "/api/notifications") return Response.json([]);
   return undefined;
  });
@@ -66,6 +69,34 @@ it("uses the right illustrations, compact mobile grid, and whole-euro KPI format
   const icon = overviewRegion.querySelector(`img[data-icon="${category}"]`);
   expect(icon).toHaveAttribute("width", "36");
  }
+});
+
+it("uses possible savings from the report when purchase guard lines are empty", async () => {
+ stubHomeApi([], {
+  generated_at: "2026-11-20T09:00:00Z",
+  company: "Appelia",
+  covered_equipment_eur: 75587.42,
+  possible_savings_eur: 120,
+  realized_savings_eur: 0,
+  journal_ok: true,
+  journal_head: "hash",
+  lines: [{
+   case_id: "case-1",
+   equipment_label: "Jabra Evolve2 65",
+   manufacturer: "Jabra",
+   channel: "email_reseller",
+   status: "awaiting_validation",
+   amount_eur: 120,
+   realized: false,
+   resolved_at: null,
+   reference: null,
+  }],
+  purchase_guard_lines: [],
+ });
+ renderWithApi(<Home/>);
+ const overviewRegion = await screen.findByRole("region", { name: "Vue d’ensemble" });
+ const avoidableKpi = await within(overviewRegion).findByRole("link", { name: /Achat évitable/ });
+ expect(avoidableKpi).toHaveTextContent(/120\s?€/);
 });
 
 it("keeps the decision queue in one card with compact rows and collapsed disclosures", async () => {

@@ -70,7 +70,7 @@ WP_COOKIES := runtime/.make-session
 login:
 	@mkdir -p runtime
 	@curl --fail --silent --show-error -o /dev/null -c $(WP_COOKIES) -H 'Content-Type: application/json' \
-		-d "{\"person_id\":\"$(WP_ADMIN_ID)\",\"password\":\"$${WP_DEMO_PASSWORD:-}\"}" $(WP_API)/auth/login
+		-d "{\"person_id\":\"$(WP_ADMIN_ID)\",\"password\":\"$${WP_DEMO_PASSWORD:-appelia-demo}\"}" $(WP_API)/auth/login
 
 reset: login
 	curl --fail --silent --show-error -b $(WP_COOKIES) -H 'Content-Type: application/json' \

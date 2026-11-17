@@ -75,7 +75,7 @@ export function Decisions() {
 export default function Home() {
  const { t } = useTranslation(["home", "common"]), { user } = useOperator();
  const expiring = useOverview("expiring_soon"), overview = useOverview(), savings = useSavings(), casesQuery = useCases(), equipment = useEquipment();
- const avoidable = savings.data?.purchase_guard_lines.filter(line => !line.realized).reduce((sum, line) => sum + line.amount_eur, 0) ?? 0;
+ const avoidable = savings.data?.possible_savings_eur ?? 0;
  const verifyCount = overview.data?.filter(item => item.verdict === "to_verify").length ?? 0;
  const openCases = (casesQuery.data ?? []).filter(item => !["resolved", "cancelled"].includes(item.status)).slice(0, 5);
  const kpis = [
