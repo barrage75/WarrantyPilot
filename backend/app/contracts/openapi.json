@@ -1991,6 +1991,18 @@
           "disclosure_text": {
             "type": "string",
             "title": "Disclosure Text"
+          },
+          "disclosure_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disclosure Key",
+            "default": "aiDisclosure"
           }
         },
         "additionalProperties": false,
@@ -2038,6 +2050,20 @@
               }
             ],
             "title": "Textkey"
+          },
+          "textParams": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Textparams"
           }
         },
         "additionalProperties": false,
@@ -2893,7 +2919,6 @@
           "password": {
             "type": "string",
             "maxLength": 256,
-            "minLength": 1,
             "title": "Password"
           }
         },
