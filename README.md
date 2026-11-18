@@ -16,13 +16,27 @@ et ouvre lui-même le dossier chez le fabricant. Vous gardez toujours la décisi
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
 ![Windows · macOS · Linux](https://img.shields.io/badge/Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-démo%20locale-111111)
 
-[**Lancer la démo**](#-lancer-la-démo-en-5-minutes) · [Fonctionnement](#-comment-ça-marche) · [Captures](#-aperçu) · [Architecture](#-architecture) · [Documentation](#-documentation)
+[**Vidéo de démo**](#-vidéo-de-démo) · [**Lancer la démo**](#-lancer-la-démo-en-5-minutes) · [Fonctionnement](#-comment-ça-marche) · [Captures](#-aperçu) · [Architecture](#-architecture) · [Documentation](#-documentation)
 
 <br/>
 
 <img src="docs/images/accueil.png" alt="Accueil de Warranty" width="900"/>
 
 </div>
+
+---
+
+## 🎬 Vidéo de démo
+
+<div align="center">
+
+<a href="docs/demo/warranty-demo-en.mp4"><img src="docs/images/demo-video-poster.jpg" alt="Vidéo de démo de Warranty (1 min 09, en anglais)" width="900"/></a>
+
+**[▶ Regarder la vidéo (1 min 09, en anglais, voix off)](docs/demo/warranty-demo-en.mp4)**
+
+</div>
+
+Une salariée signale une panne en une phrase. L'agent identifie le PC, vérifie sur la facture que la panne est couverte, puis, après validation du responsable informatique, dépose seul la demande sur le portail Dell et suit le dossier jusqu'à sa résolution. Ce sont de vrais enregistrements de l'application, en données fictives ; le portail Dell est une reproduction locale et la clôture côté Dell est simulée.
 
 ---
 
